@@ -15,10 +15,16 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-10` (`MockQuoteSource`) → ba'd `P1-12` (Influx)
-**Akharin kar**: `P1-08` va `P1-09` tamum shodan. **217 test، 942 assertion، hame sabz**، Pint tamiz. Har do Source ru endpoint e **zende** ham test shodan.
+**Task e fe'li**: `P1-13` (task haye Influx + `pricing:influx:provision`)
+**Akharin kar**: `P1-10` va `P1-12` tamum shodan. **285 test، 1654 assertion، hame sabz**، Pint tamiz.
 **Nime-kare**: `QuoteEnricher` hanuz neveshte nashode (be `P1-15` moghol shod).
-**Gam e ba'di**: `P1-10` (`MockQuoteSource` baraye dev/offline)، ba'd `P1-12` (`InfluxTimeSeries`).
+**Gam e ba'di**: `P1-13` — `resources/influx/tasks/*.flux` (6 task) + command e `pricing:influx:provision` e idempotent (bucket ha + task ha + do token). Ba'd `P1-14` (`drain`/`health`).
+
+### Chiz hayi ke vasat e `P1-12` fahmidim
+- **Retention e bucket vaghe'an e'mal mishe**: neveshtan ba timestamp e kharej az 30 rooz ba `422` rad mishe («violates a Retention Policy Lower Bound»). Test ha bayad timestamp e DAKHEL e retention bezanan.
+- **Bar haye `m1` ru marz e DAGHIGHE mishinan** (`timeSrc:"_start"`)، na ru timestamp e 15-saniye-i e tick. Moghayese ye mostaghim e `candle.timestamp` ba `tick.timestamp()` ghalat ast.
+- **Test e Influx bayad khodesh ro tamiz kone.** Baghi-munde ye yek ejra ye ghabli tu hamun daghighe mishine va `close` ro avaz mikone — yek test e felaki ye klassik. Ba `POST /api/v2/delete` ru yek tag e provider e sabet hall shod (tag e tasadofi cardinality ro bala mibare).
+- **`influxdata/influxdb-client-php` amalan estefade nashod.** Hazf esh az `composer.json` yek tamiz-kari ye ekhtiari ast.
 
 ### 🔴 Do chiz ke az data ye zende fahmidim
 1. **`ons`/`silver`/`copperp`/`gerami` tu feed e tgju faghat RUZANE be-rooz mishan** (`ts` = nime-shab e rooz e ghabl)، na zende. Default e `freshnessSeconds()` baraye jahani 180s ast → bedun e override har tick rad mishan. Hall tu `P1-22`.
@@ -109,11 +115,20 @@
   → «انس طلا» **USD** ast va baghi Toman — `unit` tu map e har instrument.
   → Test e moghayese ba tgju: har do manba' ba'd az normalize bayad ta 2% be ham nazdik bashan (check e nahayi ye vahed).
   → Ru endpoint e **zende** test shod: 9 quote. ⚠️ **7.1 saniye** tool keshid.
-- [ ] **P1-10** — `MockQuoteSource` (random-walk baraye dev/offline)
+- [x] **P1-10** — `MockQuoteSource` (11 test)
+  → **Bedun e halat**: gheymat yek TABE ye MAHZ az zaman ast (do mowj e sinusi + jitter e hash-based)، na «akharin meghdar tu Redis + delta ye random». Pas Source ghabl e test bedun e Redis ast va `final readonly` esh vaghe'an bi-halat mimune.
+  → Har symbol faz e khodesh ro dare (ba `crc32`) ta kol e tablo ham-faz harekat nakone.
+  → Jofte bid/ask e abshode ro ham taghlid mikone، vagarna mantegh e `is_derived` tu dev hichvaght test nemishe.
 - [ ] **P1-11** — Test e **har instrument e har source** ru fixture e vaghei (meghdar e daghigh e minor)
 
 ### Influx
-- [ ] **P1-12** — `InfluxTimeSeries` (write ba SDK e SYNCHRONOUS tu CLI؛ read ba `Http` + `FluxCsv`) + `Flux` + `InfluxSpool`
+- [x] **P1-12** — `InfluxTimeSeries` + `Flux` + `FluxCsv` + `InfluxSpool` (57 test)
+  → **Aslan SDK estefade nashod** — na baraye read، na baraye write. Har do ba `Http` facade-and (hamun stack e baghi ye app، Octane-proven). Yek kelas e kamel e khatar e Octane hazf shod va `influxdata/influxdb-client-php` amalan bi-estefade munde.
+  → `Flux` ba allowlist e `[a-z0-9_-]` — 8 ta payload e hojumi test shod.
+  → Har 4 tale test e makhsus daran: `timeSrc:"_start"`، `drop` ghabl az `set`، `sort→limit→sort`، `timezone.fixed(3h30m)`.
+  → `FluxCsv` dasti parse mikone (yek series e `h1` e yek-sale tu SDK ≈ 44k object misazad).
+  → Round-trip e **vaghei** ru Influx e zende: neveshtan + khundan + **ta'eed e idempotency** (neveshtan e dobare ye hamun tick OVERWRITE mikone، na duplicate — hamin chizi-e ke replay e spool ro emn mikone).
+  → `app/Modules/Pricing/Config/pricing.php` ham neveshte shod.
 - [ ] **P1-13** — `resources/influx/tasks/*.flux` (6 task) + `pricing:influx:provision` e idempotent
 - [ ] **P1-14** — `pricing:influx:drain` + `pricing:influx:health`
 
