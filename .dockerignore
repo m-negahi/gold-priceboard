@@ -1,0 +1,41 @@
+# Dockerfile: `COPY . .` → هرچه اینجا نیست وارد لایه‌ی image می‌شود. رازها،
+# تاریخچه‌ی git، تست‌ها و asset‌های سنگین نباید داخل image بروند.
+
+# ── رازها و پیکربندی محلی ──
+.env
+.env.*
+!.env.example
+auth.json
+
+# ── VCS / CI / IDE ──
+.git
+.gitattributes
+.gitignore
+.github
+.gitlab-ci.yml
+.idea
+.vscode
+
+# ── چیزهایی که از stage دیگری می‌آیند یا در runtime ساخته می‌شوند ──
+vendor
+node_modules
+public/build
+public/hot
+public/storage
+bootstrap/cache/*.php
+
+# ── تست/توسعه/داکیومنت — در production لازم نیستند ──
+tests
+docs
+images
+graphify-out
+scripts
+.phpunit.cache
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+
+# ── همان‌جا که Dockerfile بعداً پاکشان می‌کند؛ از context هم بیرون بمانند ──
+docker-compose*.yml
+.dockerignore
+.editorconfig

@@ -1,0 +1,90 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "priceboard/priceboard",
+    "type": "project",
+    "description": "PriceBoard — moghayese ye gheymat e tala, noghre va mes beyn e provider haye Irani.",
+    "keywords": ["laravel", "gold", "price", "iran"],
+    "license": "proprietary",
+    "require": {
+        "php": "^8.3",
+        "guzzlehttp/guzzle": "^7.9",
+        "influxdata/influxdb-client-php": "^3.9",
+        "laravel/framework": "^13.17",
+        "laravel/horizon": "^5.47",
+        "laravel/octane": "^2.17",
+        "laravel/pulse": "^1.7",
+        "laravel/sanctum": "^4.3",
+        "laravel/tinker": "^3.0",
+        "livewire/livewire": "^4.3",
+        "morilog/jalali": "^3.5",
+        "secondnetwork/blade-tabler-icons": "^3.44",
+        "sentry/sentry-laravel": "^4.27",
+        "spatie/laravel-responsecache": "^8.4"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.23",
+        "laravel/pail": "^1.2.5",
+        "laravel/pint": "^1.27",
+        "laravel/telescope": "^5.20",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.6",
+        "phpunit/phpunit": "^12.5.12"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "test": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        },
+        "platform": {
+            "php": "8.5.0",
+            "ext-apcu": "5.1.24",
+            "ext-bcmath": "8.5.0",
+            "ext-curl": "8.5.0",
+            "ext-exif": "8.5.0",
+            "ext-gd": "8.5.0",
+            "ext-intl": "8.5.0",
+            "ext-mbstring": "8.5.0",
+            "ext-pcntl": "8.5.0",
+            "ext-pdo_pgsql": "8.5.0",
+            "ext-posix": "8.5.0",
+            "ext-redis": "6.1.0",
+            "ext-sockets": "8.5.0",
+            "ext-swoole": "6.0.0",
+            "ext-zip": "1.22.0"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

@@ -1,0 +1,284 @@
+# PriceBoard — mohit e local.
+#
+# Port ha amdan shift shodan ta ba projeh haye digar e hamin machine conflict nakhoran:
+#   livewire_learn → 8000/5173/5432/6379      hg → 8100/5173/55432/56379
+#   b2b            → 8200/5273/55433/56380    pb (ma) → 8300/5373/55434/56381/56382/8386
+# Ghabl az har taghir e port: `docker ps -a` + `docker inspect <name>`.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-healthcheck: &healthcheck
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  octane: &octane
+    build:
+      context: .
+      dockerfile: .docker/local/php/Dockerfile
+      target: app
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.5}
+        USE_IRAN_MIRROR: ${USE_IRAN_MIRROR:-false}
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      redis-prices:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    container_name: ${COMPOSE_PROJECT_NAME:-pb}_octane
+    working_dir: /var/www/html
+    ports:
+      - "${OCTANE_PORT:-8300}:8000"
+    volumes:
+      - ./app:/var/www/html/app:cached
+      - ./bootstrap:/var/www/html/bootstrap:cached
+      - ./config:/var/www/html/config:cached
+      - ./database:/var/www/html/database:cached
+      - ./public:/var/www/html/public:cached
+      - ./resources:/var/www/html/resources:cached
+      - ./routes:/var/www/html/routes:cached
+      - ./lang:/var/www/html/lang:cached
+      - ./storage:/var/www/html/storage:cached
+      - ./tests:/var/www/html/tests
+      - ./.env:/var/www/html/.env:cached
+      - ./vite.config.js:/var/www/html/vite.config.js:cached
+      - ./package.json:/var/www/html/package.json:cached
+      - ./composer.json:/var/www/html/composer.json:cached
+      - ./composer.lock:/var/www/html/composer.lock:cached
+      - ./.docker/local/php/config/01-app.ini:/usr/local/etc/php/conf.d/01-app.ini:ro
+      - ./.docker/local/php/config/02-opcache.ini:/usr/local/etc/php/conf.d/02-opcache.ini:ro
+      - ./.docker/local/php/config/03-swoole.ini:/usr/local/etc/php/conf.d/03-swoole.ini:ro
+      - ./.docker/local/php/config/04-xdebug.ini:/usr/local/etc/php/conf.d/04-xdebug.ini:ro
+      - composer_cache:/home/appuser/.composer
+      - ./vendor:/var/www/html/vendor:cached
+    tmpfs:
+      - /tmp:noexec,nosuid,nodev,size=512m
+    env_file:
+      - .env
+    environment:
+      OCTANE_WATCH: "true"
+    networks:
+      - app_network
+    healthcheck:
+      <<: *healthcheck
+      test: [ "CMD-SHELL", "curl -fsS http://127.0.0.1:8000/up || exit 1" ]
+    <<: *restart
+    logging: *logging
+
+  vite:
+    <<: *octane
+    container_name: ${COMPOSE_PROJECT_NAME:-pb}_vite
+    working_dir: /var/www/html
+    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
+    # vite.config.js ham bayad `port: 5373, strictPort: true` bashe — vagarna container
+    # ru 5173 goosh mide va in mapping be jayi vasl nemishe.
+    ports:
+      - "${VITE_PORT:-5373}:5373"
+    depends_on:
+      octane:
+        condition: service_started
+    healthcheck:
+      test: [ "NONE" ]
+      disable: true
+    tty: true
+    logging: *logging
+
+  horizon:
+    <<: *octane
+    image: ${COMPOSE_PROJECT_NAME:-pb}-octane:latest
+    container_name: ${COMPOSE_PROJECT_NAME:-pb}_horizon
+    working_dir: /var/www/html
+    command: php artisan horizon
+    ports: [ ]
+    depends_on:
+      octane:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: [ "CMD-SHELL", "php artisan horizon:status | grep -q running || exit 1" ]
+    logging: *logging
+
+  # Halghe ye 15 saniye-i ye gheymat. Amdan scheduler nist:
+  #   - har tick yek process e taze   → bedun e memory leak
+  #   - tartibi                        → bedun e overlap
+  #   - `Cache::lock('pricing:tick',14)` kamarband e dovom
+  # `sleep $((15 - $(date +%s) % 15))` (na `sleep 15` e sade): tick ha bayad ru grid e
+  # 15 saniye beyoftan، chun timestamp e floor-shode hamun chizi-e ke write e Influx ro
+  # idempotent mikone. `sleep 15` e sade yavash yavash drift mikone.
+  price-worker:
+    <<: *octane
+    image: ${COMPOSE_PROJECT_NAME:-pb}-octane:latest
+    container_name: ${COMPOSE_PROJECT_NAME:-pb}_price_worker
+    working_dir: /var/www/html
+    command: [ "sh", "-c", "while :; do php artisan pricing:tick; sleep $$((15 - $$(date +%s) % 15)); done" ]
+    ports: [ ]
+    depends_on:
+      octane:
+        condition: service_healthy
+      redis-prices:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    healthcheck:
+      test: [ "NONE" ]
+      disable: true
+    logging: *logging
+
+  scheduler:
+    <<: *octane
+    image: ${COMPOSE_PROJECT_NAME:-pb}-octane:latest
+    container_name: ${COMPOSE_PROJECT_NAME:-pb}_scheduler
+    working_dir: /var/www/html
+    command: [ "sh", "-c", "mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache && php artisan schedule:work" ]
+    ports: [ ]
+    depends_on:
+      octane:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: [ "CMD-SHELL", "php artisan schedule:list >/dev/null 2>&1" ]
+      interval: 60s
+      start_period: 10s
+    logging: *logging
+
+  postgresql:
+    image: postgres:${POSTGRES_VERSION:-18}-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-pb}_postgresql
+    shm_size: 256mb
+    ports:
+      - "${DB_EXTERNAL_PORT:-55434}:5432"
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-priceboard}
+      POSTGRES_USER: ${DB_USERNAME:-priceboard}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale=C
+    volumes:
+      - postgresql_data:/var/lib/postgresql
+      - ./.docker/local/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./.docker/local/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    networks:
+      - app_network
+    healthcheck:
+      <<: *healthcheck
+      test: [ "CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${DB_USERNAME:-priceboard} -d ${DB_DATABASE:-priceboard} || exit 1" ]
+    <<: *restart
+    logging: *logging
+
+  # Redis e omumi: cache / session / queue. `allkeys-lru` inja bi-khatar ast chun
+  # har chizi ke evict beshe dobare sakhte mishe.
+  redis:
+    image: redis:${REDIS_VERSION:-8}-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-pb}_redis
+    ports:
+      - "${REDIS_EXTERNAL_PORT:-56381}:6379"
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+      --requirepass ${REDIS_PASSWORD:-secret}
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      <<: *healthcheck
+      test: [ "CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:-secret} ping 2>/dev/null | grep -q PONG" ]
+    <<: *restart
+    logging: *logging
+
+  # 🔴 Redis e makhsus e gheymat — JODA, va amdan `noeviction`.
+  # Ba `allkeys-lru` (Redis e bala) Redis tu feshar e memory har kelidi ro mindaze —
+  # SHAMEL e kelid haye gheymat — dar hali ke khodesh ro salem gozaresh mide, va board
+  # bedun e hich error khali mishe. Inja store e DAGH ast (na faghat cache), pas:
+  #   - noeviction + kelid haye BEDUN e TTL  → hich gheymati evict nemishe
+  #   - bedun e appendonly: durability e AOF baraye datayi ke 15 saniye-i az Postgres
+  #     backfill mishe arzesh nadare va `everysec` fsync faghat latency ezafe mikone.
+  redis-prices:
+    image: redis:${REDIS_VERSION:-8}-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-pb}_redis_prices
+    ports:
+      - "${REDIS_PRICES_EXTERNAL_PORT:-56382}:6379"
+    command: >
+      redis-server
+      --maxmemory 64mb
+      --maxmemory-policy noeviction
+      --save ""
+      --appendonly no
+      --requirepass ${REDIS_PRICES_PASSWORD:-secret}
+    networks:
+      - app_network
+    healthcheck:
+      <<: *healthcheck
+      test: [ "CMD-SHELL", "redis-cli -a ${REDIS_PRICES_PASSWORD:-secret} ping 2>/dev/null | grep -q PONG" ]
+    <<: *restart
+    logging: *logging
+
+  # Time-series: hame ye tick va candle. Nasakhe 2.7 (na 3) — Core e nasakhe 3 query ro
+  # be ~72 saat mahdud mikone va tarikhche Enterprise mikhahe.
+  influxdb:
+    image: influxdb:${INFLUX_VERSION:-2.7}-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-pb}_influxdb
+    ports:
+      - "${INFLUX_EXTERNAL_PORT:-8386}:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUX_USERNAME:-priceboard}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_PASSWORD:-secret12345}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUX_ORG:-priceboard}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUX_BUCKET:-ticks}
+      DOCKER_INFLUXDB_INIT_RETENTION: ${INFLUX_RETENTION:-30d}
+      # Token e admin — faghat baraye provision. Worker va web token haye
+      # mahdud e khodeshun ro daran (`pricing:influx:provision` misazatesh).
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_ADMIN_TOKEN:-priceboard-local-admin-token}
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    networks:
+      - app_network
+    healthcheck:
+      <<: *healthcheck
+      test: [ "CMD-SHELL", "influx ping || exit 1" ]
+    <<: *restart
+    logging: *logging
+
+networks:
+  app_network:
+    driver: bridge
+    name: ${COMPOSE_PROJECT_NAME:-pb}_network
+
+volumes:
+  postgresql_data:
+    driver: local
+    name: ${COMPOSE_PROJECT_NAME:-pb}_postgresql_data
+  redis_data:
+    driver: local
+    name: ${COMPOSE_PROJECT_NAME:-pb}_redis_data
+  composer_cache:
+    driver: local
+    name: ${COMPOSE_PROJECT_NAME:-pb}_composer_cache
+  influxdb_data:
+    driver: local
+    name: ${COMPOSE_PROJECT_NAME:-pb}_influxdb_data
+  influxdb_config:
+    driver: local
+    name: ${COMPOSE_PROJECT_NAME:-pb}_influxdb_config

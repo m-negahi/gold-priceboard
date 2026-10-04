@@ -1,0 +1,8 @@
+# Keep directory structure
+!.gitignore
+!.gitkeep
+!apcu-5.1.24.tgz
+
+# Track .tgz packages (committed for offline CI builds)
+# Only ignore large temporary files
+*.tmp
