@@ -41,6 +41,12 @@
         <env name="TELESCOPE_ENABLED" value="false" force="true"/>
         <env name="NIGHTWATCH_ENABLED" value="false" force="true"/>
 
+        <!--
+          Redis e gheymat: database e 15 — JODA az 0 ke dev azash estefade
+          mikone. Bedun e in, ejra ye test tablo ye vaghei ye dev ro pak mikone.
+        -->
+        <env name="REDIS_PRICES_DB" value="15" force="true"/>
+
         <!-- SMS: driver e fake — hich IO, ghabel e assert tu test. -->
         <env name="SMS_DRIVER" value="fake" force="true"/>
         <env name="BYPASS_OTP" value="false" force="true"/>

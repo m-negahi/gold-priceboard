@@ -15,16 +15,17 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-07` (Model ha + adapter haye Persistence/Cache)
-**Akharin kar**: `P1-03` (Port + Dto + Fake) va `P1-06` (migration ha) tamum shodan. **150 test، 688 assertion، hame sabz**، Pint tamiz.
+**Task e fe'li**: `P1-08` (`TgjuQuoteSource`)
+**Akharin kar**: `P1-07` tamum shod. **184 test، 765 assertion، hame sabz**، Pint tamiz.
 **Nime-kare**: `QuoteEnricher` hanuz neveshte nashode (be `P1-15` moghol shod — be snapshot e ghabli niaz dare).
-**Gam e ba'di**: `P1-07` — Model haye Eloquent + `EloquentSnapshotStore` (upsert e yek-ja، na halghe) + `RedisHotCache` (ru `redis-prices`، bedun e TTL). Ba'd `P1-08`/`P1-09` (Source haye vaghei).
+**Gam e ba'di**: `P1-08` — `TgjuQuoteSource` ba map e 17 kelid + filter e staleness، test ru `tests/Fixtures/tgju-ajax.json`. Ba'd `P1-09` (`EstjtQuoteSource`).
 
 ### Chiz hayi ke vasat e rah yad gereftim (ta dobare gir nakonim)
 - 🔴 **`docker compose restart` baraye taghir e `.env` KAFI NIST.** `env_file` faghat vaghte SAKHTE shodan e container khunde mishe; `APP_KEY` e khali hamchenan be onvan e env e OS export mishe va bar `.env` BARANDE mishe. Hatman `up -d --force-recreate`.
 - **Band e motlagh khata ye 10x ro nemigire va nemitune begire.** Rial onghadr sari tavarrom dare (tala ~70 barabar tu 8 sal) ke har band e chand-sale az yek martabe ham pahn tar ast. Chizi ke 10x ro migire enheraf e tick-be-tick ast (90% ya 901%). Rakhne: avvalin tick → `P1-24`.
 - **`Price::multipliedBy(float)` hazf shod.** `100 * 1.005` tu float mishe `100.49999999999999` va `round()` un ro 100 mikone. Har zarb e nesbati tu `SpreadPricer` ba mantegh e delta anjam mishe.
 - **PHP `int / int` vaghti baghi-munde nadare INT bar migardune.** Baraye IRR (`scale 0`) in ya'ni series e chart int mishod va baraye USD float — cast e sarih e `(float)` ezafe shod.
+- **Client e Redis e Laravel KHODESH prefix mizare.** Agar tu test dasti `config('database.redis.options.prefix')` ro jolo ye kelid bechasbuni، be yek kelid e khiali eshare mikoni va test saket be dalil e GHALAT pass mishe (do ta az test haye `RedisHotCache` daghighan hamin tur bud).
 - Image e `pb-octane` ffmpeg ro nasb mikone (az Dockerfile e hg_website ers reside) — baraye in projeh lazem NIST va ~2 daghighe be build ezafe mikone. Yek tamiz-kari ye ekhtiari ast.
 
 ---
@@ -86,7 +87,13 @@
   → 6 migration، hame ejra shodan ru Postgres 18.
   → `pending_outlier_minor` ru `price_snapshots` ezafe shod (na Redis) — ta ghanun e «do outlier» ba restart e Redis gom nashe.
   → `SchemaTest` (13 test): unique e `(provider, symbol, side)`، ejaze ye bid/ask e jodagane، do provider ru yek symbol، `bigint` baraye sekke ye 2.7 miliardi، `scale` ru har radif، spread e manfi va 4 raghame ashar، cascade delete.
-- [ ] **P1-07** — Model ha + `EloquentSnapshotStore` (upsert e yek-ja، na halghe) + `RedisHotCache` (pipeline، bedun e TTL، ru `redis-prices`)
+- [x] **P1-07** — Model ha + `EloquentSnapshotStore` + `RedisHotCache`
+  → 6 Model tu `Infrastructure/Persistence/Models/` ba cast e enum. `raw_minor` cast e `integer` dare chun driver e Postgres `bigint` ro STRING bar migardune va bedun esh har `===` saket shekast mikhore.
+  → `EloquentSnapshotStore`: upsert e **yek-dasturi** (test esh query log ro mishmare va assert mikone faghat YEK insert bashe — jologiri az regression e `updateOrCreate` tu halghe).
+  → `RedisHotCache`: ru connection e jadid e `prices` (= container e `redis-prices`)، kol e tablo tu **yek kelid** (yek round-trip na 50 ta)، `set`+`incr` tu yek pipeline، va **bedun e TTL**.
+  → `config/database.php`: connection e `prices` ezafe shod.
+  → `phpunit.xml`: `REDIS_PRICES_DB=15` majbur shod ta test tablo ye dev ro pak nakone.
+  → 34 test (17 store + 17 cache).
 
 ### Source ha
 - [ ] **P1-08** — `TgjuQuoteSource` + map e 17 kelid + filter e staleness
