@@ -15,10 +15,10 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-03` (Port ha) → ba'd `P1-06` (migration ha)
-**Akharin kar**: `P1-01`، `P1-02`، `P1-04`، `P1-05` tamum shodan. **110 test، 342 assertion، hame sabz**، Pint tamiz. Hame bedun e DB/Redis/Influx ejra mishan.
-**Nime-kare**: `QuoteEnricher` neveshte nashode (be `P1-15` moghol shod — be snapshot e ghabli niaz dare). `Interval` enum ham ba `P1-18` miad.
-**Gam e ba'di**: `P1-03` — Port ha (`QuoteSourcePort`، `SnapshotStorePort`، `HotCachePort`، `TimeSeriesPort`، `ClockPort`) + fake hashun tu `tests/Support/Fakes/`.
+**Task e fe'li**: `P1-07` (Model ha + adapter haye Persistence/Cache)
+**Akharin kar**: `P1-03` (Port + Dto + Fake) va `P1-06` (migration ha) tamum shodan. **150 test، 688 assertion، hame sabz**، Pint tamiz.
+**Nime-kare**: `QuoteEnricher` hanuz neveshte nashode (be `P1-15` moghol shod — be snapshot e ghabli niaz dare).
+**Gam e ba'di**: `P1-07` — Model haye Eloquent + `EloquentSnapshotStore` (upsert e yek-ja، na halghe) + `RedisHotCache` (ru `redis-prices`، bedun e TTL). Ba'd `P1-08`/`P1-09` (Source haye vaghei).
 
 ### Chiz hayi ke vasat e rah yad gereftim (ta dobare gir nakonim)
 - 🔴 **`docker compose restart` baraye taghir e `.env` KAFI NIST.** `env_file` faghat vaghte SAKHTE shodan e container khunde mishe; `APP_KEY` e khali hamchenan be onvan e env e OS export mishe va bar `.env` BARANDE mishe. Hatman `up -d --force-recreate`.
@@ -68,7 +68,12 @@
   → `Instrument` (15 symbol)، `Metal`، `QuoteCurrency`، `Unit`، `Side`، `Direction`، `SpreadMode`، `UpstreamUnit`، `HealthState`. `Interval` hanuz nist — ba `CandleQuery` miad (`P1-18`).
 - [x] **P1-02** — ValueObject ha: `Price` (minor+quote، `plus()` ba throw ru cross-currency)، `Symbol`، `Spread`، `Freshness`، `TickTime` (floor e grid e 15s)
   → `Price`، `TickTime`، `Spread`، `SpreadPair`، `SanityVerdict`. `Symbol` lazem nashod (`Instrument` khodesh enum e typed ast) va `Freshness` raft tu `Instrument::freshnessSeconds()`.
-- [ ] **P1-03** — Port ha: `QuoteSourcePort`، `SnapshotStorePort`، `HotCachePort`، `TimeSeriesPort`، `ClockPort`
+- [x] **P1-03** — Port ha + Dto ha + Fake ha
+  → 5 Port: `QuoteSourcePort`، `SnapshotStorePort`، `HotCachePort`، `TimeSeriesPort`، `ClockPort`.
+  → 5 Dto: `RawQuoteDto`، `SnapshotDto`، `CandleDto`، `CandleRequestDto`، `ProviderHealthDto`.
+  → 5 Fake tu `tests/Support/Fakes/` ke har kodum mitunan amdan **beterkan** (`breakIt()`) ya **saket evict** shan (`evictEverything()` — shabih-sazi ye `allkeys-lru`).
+  → `Interval` enum az `P1-18` jolo kashide shod (port e candle be type esh niaz dasht).
+  → `PortContractTest` (27 test) + yek test e me'mari ke **be sorat e khodkar check mikone `Domain/` hich Facade/helper e Laravel nadare** (ba tokenizer comment ha hazf mishan ta docblock ha false-positive nadan).
 - [x] **P1-04** — `NumberParser` + `PersianText::fold()` + test ha
   → 14 test e `NumberParser` + 7 test e `PersianText` + 13 test e `RealPayloadTest` ru fixture haye **vaghei**.
   → `RealPayloadTest` sabt mikone: `\t` e jolo ye `mesghal_buy`، bayat budan e bishtar az nesf e 963 symbol، tanha budan e jofte bid/ask e abshode، va inke ba'd az ×10 gheymat e estjt ba tgju ta 2% michasbe.
@@ -77,7 +82,10 @@
   → `QuoteEnricher` hanuz neveshte nashode — be `P1-15` (Normalize stage) moghol shod chun be snapshot e ghabli niaz dare.
 
 ### Persistence
-- [ ] **P1-06** — Migration ha: `providers`، `provider_spreads`، `provider_spread_revisions`، `price_snapshots`، `price_changes`، `influx_backfills`
+- [x] **P1-06** — Migration ha + `SchemaTest`
+  → 6 migration، hame ejra shodan ru Postgres 18.
+  → `pending_outlier_minor` ru `price_snapshots` ezafe shod (na Redis) — ta ghanun e «do outlier» ba restart e Redis gom nashe.
+  → `SchemaTest` (13 test): unique e `(provider, symbol, side)`، ejaze ye bid/ask e jodagane، do provider ru yek symbol، `bigint` baraye sekke ye 2.7 miliardi، `scale` ru har radif، spread e manfi va 4 raghame ashar، cascade delete.
 - [ ] **P1-07** — Model ha + `EloquentSnapshotStore` (upsert e yek-ja، na halghe) + `RedisHotCache` (pipeline، bedun e TTL، ru `redis-prices`)
 
 ### Source ha
