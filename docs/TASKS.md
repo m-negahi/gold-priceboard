@@ -53,7 +53,8 @@
   → hame ye service bala: `pb_octane` `pb_postgresql` `pb_redis` `pb_redis_prices` `pb_influxdb`. `curl localhost:8300/up` = **200**.
   → Policy e Redis **ta'eed shod**: `redis` = `allkeys-lru` (cache), `redis-prices` = `noeviction` + `appendonly no`. InfluxDB 2.7.12 `ready for queries and writes`.
   → Hich conflict e port: tanha takrar haye machine `5173` va `8080`-and ke beyn e `hg_*` va `livewire_learn_*` az ghabl bude, na mal e ma.
-- [ ] **P0-11** — Commit e avval
+- [x] **P0-11** — Commit e avval
+  → `501d1af` — 125 file.
 
 ---
 
