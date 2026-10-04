@@ -140,8 +140,32 @@ final class PortContractTest extends TestCase
         $quote = new RawQuoteDto('tgju', Instrument::Gold18Gram, Side::Last, Price::irr(266_400_000));
         $source = (new FakeQuoteSource('tgju'))->returns([$quote]);
 
-        self::assertSame([$quote], $source->fetch());
+        $result = $source->fetch();
+
+        self::assertSame([$quote], $result->quotes);
+        self::assertSame(1, $result->count());
         self::assertSame(1, $source->fetchCount());
+    }
+
+    /**
+     * `fetch()` yek Dto bar migardune, na array.
+     *
+     * Avval port yek `lastPayloadHash()` dasht ke ba'd az `fetch()` seda
+     * zade mishod — ya'ni Source bayad HALAT negah dare. Halat tu yek
+     * singleton e `final readonly` zire Swoole beyn e request ha nasht
+     * mikone, pas hame chiz raft tu khoruji.
+     */
+    public function test_source_is_stateless_and_returns_meta_with_the_quotes(): void
+    {
+        self::assertFalse(
+            method_exists(QuoteSourcePort::class, 'lastPayloadHash'),
+            'Source nabayad halat negah dare — meta bayad tu khoruji bashe.',
+        );
+
+        $result = (new FakeQuoteSource('tgju', [], payloadHash: 'abc123'))->fetch();
+
+        self::assertSame('abc123', $result->payloadHash);
+        self::assertTrue($result->isEmpty());
     }
 
     /**

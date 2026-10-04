@@ -15,10 +15,14 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-08` (`TgjuQuoteSource`)
-**Akharin kar**: `P1-07` tamum shod. **184 test، 765 assertion، hame sabz**، Pint tamiz.
-**Nime-kare**: `QuoteEnricher` hanuz neveshte nashode (be `P1-15` moghol shod — be snapshot e ghabli niaz dare).
-**Gam e ba'di**: `P1-08` — `TgjuQuoteSource` ba map e 17 kelid + filter e staleness، test ru `tests/Fixtures/tgju-ajax.json`. Ba'd `P1-09` (`EstjtQuoteSource`).
+**Task e fe'li**: `P1-10` (`MockQuoteSource`) → ba'd `P1-12` (Influx)
+**Akharin kar**: `P1-08` va `P1-09` tamum shodan. **217 test، 942 assertion، hame sabz**، Pint tamiz. Har do Source ru endpoint e **zende** ham test shodan.
+**Nime-kare**: `QuoteEnricher` hanuz neveshte nashode (be `P1-15` moghol shod).
+**Gam e ba'di**: `P1-10` (`MockQuoteSource` baraye dev/offline)، ba'd `P1-12` (`InfluxTimeSeries`).
+
+### 🔴 Do chiz ke az data ye zende fahmidim
+1. **`ons`/`silver`/`copperp`/`gerami` tu feed e tgju faghat RUZANE be-rooz mishan** (`ts` = nime-shab e rooz e ghabl)، na zende. Default e `freshnessSeconds()` baraye jahani 180s ast → bedun e override har tick rad mishan. Hall tu `P1-22`.
+2. **estjt ~7 saniye tool mikeshe** (tgju ~0.5s). Ba tick e 15 saniye-i، in nesf e budget ast → fetch e provider ha tu `P1-15` bayad **movazi** bashe (`Http::pool`)، na poshte sar e ham. Vagarna ezafe kardan e provider e sevom tick ro az 15s rad mikone.
 
 ### Chiz hayi ke vasat e rah yad gereftim (ta dobare gir nakonim)
 - 🔴 **`docker compose restart` baraye taghir e `.env` KAFI NIST.** `env_file` faghat vaghte SAKHTE shodan e container khunde mishe; `APP_KEY` e khali hamchenan be onvan e env e OS export mishe va bar `.env` BARANDE mishe. Hatman `up -d --force-recreate`.
@@ -96,10 +100,15 @@
   → 34 test (17 store + 17 cache).
 
 ### Source ha
-- [ ] **P1-08** — `TgjuQuoteSource` + map e 17 kelid + filter e staleness
-  ⚠️ `p` comma dare va ba'zi vaght `\t`؛ faghat ~389 az 963 taze-an؛ `tgju_gold_irg18`/`_buy` tanha jofte bid/ask
-- [ ] **P1-09** — `EstjtQuoteSource` (DOMXPath، label e fold-shode، UA + HTTP/1.1، Toman→Rial)
-  ⚠️ «انس طلا» **USD** ast va baghi Toman → unit **tu map**
+- [x] **P1-08** — `TgjuQuoteSource` (16 test)
+  → Map e 16 kelid، `unit` **per-entry**، `ts` be onvan e vaght e Tehran parse mishe (`"2026-10-04 12:21:30"` → `08:51:30Z`).
+  → **Staleness inja NIST** — raft tu stage e `Validate` (tozih e kamel tu docblock e `QuoteSourcePort`). Chun tazegi be (provider, instrument) vabaste ast، na faghat instrument.
+  → Ru endpoint e **zende** test shod: 520ms، 16 quote.
+- [x] **P1-09** — `EstjtQuoteSource` (16 test)
+  → DOMXPath (na regex)، label e fold-shode، UA + `X-Requested-With` + Referer + **HTTP/1.1**، Toman→Rial.
+  → «انس طلا» **USD** ast va baghi Toman — `unit` tu map e har instrument.
+  → Test e moghayese ba tgju: har do manba' ba'd az normalize bayad ta 2% be ham nazdik bashan (check e nahayi ye vahed).
+  → Ru endpoint e **zende** test shod: 9 quote. ⚠️ **7.1 saniye** tool keshid.
 - [ ] **P1-10** — `MockQuoteSource` (random-walk baraye dev/offline)
 - [ ] **P1-11** — Test e **har instrument e har source** ru fixture e vaghei (meghdar e daghigh e minor)
 
@@ -117,6 +126,7 @@
 - [ ] **P1-20** — `PricingServiceProvider` + `Config/pricing.php` + **test e bind**
 - [ ] **P1-21** — Fake ha (`InMemorySnapshotStore`، `ArrayHotCache`، `FakeTimeSeries`، `FrozenClock`) + test e kol e pipeline **bedun e Docker**
 - [ ] **P1-22** — Seeder e provider ha (tgju + estjt، `is_active=false`) + spread e wildcard
+  ⚠️ Bayad `freshness_seconds` ro baraye tgju override kone ru `xau-oz-usd`، `xag-oz-usd`، `xcu-lb-usd` va `xau-coin-gerami-irr` (~90000 = yek rooz): in chahar ta tu feed e tgju faghat RUZANE be-rooz mishan، vali default e `Instrument::freshnessSeconds()` baraye jahani 180s ast va har tick radeshun mikone.
 - [ ] **P1-23** — Test e taab-avari: Influx down → spool؛ Redis down → PG fallback؛ PG down → polling edame
 - [ ] **P1-24** — 🔴 **Check e cross-provider baraye AVVALIN tick** (rakhne ye kashf-shode tu `P1-05`)
   Band e motlagh khata ye 10x ro **nemigire** (tavarrom e rial — tozih tu `Instrument::sanityBand()`)، va enheraf e tick-be-tick baraye avvalin tick e yek (provider, symbol) e jadid `previous` nadare. Pas yek provider e taze ba unit e eshtebah mitune avvalin gheymat esh ro bedun e moghe'iat benevise.

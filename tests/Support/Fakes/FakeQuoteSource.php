@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Support\Fakes;
 
 use App\Modules\Pricing\Application\Dto\RawQuoteDto;
+use App\Modules\Pricing\Application\Dto\SourceResultDto;
 use App\Modules\Pricing\Domain\Ports\QuoteSourcePort;
 use RuntimeException;
 
@@ -26,7 +27,7 @@ final class FakeQuoteSource implements QuoteSourcePort
         return $this->key;
     }
 
-    public function fetch(): array
+    public function fetch(): SourceResultDto
     {
         $this->fetchCount++;
 
@@ -34,12 +35,7 @@ final class FakeQuoteSource implements QuoteSourcePort
             throw new RuntimeException($this->throwMessage);
         }
 
-        return $this->quotes;
-    }
-
-    public function lastPayloadHash(): ?string
-    {
-        return $this->payloadHash;
+        return new SourceResultDto($this->quotes, $this->payloadHash, count($this->quotes));
     }
 
     /** @param array<int, RawQuoteDto> $quotes */
