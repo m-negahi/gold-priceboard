@@ -163,13 +163,28 @@ enum Instrument: string
     /**
      * Band e plausibility baraye `PriceSanity` — `[min, max]` tu MINOR unit.
      *
-     * Hadaf: gereftan e khata ye 10x (toman/rial), soton e eshtebah e HTML, va
-     * flip e arz — GHABL az inke meghdar be Influx berese. Yek meghdar e kharab
-     * tu `candles_1d` yek dorugh e daemi ast va pak kardanesh `delete` e
-     * predicate-i + cascade e re-run e task mikhahe.
+     * ── 🔴 In band khata ye 10x ro NEMIGIRE. Amdan. ──────────────────
+     * Rial sari tavarrom dare: tala ye 18 ayar az ~3.8M rial (2018) be ~266M
+     * (2026) raside — ~70 barabar tu 8 sal. Har band-i ke onghadr pahn bashe
+     * ke chand sal davam biare, az yek martabe (10x) ham pahn tar ast. Pas
+     * sakhtan e band-i ke ham 10x ro begire ham ta'mir nakhahe, momken NIST.
      *
-     * Band ha amdan PAHN-and: hadaf gereftan e khata ye martabe-i ast, na
-     * modiriat e bazaar.
+     * Taghsim e kar e vaghei:
+     *   - IN BAND         -> faghat tore ye «mozakhraf»: flip e arz, soton e
+     *                        eshtebah e HTML, meghdar e manfi/sefr, matn e
+     *                        parse-shode be onvan e adad.
+     *   - ENHERAF E TICK  -> 10x ro migire. Yek khata ye 10x ya'ni 90% ya 900%
+     *                        enheraf, ke az har saghf e manteghi kheyli balatar
+     *                        ast. In mohafez e ASLI ye runtime ast.
+     *   - TEST E FIXTURE  -> khata ye 10x e SYSTEMATIK (masalan Source-i ke
+     *                        farāmush karde Toman ro x10 kone) tu `tests/` ba
+     *                        meghdar e daghigh gerefte mishe, na tu runtime.
+     *
+     * ⚠️ Rakhne ye baghi-munde: AVVALIN tick e yek (provider, symbol) e jadid
+     * ke hanuz `previous` nadare. Unja enheraf nemitune komak kone va faghat in
+     * band e pahn hast. Hall esh moghayese ba provider haye DIGAR ast baraye
+     * hamun symbol (task `P1-24`) — chun in yek site e moghayese ast, in data
+     * ro ghablan darim.
      *
      * @return array{0: int, 1: int}
      */

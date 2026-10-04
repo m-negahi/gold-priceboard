@@ -89,12 +89,6 @@ final readonly class Price
         return new self($this->minor - $other->minor, $this->quote);
     }
 
-    /** Zarb dar yek nesbat (masalan baraye spread e darsadi). Round e half-up. */
-    public function multipliedBy(float $factor): self
-    {
-        return new self((int) round($this->minor * $factor), $this->quote);
-    }
-
     public function isGreaterThan(self $other): bool
     {
         $this->assertSameCurrency($other);

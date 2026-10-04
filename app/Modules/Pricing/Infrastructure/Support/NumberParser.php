@@ -51,7 +51,7 @@ final readonly class NumberParser
      * @param  array<int, string>  $thousands  separator haye hezargan (bedun e shart hazf mishan)
      * @param  string|null  $decimal  TANHA alamat e ashar, ya null agar adad sahih ast
      * @param  int  $scale  chand raghame ashar tu minor jaa she
-     * @return int|null  null = ghabl e parse nist (bayad rad she, na sefr)
+     * @return int|null null = ghabl e parse nist (bayad rad she, na sefr)
      */
     public static function toMinor(string $raw, array $thousands, ?string $decimal, int $scale): ?int
     {

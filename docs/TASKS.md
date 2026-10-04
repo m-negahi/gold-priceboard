@@ -15,13 +15,16 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-04` / `P1-05` (test e Domain)
-**Akharin kar**: Phase 0 **tamum shod** — stack bala-st va `/up` = 200. Enum ha, `Price`, `TickTime`, `Spread(Pair)`, `SpreadPricer`, `PriceSanity`, `NumberParser`, `PersianText` neveshte shodan va syntax eshun salem ast.
-**Nime-kare**: hich. Vali **hanuz baraye hich kodum az class haye Domain test neveshte nashode** — gam e ba'di hamun ast.
-**Gam e ba'di**: test e `NumberParser` ru fixture haye vaghei (`tests/Fixtures/`), ba'd `SpreadPricer` + `PriceSanity`. Ba'd `P1-03` (Port ha) va `P1-06` (migration ha).
+**Task e fe'li**: `P1-03` (Port ha) → ba'd `P1-06` (migration ha)
+**Akharin kar**: `P1-01`، `P1-02`، `P1-04`، `P1-05` tamum shodan. **110 test، 342 assertion، hame sabz**، Pint tamiz. Hame bedun e DB/Redis/Influx ejra mishan.
+**Nime-kare**: `QuoteEnricher` neveshte nashode (be `P1-15` moghol shod — be snapshot e ghabli niaz dare). `Interval` enum ham ba `P1-18` miad.
+**Gam e ba'di**: `P1-03` — Port ha (`QuoteSourcePort`، `SnapshotStorePort`، `HotCachePort`، `TimeSeriesPort`، `ClockPort`) + fake hashun tu `tests/Support/Fakes/`.
 
 ### Chiz hayi ke vasat e rah yad gereftim (ta dobare gir nakonim)
 - 🔴 **`docker compose restart` baraye taghir e `.env` KAFI NIST.** `env_file` faghat vaghte SAKHTE shodan e container khunde mishe; `APP_KEY` e khali hamchenan be onvan e env e OS export mishe va bar `.env` BARANDE mishe. Hatman `up -d --force-recreate`.
+- **Band e motlagh khata ye 10x ro nemigire va nemitune begire.** Rial onghadr sari tavarrom dare (tala ~70 barabar tu 8 sal) ke har band e chand-sale az yek martabe ham pahn tar ast. Chizi ke 10x ro migire enheraf e tick-be-tick ast (90% ya 901%). Rakhne: avvalin tick → `P1-24`.
+- **`Price::multipliedBy(float)` hazf shod.** `100 * 1.005` tu float mishe `100.49999999999999` va `round()` un ro 100 mikone. Har zarb e nesbati tu `SpreadPricer` ba mantegh e delta anjam mishe.
+- **PHP `int / int` vaghti baghi-munde nadare INT bar migardune.** Baraye IRR (`scale 0`) in ya'ni series e chart int mishod va baraye USD float — cast e sarih e `(float)` ezafe shod.
 - Image e `pb-octane` ffmpeg ro nasb mikone (az Dockerfile e hg_website ers reside) — baraye in projeh lazem NIST va ~2 daghighe be build ezafe mikone. Yek tamiz-kari ye ekhtiari ast.
 
 ---
@@ -61,12 +64,17 @@
 ## Phase 1 — Pricing engine (bedun e UI)
 
 ### Domain (bedun e Docker test mishe)
-- [ ] **P1-01** — Enum ha: `Instrument` (15 ta symbol + unit/quote/scale/weight/freshness/sanityBand)، `Metal`، `QuoteCurrency`، `Unit`، `Side`، `SpreadMode`، `Interval`، `Direction`، `HealthState`، `UpstreamUnit`
-- [ ] **P1-02** — ValueObject ha: `Price` (minor+quote، `plus()` ba throw ru cross-currency)، `Symbol`، `Spread`، `Freshness`، `TickTime` (floor e grid e 15s)
+- [x] **P1-01** — Enum ha: `Instrument` (15 ta symbol + unit/quote/scale/weight/freshness/sanityBand)، `Metal`، `QuoteCurrency`، `Unit`، `Side`، `SpreadMode`، `Interval`، `Direction`، `HealthState`، `UpstreamUnit`
+  → `Instrument` (15 symbol)، `Metal`، `QuoteCurrency`، `Unit`، `Side`، `Direction`، `SpreadMode`، `UpstreamUnit`، `HealthState`. `Interval` hanuz nist — ba `CandleQuery` miad (`P1-18`).
+- [x] **P1-02** — ValueObject ha: `Price` (minor+quote، `plus()` ba throw ru cross-currency)، `Symbol`، `Spread`، `Freshness`، `TickTime` (floor e grid e 15s)
+  → `Price`، `TickTime`، `Spread`، `SpreadPair`، `SanityVerdict`. `Symbol` lazem nashod (`Instrument` khodesh enum e typed ast) va `Freshness` raft tu `Instrument::freshnessSeconds()`.
 - [ ] **P1-03** — Port ha: `QuoteSourcePort`، `SnapshotStorePort`، `HotCachePort`، `TimeSeriesPort`، `ClockPort`
-- [ ] **P1-04** — `Support/NumberParser` (bcmath، policy e har-source، `٫`/`,`/`\t`/raghame Farsi) + `Support/PersianText::fold()`
-  **Test**: ru fixture haye vaghei
-- [ ] **P1-05** — `Domain/Services`: `SpreadPricer` (se invariant)، `QuoteEnricher`، `PriceSanity` (band + deviation + ghanun e «do outlier e mote'ali vaghei-and»)
+- [x] **P1-04** — `NumberParser` + `PersianText::fold()` + test ha
+  → 14 test e `NumberParser` + 7 test e `PersianText` + 13 test e `RealPayloadTest` ru fixture haye **vaghei**.
+  → `RealPayloadTest` sabt mikone: `\t` e jolo ye `mesghal_buy`، bayat budan e bishtar az nesf e 963 symbol، tanha budan e jofte bid/ask e abshode، va inke ba'd az ×10 gheymat e estjt ba tgju ta 2% michasbe.
+- [x] **P1-05** — `SpreadPricer` + `PriceSanity` + test ha
+  → `SpreadPricer` ba 3 invariant (24 test) va `PriceSanity` (16 test).
+  → `QuoteEnricher` hanuz neveshte nashode — be `P1-15` (Normalize stage) moghol shod chun be snapshot e ghabli niaz dare.
 
 ### Persistence
 - [ ] **P1-06** — Migration ha: `providers`، `provider_spreads`، `provider_spread_revisions`، `price_snapshots`، `price_changes`، `influx_backfills`
@@ -95,6 +103,9 @@
 - [ ] **P1-21** — Fake ha (`InMemorySnapshotStore`، `ArrayHotCache`، `FakeTimeSeries`، `FrozenClock`) + test e kol e pipeline **bedun e Docker**
 - [ ] **P1-22** — Seeder e provider ha (tgju + estjt، `is_active=false`) + spread e wildcard
 - [ ] **P1-23** — Test e taab-avari: Influx down → spool؛ Redis down → PG fallback؛ PG down → polling edame
+- [ ] **P1-24** — 🔴 **Check e cross-provider baraye AVVALIN tick** (rakhne ye kashf-shode tu `P1-05`)
+  Band e motlagh khata ye 10x ro **nemigire** (tavarrom e rial — tozih tu `Instrument::sanityBand()`)، va enheraf e tick-be-tick baraye avvalin tick e yek (provider, symbol) e jadid `previous` nadare. Pas yek provider e taze ba unit e eshtebah mitune avvalin gheymat esh ro bedun e moghe'iat benevise.
+  Hall: avvalin tick ba gheymat e provider haye **digar** baraye hamun symbol moghayese she (in site e moghayese ast — in data ro darim). Ekhtelaf > ~20% → rad + hoshdar e admin.
 
 ---
 

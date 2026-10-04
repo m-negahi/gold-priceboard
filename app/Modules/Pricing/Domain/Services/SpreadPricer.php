@@ -146,7 +146,14 @@ final readonly class SpreadPricer
             static function (array $candle) use ($spread, $quote, $factor): array {
                 foreach (['open', 'high', 'low', 'close'] as $field) {
                     $minor = (int) round(((float) $candle[$field]) * $factor);
-                    $candle[$field] = self::apply(new Price($minor, $quote), $spread)->minor / $factor;
+
+                    // ⚠️ cast e sarih e `(float)` lazem ast: tu PHP `int / int`
+                    // vaghti baghi-munde nadare INT bar migardune. Baraye IRR ke
+                    // `$factor === 1` ast, bedun e cast kol e series int mishe va
+                    // JSON e chart baraye IRR int va baraye USD float mide —
+                    // KLineCharts va har masraf-konande ye digar bayad yek shekl
+                    // bebinan.
+                    $candle[$field] = (float) (self::apply(new Price($minor, $quote), $spread)->minor / $factor);
                 }
 
                 return $candle;
