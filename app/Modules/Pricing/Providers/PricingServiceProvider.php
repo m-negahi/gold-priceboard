@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Modules\Pricing\Providers;
 
+use App\Modules\Pricing\Application\Actions\IngestTickAction;
 use App\Modules\Pricing\Application\Actions\ProviderSpreadAction;
+use App\Modules\Pricing\Application\Actions\RecordProviderHealthAction;
 use App\Modules\Pricing\Application\Pipeline\Stages\EnrichStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\FetchStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\PersistStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\PublishStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\ValidateStage;
 use App\Modules\Pricing\Application\Pipeline\TickPipeline;
+use App\Modules\Pricing\Application\Queries\CandleQuery;
+use App\Modules\Pricing\Application\Queries\ProviderQuery;
+use App\Modules\Pricing\Application\Queries\SpreadQuery;
 use App\Modules\Pricing\Console\Commands\PricingInfluxDrainCommand;
 use App\Modules\Pricing\Console\Commands\PricingInfluxHealthCommand;
 use App\Modules\Pricing\Console\Commands\PricingInfluxProvisionCommand;
@@ -24,8 +29,12 @@ use App\Modules\Pricing\Infrastructure\Persistence\EloquentSnapshotStore;
 use App\Modules\Pricing\Infrastructure\Time\SystemClock;
 use App\Modules\Pricing\Infrastructure\TimeSeries\InfluxSpool;
 use App\Modules\Pricing\Infrastructure\TimeSeries\InfluxTimeSeries;
+use App\Modules\Pricing\Services\SourceManager;
+use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * ⚠️ Ghanun e bind: faghat chizi `singleton` mishe ke `final readonly` ast va
@@ -61,15 +70,43 @@ final class PricingServiceProvider extends ServiceProvider
             (int) config('pricing.influx.spool_max_lines', 40_000),
         ));
 
-        // `ProviderSpreadAction` sarih bind mishe faghat baraye yek chiz:
-        // logger esh bayad channel e `pricing` bashe. Autowire `LoggerInterface`
-        // ro be channel e default resolve mikone، va un vaght yek
-        // `spread_version_bump_failed` — ke ya'ni cache e nemudar bayat mune —
-        // tu log e omumi gom mishe jaye inke tu log e pricing bashe.
+        // ── Chera in se ta SARIH bind mishan ────────────────────
+        // Har se yek param e `?LoggerInterface` daran. Autowire un ro be
+        // channel e DEFAULT resolve mikone (container `LoggerInterface` ro
+        // be `LogManager` bind karde)، na be channel e `pricing`.
+        //
+        // Natije ye un، yek shekast e saket e monitoring bud: hoshdar hayi
+        // mesl e `providers_unavailable`، `lock_unavailable`،
+        // `health_write_failed` va `spread_version_bump_failed` tu log e
+        // OMUMI mioftadan، dar hali ke kol e dalil e vojud e channel e
+        // `pricing` in ast ke hamun hoshdar ha yek ja ye JSON e ghabl e
+        // query bashan.
         $this->app->singleton(ProviderSpreadAction::class, static fn ($app): ProviderSpreadAction => new ProviderSpreadAction(
             cache: $app->make(HotCachePort::class),
             clock: $app->make(ClockPort::class),
-            logger: Log::channel((string) config('pricing.log.channel', 'stack')),
+            logger: self::logger(),
+        ));
+
+        $this->app->singleton(IngestTickAction::class, static fn ($app): IngestTickAction => new IngestTickAction(
+            pipeline: $app->make(TickPipeline::class),
+            providers: $app->make(ProviderQuery::class),
+            sources: $app->make(SourceManager::class),
+            cache: $app->make(HotCachePort::class),
+            clock: $app->make(ClockPort::class),
+            health: $app->make(RecordProviderHealthAction::class),
+            logger: self::logger(),
+        ));
+
+        // `CandleQuery` store esh SARIH ast — na store e default e app.
+        //
+        // 🔴 `CACHE_STORE=database` chart ro mindaze ru POSTGRES: hamun DB-i
+        // ke kol e cache baraye mohafezat azash hast. Yek series e `h1` e
+        // yek-sale 8,760 candle ast؛ zakhire kardan esh unja aks e hadaf ast.
+        $this->app->singleton(CandleQuery::class, static fn ($app): CandleQuery => new CandleQuery(
+            series: $app->make(TimeSeriesPort::class),
+            hot: $app->make(HotCachePort::class),
+            spreads: $app->make(SpreadQuery::class),
+            cache: $app->make(CacheFactory::class)->store(config('pricing.cache_store')),
         ));
 
         // Tartib e Stage ha MOHEM ast:
@@ -91,8 +128,24 @@ final class PricingServiceProvider extends ServiceProvider
                 ),
                 new PublishStage($app->make(HotCachePort::class)),
             ],
-            logger: Log::channel((string) config('pricing.log.channel', 'stack')),
+            logger: self::logger(),
         ));
+    }
+
+    /**
+     * Logger e module — ba ehteram be `pricing.log.enabled`.
+     *
+     * ⚠️ Un kelid tu config bud vali HICHVAGHT khunde nemishod:
+     * `PRICING_LOG=false` hich kari nemikard. Yek kelid e config ke kar
+     * nemikone yek dorugh ast — ya bayad e'mal she ya pak she.
+     */
+    private static function logger(): LoggerInterface
+    {
+        if (! (bool) config('pricing.log.enabled', true)) {
+            return new NullLogger;
+        }
+
+        return Log::channel((string) config('pricing.log.channel', 'stack'));
     }
 
     public function boot(): void

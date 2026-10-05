@@ -72,8 +72,28 @@ return [
     ],
 
     /*
+     * Store e cache baraye series e candle.
+     *
+     * `null` = store e default e app.
+     *
+     * 🔴 Chera sarih: `CACHE_STORE=database` chart ro mindaze ru POSTGRES —
+     * hamun DB-i ke kol e cache baraye mohafezat azash hast. Yek series e
+     * `h1` e yek-sale 8,760 candle ast؛ un ro az Postgres khundan va unja
+     * zakhire kardan daghighan aks e hadaf ast. `file` ham zire Octane ba
+     * chand worker bi-ma'ni-e.
+     *
+     * ⚠️ In store e `redis` e OMUMI-e (ba `allkeys-lru`)، na `redis-prices`.
+     * Baraye cache e candle DOROST ast ke evict beshe — un yek cache e
+     * vaghei-e، bar khalaf e tablo ye dagh ke manba' e khundan ast.
+     */
+    'cache_store' => env('PRICING_CACHE_STORE'),
+
+    /*
      * Log e feed — «kodum provider chi dad» tu storage/logs/pricing.
      * Channel tu `config/logging.php` ta'rif mishe.
+     *
+     * `enabled => false` -> `NullLogger`. (Ghablan in kelid khunde
+     * NEMISHOD: `PRICING_LOG=false` hich kari nemikard.)
      */
     'log' => [
         'enabled' => (bool) env('PRICING_LOG', true),

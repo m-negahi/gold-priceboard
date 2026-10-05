@@ -15,11 +15,11 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-20` (takmil e `PricingServiceProvider` + test e bind)
-**Akharin kar**: `P1-19` tamum shod. **424 test، 2096 assertion، hame sabz**، Pint tamiz.
+**Task e fe'li**: `P1-21` (takmil e fake ha + pushesh e test e pipeline)
+**Akharin kar**: `P1-20` tamum shod. **457 test، 2142 assertion، hame sabz**، Pint tamiz.
 **ENGINE ZENDE-ST**: `price-worker` tick mizane، `BoardQuery` tablo ye vaghei ro ba moghayese ye do provider bar migardune.
 **Nime-kare**: hich.
-**Gam e ba'di**: `P1-20` — har bind e `PricingServiceProvider` yek test e assert dare (dalil esh tu `app/Modules/CLAUDE.md`: tu projeh ye marja' yek `scoped()` ru class e NAMOJUD bind shode bud va memoization hichvaght kar nakard). Ba'd `P1-21` (takmil e fake ha) va `P1-23` (test haye taab-avari).
+**Gam e ba'di**: `P1-21` — takmil e fake ha (`tests/Support/Fakes/`) va pushesh e test e `TickPipeline`. Ba'd `P1-23` (test haye taab-avari)، `P1-24` (check e cross-provider baraye AVVALIN tick)، `P1-25` (retry baraye `cURL 35`)، `P1-26` (`hide_after_seconds`).
 **⚠️ `P1-22` (Seeder) ghablan tu `P1-19` anjam shod** — seeder az Action ha rad mishe va re-seed gheyr-mokhareb ast.
 
 ### 🔴🔴 MOHEM TARIN DARS: `force="true"` e phpunit KAFI NABUD
@@ -78,6 +78,8 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 - **PHP `int / int` vaghti baghi-munde nadare INT bar migardune.** Baraye IRR (`scale 0`) in ya'ni series e chart int mishod va baraye USD float — cast e sarih e `(float)` ezafe shod.
 - **Client e Redis e Laravel KHODESH prefix mizare.** Agar tu test dasti `config('database.redis.options.prefix')` ro jolo ye kelid bechasbuni، be yek kelid e khiali eshare mikoni va test saket be dalil e GHALAT pass mishe (do ta az test haye `RedisHotCache` daghighan hamin tur bud).
 - **`microtime()` dor e `Http::pool` bi-ma'ni-st**: vaghti javab ha miyan، pool ghablan tamum shode va ma faghat parse mikonim. Latency bayad az `handlerStats()['total_time']` biad — vagarna har provider «1ms» gozaresh mishe va monitoring e panel dorugh mige. (Hamin ro tu benchmark e avval didim.)
+- 🔴 **Test e jadid ro ba MUTATION besanj، na ba sabz budanesh.** Tu `P1-20` yek test neveshtam ke store e cache e candle ro check mikard — sabz bud، vali vaghti bind ro amdan kharab kardam **baz ham sabz mund**: `pricing.cache_store` ro `array` gozashte budam ke hamun default e test bud، pas `->store('array')` va `->store()` az ham ghabl e tashkhis nabudan. Ghanun: tu test، meghdar e config bayad ba default FARGH kone. Do ta test e digar ham hamin tor bi-ma'ni budan: `assertNotContains('pricing:tick', …)` ru yek array e KHALI pass mishod (regex e ghalat).
+- ⚠️ **`git checkout -- <file>` ru file e commit-nashode = az dast raftan e kar.** Vasat e mutation check az `git checkout` baraye bargashtan estefade kardam، va un file ro be akharin COMMIT bargardund — ya'ni hame ye taghirat e commit-nashode ye `P1-20` ru `PricingServiceProvider` pak shod. Baraye bargashtan e movaghat `cp` be yek file e backup bezan، na `git checkout`.
 - 🔴 **Validation ro ba config e VAGHEI ye projeh miyzan kon، na ba hads.** Do «invariant» neveshtam ke har do config e khod e seeder ro rad mikardan va test e khodam un ha ro gereft:
   (1) «`timeout` bayad az `poll_interval_seconds` kamtar bashe» — estjt `timeout = 20` ba fasele ye 15s dare chun un endpoint andaze-giri shode 6.2–9.1s javab mide. Un shart eshtebah bud: halghe ye worker ba `sleep $((15 - $(date +%s) % 15))` ru grid ham-taraz mishe، pas tick e 20 saniye-i YEK tick ja mindaze، na drift e daemi. Jash saghf e motlagh e 60s neshast (`Http::pool` montazer e HAME mimune، pas timeout e 300s ya'ni 5 daghighe bi-gheymat az HAME ye provider ha).
   (2) «tazegi <= 86,400» — seeder baraye symbol haye jahani ye tgju **90,000** mizare chun un ha faghat RUZANE be-rooz mishan. Saghf shod yek hafte.

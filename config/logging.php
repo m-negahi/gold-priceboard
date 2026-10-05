@@ -66,6 +66,11 @@ return [
          */
         'pricing' => [
             'driver' => 'daily',
+            // ⚠️ Bedun e in، Monolog esm esh ro az `app.env` migire va har
+            // record «local» (ya «production») neshun mide — dar hali ke kol
+            // e noghte ye in channel in ast ke log e feed ghabl e tashkhis
+            // bashe.
+            'name' => 'pricing',
             'path' => storage_path('logs/pricing/pricing.log'),
             'level' => env('PRICING_LOG_LEVEL', 'info'),
             'days' => env('PRICING_LOG_DAYS', 14),
