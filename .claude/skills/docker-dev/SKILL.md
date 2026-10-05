@@ -95,6 +95,7 @@ Channel e `pricing` JSON-per-line ast (Filebeat/Kibana-ready) va se event dare: 
 | Alamat | Dalil | Hall |
 |---|---|---|
 | Taghir e `.env` asar nadare | Octane process e long-running ast | `dc up -d --force-recreate` (na `octane:reload`) |
+| Taghir e `bootstrap/app.php` asar nadare (middleware/header ha nemian) | `bootstrap/app.php` yek bar be ezaye BOOT e worker khunde mishe، na har request | `dc exec octane php artisan octane:reload` (inja `--force-recreate` lazem NIST — farg esh ba radif e bala hamin ast) |
 | `octane` healthy nemishe | migration ya `.env` kharab | `dc logs octane` |
 | Chart khali | task e Influx morde | `php artisan pricing:influx:health` + skill e `influx-timeseries` |
 | Board khali vali tick salem | kelid e Redis evict shode | motma'en sho ru `redis-prices` minevisi va **bedun e TTL** |

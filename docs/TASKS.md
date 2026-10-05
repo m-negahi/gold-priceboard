@@ -15,12 +15,12 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P2-02` (sabt e middleware ha tu `bootstrap/app.php`)
-**Akharin kar**: `P2-01` tamum shod. **643 test (2609 assertion)، hame sabz**، Pint tamiz.
+**Task e fe'li**: `P2-03` (migration e `users`)
+**Akharin kar**: `P2-02` tamum shod. **654 test (2627 assertion)، hame sabz**، Pint tamiz.
 **Phase 1 amalan tamum ast** — faghat `P1-28` (marja' e e'temad) baz munde، ke AMDAN be ba'd az Phase 3 moghul shode: hall esh yek toggle ya «ta'eed e dasti» tu panel ast، pas sakhtan esh ghabl az vojud e panel ya'ni hads zadan e UI. `scripts/resilience-check.sh` ru mohit e vaghei **29/29 sabz**.
 **ENGINE ZENDE-ST**: `price-worker` tick mizane، `BoardQuery` tablo ye vaghei ro ba moghayese ye do provider bar migardune.
 **Nime-kare**: hich.
-**Gam e ba'di**: `P2-02` — sabt e middleware ha tu `bootstrap/app.php`. 🔴 `TrustProxies` bayad **`prepend`** beshe (avvalin)، vagarna `$request->ip()` hamishe IP e proxy ast va rate limit e IP e OTP bi-ma'ni mishe. Tartib e `web`: `NormalizeString` -> `NormalizePhone` -> `NormalizeRouteParams`، va `LatinizeDigits` AKHAR. `SecurityHeaders` ru hame.
+**Gam e ba'di**: `P2-03` — migration e `users`: `phone` e **unique** (format e E.164 — `PhoneHelper` un ro ta'min mikone)، `phone_verified_at`، `is_admin`. Jadval e `users` e default e Laravel `email` e ejbari dare؛ bayad `email` nullable beshe chun login ba MOBILE ast.
 **Ba'd az un Phase 2** (auth: mobile + OTP).
 **⚠️ `P1-22` (Seeder) ghablan tu `P1-19` anjam shod** — seeder az Action ha rad mishe va re-seed gheyr-mokhareb ast.
 
@@ -294,7 +294,14 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → `StringHelperTest` (10 test): `ي`/`ی` do codepoint-and va `=` eshun barabar nist — bedun e normalize، jostoju ye Farsi natije nemide.
   → **Hame ye comment ha/docblock haye English be Finglish tabdil shodan** (ghanun e #1) — shamel e `BaseAction`/`BaseQuery`/`Dto` ke az P0 munde budan.
   → Esm e `fullBytes` tu moghayese ye CIDR e IPv6 ghalat bud (vaghe'an NIBBLE ast) — eslah shod.
-- [ ] **P2-02** — Sabt tu `bootstrap/app.php` ba tartib e dorost + test e `LatinizeDigits` (JSON e Livewire rad she)
+- [x] **P2-02** — Sabt tu `bootstrap/app.php` + `MiddlewareOrderTest` (11 test)
+  → 🔴 **`TrustProxies` JAYGOZIN shod، na EZAFE** (`replace()`). Framework khodesh un ro tu stack e global dare (jaygah e 3)؛ `prepend` kardan e male ma ya'ni HAR DO ejra mishan va `REMOTE_ADDR` do bar bazneveshte mishe. `replace()` jaygah ro ham hefz mikone — bayad ghabl az `HandleCors` bashe.
+  → 🔴 **Bug e vaghei ke peyda shod**: `NormalizeRouteParams` ro aval `append` kardam va jaygah e **10** shod — BA'D az `SubstituteBindings` (7). Un amalan middleware ro BI-ASAR mikone: route-model binding ba parameter e KHAM ejra mishe، pas `/providers/۱۰۲۲` ghabl az normalize shodan 404 mide. `prepend` shod. Do test: yeki tartib، yeki RAFTAR (binding ba shenase ye Farsi bayad model ro peyda kone).
+  → 🔴 **`LatinizeDigits` PREPEND shod، na APPEND** (zed e shohud): pipeline tu-dar-tu-st، pas code e ba'd az `$next()` baraye AVVALIN middleware AKHAR ejra mishe. Yek filter e khoruji bayad HTML e NAHAYI ro bebine، pas bayad BIRUNI TARIN bashe.
+  → `SecurityHeaders` global (web + API). Normalize ha faghat `web` — ru `api` amdan nist: yek API e foroshi bayad ghararad e SARIH dashte bashe، na input-i ke saket bazneveshte mishe (tasmim tu Phase 4).
+  → **Mutation check har 4 tartib ro gereft**: LatinizeDigits -> append (1 fail)، RouteParams -> append (2 fail)، TrustProxies -> prepend (1 fail)، NormalizeString ba'd az Phone (1 fail).
+  → ⚠️ Yek test e khodam OVER-CLAIM mikard: «middleware e daxeli» e man sath e ROUTE bud، pas hamishe dakhel e group ejra mishe va ba `append` ham sabz mimund. Docblock esh eslah shod ta begire chi ro vaghe'an sabt mikone.
+  → Ru mohit e zende ta'eed shod (ba'd az `octane:reload`): 5 header e amniati ru `/up`، va **HSTS ru HTTP NIST**.
 - [ ] **P2-03** — Migration e `users` (phone e unique، `phone_verified_at`، `is_admin`)
 - [ ] **P2-04** — `OtpStorePort` + `RedisOtpStore` (code **hash shode**)
 - [ ] **P2-05** — `SmsPort` + se driver: `KavenegarSms` (vaghei)، `LogSms` (dev)، `FakeSms` (in-memory، `assertSentTo()` baraye test) + `SmsManager` e switcher ru `SMS_DRIVER`
