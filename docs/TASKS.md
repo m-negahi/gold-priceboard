@@ -15,11 +15,11 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-24` (check e cross-provider baraye AVVALIN tick)
-**Akharin kar**: `P1-25` tamum shod. **509 test (2286 assertion)، hame sabz**، Pint tamiz. `scripts/resilience-check.sh` ru mohit e vaghei **29/29 sabz**.
+**Task e fe'li**: `P1-26` + `P1-27` (ba ham — «tablo chetor bayat budan ro bian mikone»)
+**Akharin kar**: `P1-24` tamum shod. **523 test (2312 assertion)، hame sabz**، Pint tamiz. `scripts/resilience-check.sh` ru mohit e vaghei **29/29 sabz**.
 **ENGINE ZENDE-ST**: `price-worker` tick mizane، `BoardQuery` tablo ye vaghei ro ba moghayese ye do provider bar migardune.
 **Nime-kare**: hich.
-**Gam e ba'di**: `P1-24` (check e cross-provider baraye AVVALIN tick)، ba'd `P1-26`+`P1-27` ke **ba ham** tasmim gerefte mishan. `P1-11` ham baz ast (test e har instrument e har source ru fixture).
+**Gam e ba'di**: `P1-26`+`P1-27` **ba ham** — har do yek soal-and: «tablo chetor bayat budan ro bian mikone». Ba'd `P1-11` (test e har instrument e har source ru fixture) va `P1-28` (marja' e e'temad). Ba'd **Phase 2**.
 **Ba'd az un Phase 2** (auth: mobile + OTP).
 **⚠️ `P1-22` (Seeder) ghablan tu `P1-19` anjam shod** — seeder az Action ha rad mishe va re-seed gheyr-mokhareb ast.
 
@@ -254,10 +254,17 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → Config e `pricing.fetch.max_attempts` / `retry_delay_ms`. `max_attempts = 1` kamelan khamoosh mikone (test esh hast).
 - [ ] **P1-27** — 🔴 **yakh-zadegi ye SAKET e tablo** (ba `P1-21` kashf shod، test esh `TickPipelineTest::test_a_redis_oom_freezes_the_board_but_keeps_postgres_current`). Vaghti `redis-prices` por she: write ha rad mishan، **read ha salem-and**، `PING` salem ast. Pas `HotCachePort::isAvailable()` `true` mide، `board()` data mide، va `BoardQuery` `degraded=false` e'lam mikone — masir e fallback e Postgres HICHVAGHT roshan nemishe، dar hali ke Postgres data ye TAZE dare. Tablo ru akharin gheymat e neveshte-shode yakh mizane va tanha neshane `ageSeconds` ast ke bala mire.
   Gozine ha: (a) `BoardQuery` agar sen e HAME ye radif ha az yek saghf rad kard، `degraded` bede va az Postgres bekhune؛ (b) `PersistStage` shekast e sink e redis ro yek ja benevise ke masir e READ bebine. Ba `P1-26` (`hide_after_seconds`) ham-pushani dare — ba ham tasmim gerefte shan.
+- [ ] **P1-28** — «marja' e e'temad» (`trust anchor`). `P1-24` yek labe ye tiz dare ke test esh hast (`test_whoever_arrives_first_becomes_the_reference`): agar yek provider e GHALAT tu halat e bootstrap avval ja bioftad، provider e DOROST e ba'di rad mishe. Fe'lan jologiri AMALIATI-e (seeder `is_active=false`، roshan kardan e yeki-yeki + check e `TickMonitor`، va radd ba barchasb e `cross_provider:` tu panel ma'lum ast). Hall e code-i: yek flag e `is_trust_anchor` ru `providers` ke faghat un provider be onvan e marja' hesab beshe — ya ejaze ye «ta'eed e dasti» tu panel.
 - [ ] **P1-26** — tasmim: aya tablo radif haye BAYAT ro negah dare? Alan masir e Redis faghat symbol hayi ro dare ke hamin tick taze umadan، vali Postgres akharin-ma'lum ro baraye HAME negah midare — pas shab ha (bazaar e baste) tablo az masir e Redis kuchik mishe va az masir e fallback bozorg. Soton e `providers.hide_after_seconds` (default 600) sakhte shode vali **hichvaght khunde nemishe**: neyat e asli in bude ke gheymat e bayat ta un moddat ba marker neshun dade she va ba'd makhfi she. Bayad tu `PersistStage`/`PublishStage` e'mal she ta do masir TOOL e shabaneh ham yeki bashan. (Ba `BoardQueryTest` e agreement check mishe.)
-- [ ] **P1-24** — 🔴 **Check e cross-provider baraye AVVALIN tick** (rakhne ye kashf-shode tu `P1-05`)
-  Band e motlagh khata ye 10x ro **nemigire** (tavarrom e rial — tozih tu `Instrument::sanityBand()`)، va enheraf e tick-be-tick baraye avvalin tick e yek (provider, symbol) e jadid `previous` nadare. Pas yek provider e taze ba unit e eshtebah mitune avvalin gheymat esh ro bedun e moghe'iat benevise.
-  Hall: avvalin tick ba gheymat e provider haye **digar** baraye hamun symbol moghayese she (in site e moghayese ast — in data ro darim). Ekhtelaf > ~20% → rad + hoshdar e admin.
+- [x] **P1-24** — 🔴 **Check e cross-provider baraye AVVALIN tick** (+16 test)
+  → `PriceSanity::crossProvider()` — pure، static. `ValidateStage` faghat vaghti seda mizane ke `previous` NABASHE.
+  → Rakhne: band e motlagh khata ye 10x ro **nemitune** begire (tavarrom e rial band ha ro az yek martabe pahn tar karde) va enheraf e tick-be-tick be `previous` niaz dare ke avvalin tick nadare. Pas provider e taze ba vahed e eshtebah avvalin gheymat esh ro bedun e moghe'iat minevesht — va chun tick haye ba'di ba hamun meghdar e ghalat SAZEGAR-and، hargez kashf nemishod: yek dorugh e DAEMI.
+  → **Saghf 20%**: provider ha vaghe'an ba ham farg daran (andaze-giri ye zende: ons 0.27%، tala ye 18 ayar 0.26%)، vali chizi ke bayad gerefte she az yek martabe bozorgtar ast (toman jaye rial = 90%، khata ye 10x = 900%). Ru tick e zende: **sefr radd e cross_provider** — noise nemisaze.
+  → **MIANE، na miangin**: miangin ba yek marja' e kharab kharab mishe (yek marja' e 10 barabari miangin ro ~4 barabar mikone va un vaght gheymat e DOROST rad mishe). Miane ba yek outlier tekun nemikhore.
+  → `holdAsOutlier` nemide: ghanun e «do outlier» be yek snapshot e ghabli niaz dare ke hamun chizi-e ke nadarim، va >20% ekhtelaf ba bazaar yek eshtebah e CONFIG ast (vahed، map، soton)، na harekat e bazaar.
+  → **Faghat avvalin tick**: provider e ja-oftade hargez cross-check nemishe — vagarna yek maghaze ye geran ba'd az chand rooz kamelan khamoosh mishe. Un kar e check e enheraf ast.
+  → **Ba mutation check sanjide shod، va DO ta az test ha bi-ma'ni budan**: (a) test e «provider e ja-oftade cross-check nemishe» ba yek drift e 7.7% neveshte bude budam — un zir e saghf e 20% bud pas ba ejra shodan e check ru HAR tick ham sabz mimund؛ eslah: se gam e +8% (har kodum zir e saghf e enheraf) ta jam' esh ~26% beshe. (b) Test e «marja' e khodesh hesab nemishe» hargez farg nemizasht.
+  → ⚠️ **Shart e «marja' e khodesh» amdan test NASHODE** va tu docblock sadeghane neveshte shod: mutation check neshun dad bardashtan esh hich test-i ro ghermez nemikone، chun miane ba do marja' natije ro barnemigardune VA yek provider aslan nemitune chand radif e ghalat ja bioftad vaghti marja' e durost vojud dare.
 
 ---
 

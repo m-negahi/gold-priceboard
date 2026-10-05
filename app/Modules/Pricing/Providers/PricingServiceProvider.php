@@ -125,7 +125,10 @@ final class PricingServiceProvider extends ServiceProvider
                     retryDelayMs: (int) config('pricing.fetch.retry_delay_ms', 300),
                     budgetMs: (int) config('pricing.tick_seconds', 15) * 1_000,
                 ),
-                new ValidateStage((array) config('pricing.max_deviation', [])),
+                new ValidateStage(
+                    maxDeviation: (array) config('pricing.max_deviation', []),
+                    maxCrossProviderDeviation: (float) config('pricing.max_cross_provider_deviation', 20),
+                ),
                 new EnrichStage,
                 new PersistStage(
                     cache: $app->make(HotCachePort::class),

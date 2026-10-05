@@ -35,11 +35,49 @@ use App\Modules\Pricing\Domain\ValueObjects\SanityVerdict;
  * dashte mishe; agar tick e BA'DI hamun hodud ro ta'eed kone, paziresh mishe.
  * In class bi-halat ast; negah dashtan e `pendingOutlier` kar e laye ye
  * Application (snapshot/cache) ast.
+ *
+ * ── 3. CROSS-PROVIDER (faghat AVVALIN tick) — `P1-24` ───────────────
+ * Do check e bala yek RAKHNE daran ke ru ham ham pushesh esh nemidan:
+ *
+ *   - Band e motlagh khata ye 10x ro **NEMITUNE** begire. Rial onghadr sari
+ *     tavarrom dare (tala ~70 barabar tu 8 sal) ke har band e chand-sale az
+ *     yek martabe ham pahn tar ast. (Tozih e kamel tu
+ *     `Instrument::sanityBand()`.)
+ *   - Enheraf e tick-be-tick be `previous` niaz dare — va AVVALIN tick e yek
+ *     (provider, symbol) hich `previous` nadare.
+ *
+ * Natije: yek provider e TAZE ba vahed e eshtebah (toman jaye rial) mitune
+ * avvalin gheymat esh ro bedun e hich moghe'iat benevise. Va chun tick haye
+ * ba'di ba hamun meghdar e ghalat SAZEGAR-and، check e enheraf hargez
+ * roshan nemishe: yek dorugh e DAEMI.
+ *
+ * Hall: in yek site e MOGHAYESE ast — gheymat e provider haye DIGAR baraye
+ * hamun symbol ro darim. Agar avvalin gheymat az un ha kheyli dur bashe،
+ * rad mishe.
  */
 final readonly class PriceSanity
 {
     /** Chand darsad ekhtelaf beyn e outlier e moallagh va tick e ba'di hanuz «ta'eed» hesab mishe. */
     private const CONFIRMATION_TOLERANCE_PCT = 2.0;
+
+    /**
+     * Saghf e ekhtelaf ba provider haye DIGAR، baraye avvalin tick.
+     *
+     * ── Chera 20% va na 10% ─────────────────────────────────────────
+     * Provider ha VAGHE'AN ba ham farg daran: estjt (Esfahan) va tgju
+     * (Tehran) do bazaar e motefavet-and va har maghaze nerkh e khodesh ro
+     * dare. Andaze-giri ye zende: ons 0.27% ekhtelaf، tala ye 18 ayar
+     * 0.26%.
+     *
+     * Chizi ke in check bayad begire az yek martabe bozorgtar ast:
+     *   toman jaye rial -> 90% ekhtelaf
+     *   khata ye 10x    -> 900% ekhtelaf
+     *   soton e eshtebah -> ma'mulan chand barabar
+     *
+     * 20% onghadr pahn ast ke hich ekhtelaf e VAGHEI ye bazaar ro rad
+     * nakone، va onghadr tang ast ke har khata ye vahed/martabe ro begire.
+     */
+    public const MAX_CROSS_PROVIDER_DEVIATION_PCT = 20.0;
 
     public static function check(
         Instrument $instrument,
@@ -58,7 +96,9 @@ final readonly class PriceSanity
             return SanityVerdict::reject("out_of_band:{$price->minor}");
         }
 
-        // Tick e avval — chizi baraye moghayese nist.
+        // Tick e avval — `previous` nist، pas check e enheraf nemitune ejra
+        // beshe. Inja `crossProvider()` masuliat ro migire (az
+        // `ValidateStage` seda mishe).
         if ($previous === null || ! $previous->isPositive()) {
             return SanityVerdict::accept();
         }
@@ -83,5 +123,84 @@ final readonly class PriceSanity
             sprintf('deviation:%.2f%%', $deviation),
             holdAsOutlier: true,
         );
+    }
+
+    /**
+     * Check e AVVALIN tick ba gheymat e provider haye DIGAR.
+     *
+     * Faghat vaghti seda mishe ke `previous` nabashe — ya'ni in avvalin bar
+     * ast ke in (provider, symbol, side) gheymat mide.
+     *
+     * ── ⚠️ Mahdudiat e sadeghane ──────────────────────────────────
+     * Agar hich provider e digari un symbol ro nade، in check **hich kari
+     * nemitune bokone** va ghabul mikone. Un halat e bootstrap ast: avvalin
+     * ejra ye system ke hanuz hich gheymati zakhire nashode. Be hamin
+     * dalil seeder provider ha ro `is_active=false` shoru' mikone va
+     * ravesh e kar (skill e `add-price-provider`) mige provider ha ro
+     * YEKI-YEKI roshan kon va `TickMonitor` ro check kon — un vaght baraye
+     * provider e DOVOM be ba'd، in check vaghe'an kar mikone.
+     *
+     * ── Chera `holdAsOutlier` nemide ──────────────────────────────
+     * Ghanun e «do outlier» be yek snapshot e ghabli niaz dare ke un ro
+     * negah dare — va daghighan hamun chizi-e ke inja nadarim. Alave bar
+     * un، ekhtelaf e >20% ba baghi ye bazaar yek ekhtelaf e VAGHEI ye
+     * bazaar nist، yek eshtebah e CONFIG ast (vahed، map e symbol، soton).
+     * Un bayad tavasot e admin DOROST she، na ba sabr kardan.
+     *
+     * @param  array<int, Price>  $references  gheymat e provider haye digar baraye HAMUN instrument
+     */
+    public static function crossProvider(
+        Price $price,
+        array $references,
+        float $maxDeviationPct = self::MAX_CROSS_PROVIDER_DEVIATION_PCT,
+    ): SanityVerdict {
+        $median = self::median($references);
+
+        if ($median === null) {
+            // Hich marja'-i nist — halat e bootstrap.
+            return SanityVerdict::accept();
+        }
+
+        $deviation = abs($price->minor - $median) / $median * 100;
+
+        if ($deviation <= $maxDeviationPct) {
+            return SanityVerdict::accept();
+        }
+
+        return SanityVerdict::reject(
+            sprintf('cross_provider:%.2f%%', $deviation),
+        );
+    }
+
+    /**
+     * Miane ye marja' ha — na miangin.
+     *
+     * 🔴 Miangin ba yek provider e kharab kharab mishe: agar yeki az se
+     * marja' 10 barabar bashe، miangin ~4 barabar mishe va un vaght yek
+     * gheymat e DOROST ro rad mikonim. Miane ba yek outlier tekun nemikhore.
+     *
+     * @param  array<int, Price>  $references
+     */
+    private static function median(array $references): ?float
+    {
+        $values = [];
+
+        foreach ($references as $reference) {
+            if ($reference->isPositive()) {
+                $values[] = $reference->minor;
+            }
+        }
+
+        if ($values === []) {
+            return null;
+        }
+
+        sort($values);
+        $count = count($values);
+        $middle = intdiv($count, 2);
+
+        return $count % 2 === 1
+            ? (float) $values[$middle]
+            : ($values[$middle - 1] + $values[$middle]) / 2;
     }
 }

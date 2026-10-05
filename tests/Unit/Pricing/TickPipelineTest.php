@@ -337,6 +337,190 @@ final class TickPipelineTest extends TestCase
         self::assertSame(2, $report->failedSinks());
     }
 
+    // ── 🔴 Cross-provider baraye AVVALIN tick — P1-24 ───────────
+
+    /** @param array<int, RawQuoteDto> $quotes */
+    private function twoProviderTick(array $quotes): TickReportDto
+    {
+        return $this->tick($quotes, new TickContext(
+            at: $this->clock->tick(),
+            sources: [new FakeQuoteSource('tgju'), new FakeQuoteSource('wallgold')],
+            providers: [
+                'tgju' => new ProviderConfigDto('tgju'),
+                'wallgold' => new ProviderConfigDto('wallgold'),
+            ],
+        ));
+    }
+
+    /**
+     * 🔴 Rakhne-i ke in task mibande، az sar ta akhar.
+     *
+     * `wallgold` yek provider e TAZE-st ke gheymat ro TOMAN mide dar hali ke
+     * config esh rial mige. Avvalin tick esh:
+     *   - band e motlagh un ro NEMIGIRE (tavarrom e rial band ha ro onghadr
+     *     pahn karde ke yek dahom ham dakhelesh ja mishe)
+     *   - check e enheraf `previous` nadare
+     * Pas bedun e in darvaze، un meghdar mineshine — va chun tick haye
+     * ba'di ba hamun meghdar e ghalat SAZEGAR-and، hargez kashf nemishe.
+     * Yek dorugh e DAEMI tu Influx.
+     */
+    public function test_a_new_provider_with_the_wrong_unit_is_rejected_on_its_first_tick(): void
+    {
+        // tgju ja-oftade-st.
+        $this->tick([$this->quote(266_400_000, provider: 'tgju')]);
+        $this->clock->advance(15);
+
+        $report = $this->twoProviderTick([
+            $this->quote(266_400_000, provider: 'tgju'),
+            // Toman jaye rial — yek dahom.
+            $this->quote(26_640_000, provider: 'wallgold'),
+        ]);
+
+        self::assertSame(1, $report->accepted);
+        self::assertArrayNotHasKey('wallgold:xau-18k-g-irr:last', $this->store->all());
+
+        $reasons = array_map(static fn ($r): string => $r->reason, $report->rejections);
+        self::assertStringContainsString('cross_provider', implode(' ', $reasons));
+    }
+
+    public function test_a_new_provider_with_a_sane_price_is_accepted_on_its_first_tick(): void
+    {
+        $this->tick([$this->quote(266_400_000, provider: 'tgju')]);
+        $this->clock->advance(15);
+
+        $report = $this->twoProviderTick([
+            $this->quote(266_400_000, provider: 'tgju'),
+            // 0.26% ekhtelaf — hamun chizi ke ru data ye zende didim.
+            $this->quote(265_710_000, provider: 'wallgold'),
+        ]);
+
+        self::assertSame(2, $report->accepted);
+        self::assertArrayHasKey('wallgold:xau-18k-g-irr:last', $this->store->all());
+    }
+
+    /**
+     * 🔴 Faghat AVVALIN tick.
+     *
+     * Ba'd az inke yek provider ja-oftad، moghayese ba baghi ye bazaar
+     * **nabayad** ejra beshe. Vagarna yek provider e vaghei ke nerkh esh
+     * modam az baghi dur mishe (maghaze ye geran، ya yek bazaar e digar)
+     * ba'd az chand rooz kamelan khamoosh mishe. Un kar e check e enheraf e
+     * tick-be-tick ast، na in.
+     */
+    public function test_an_established_provider_is_never_cross_checked(): void
+    {
+        // `wallgold` ja mioftad ba hamun gheymat e tgju.
+        $this->twoProviderTick([
+            $this->quote(266_400_000, provider: 'tgju'),
+            $this->quote(266_400_000, provider: 'wallgold'),
+        ]);
+
+        /*
+         * ⚠️ Bayad ba JAHESH haye kuchik dur beshe، na ba yek jahesh e
+         * bozorg: har gam +8% ast (zir e saghf e enheraf e 10%) vali jam'
+         * eshun ~26% mishe — ya'ni az saghf e cross-provider e 20% RAD
+         * mikone.
+         *
+         * Avval in test ro ba yek jahesh e 7.7% neveshtam va **bi-ma'ni**
+         * bud: un meghdar zir e 20% mimund، pas test ham vaghti
+         * cross-provider ru HAR tick ejra mishod sabz mimund. Mutation check
+         * un ro gereft.
+         */
+        foreach ([287_712_000, 310_728_960, 335_587_276] as $price) {
+            $this->clock->advance(15);
+
+            $report = $this->twoProviderTick([
+                $this->quote(266_400_000, provider: 'tgju'),
+                $this->quote($price, provider: 'wallgold'),
+            ]);
+
+            self::assertSame(2, $report->accepted, "gheymat e {$price} bayad ghabul mishod.");
+        }
+
+        // 26% balatar az tgju — vali chun ja-oftade-st، cross-provider
+        // aslan ejra nemishe. Vagarna yek maghaze ye geran (ya yek bazaar e
+        // digar) ba'd az chand rooz kamelan khamoosh mishe.
+        self::assertSame(
+            335_587_276,
+            $this->store->all()['wallgold:xau-18k-g-irr:last']->price->minor,
+        );
+    }
+
+    /**
+     * ⚠️ Halat e bootstrap — mahdudiat e sadeghane ye in ravesh.
+     *
+     * Avvalin ejra ye system: hich gheymat e payedari nist، pas hich marja'-i
+     * ham nist va check nemitune kari bokone. Be hamin dalil seeder provider
+     * ha ro `is_active=false` shoru' mikone va skill e `add-price-provider`
+     * mige yeki-yeki roshan kon va `TickMonitor` ro check kon.
+     */
+    public function test_the_very_first_provider_cannot_be_cross_checked(): void
+    {
+        $report = $this->tick([$this->quote(26_640_000, provider: 'tgju')]);
+
+        self::assertSame(1, $report->accepted, 'bedun e marja'.', check nemitune kari bokone.');
+    }
+
+    /**
+     * Do provider e TAZE tu yek tick: avvali marja' nadare، vali dovomi
+     * mitune ba avvali ke hamin tick paziresh shod moghayese beshe.
+     */
+    public function test_within_one_tick_an_accepted_quote_becomes_a_reference(): void
+    {
+        $report = $this->twoProviderTick([
+            $this->quote(266_400_000, provider: 'tgju'),
+            $this->quote(26_640_000, provider: 'wallgold'),
+        ]);
+
+        self::assertSame(1, $report->accepted);
+        self::assertArrayHasKey('tgju:xau-18k-g-irr:last', $this->store->all());
+        self::assertArrayNotHasKey('wallgold:xau-18k-g-irr:last', $this->store->all());
+    }
+
+    /**
+     * 🔴 Provider e khodesh marja' e khodesh nist.
+     *
+     * `xau-melted-g-irr` do radif dare (bid va ask). Moghayese ye bid e yek
+     * provider ba ask e HAMUN provider hich chizi ro ta'eed nemikone — un
+     * faghat spread e khodesh ast، va agar vahed esh ghalat bashe HAR DO
+     * radif be hamun nesbat ghalat-and.
+     */
+    /**
+     * 🔴 «Har ki AVVAL berese، marja' mishe» — labe ye tiz e in ravesh.
+     *
+     * In test un ro MIKHKUB mikone، na inke ta'eed esh kone: agar yek
+     * provider e GHALAT tu halat e bootstrap ja bioftad (vaghti hich marja'-i
+     * nist)، un vaght provider e DOROST e ba'di rad mishe — chun ba un
+     * marja' e ghalat moghayese mishe.
+     *
+     * Jologiri AMALIATI-e، na code-i: seeder provider ha ro
+     * `is_active=false` shoru' mikone va skill e `add-price-provider` mige
+     * YEKI-YEKI roshan kon va `TickMonitor` ro check kon. Radd shodan ba
+     * `cross_provider:` barchasb mikhore، pas tu panel ma'lum ast.
+     *
+     * (`P1-28` file shod: ta'in kardan e yek provider e «marja' e e'temad».)
+     */
+    public function test_whoever_arrives_first_becomes_the_reference(): void
+    {
+        // Bootstrap: `wallgold` ba vahed e GHALAT avval mirese. Hich marja'-i
+        // nist، pas paziresh mishe.
+        $first = $this->tick([$this->quote(26_640_000, provider: 'wallgold')]);
+        self::assertSame(1, $first->accepted);
+
+        $this->clock->advance(15);
+
+        // Alan tgju ba gheymat e DOROST miad — va rad mishe.
+        $second = $this->twoProviderTick([
+            $this->quote(26_640_000, provider: 'wallgold'),
+            $this->quote(266_400_000, provider: 'tgju'),
+        ]);
+
+        self::assertArrayNotHasKey('tgju:xau-18k-g-irr:last', $this->store->all());
+
+        $reasons = implode(' ', array_map(static fn ($r): string => $r->reason, $second->rejections));
+        self::assertStringContainsString('cross_provider', $reasons);
+    }
+
     // ── 🔴 Shekast e NIME: write miterke، read salem ─────────────
 
     /**

@@ -12,6 +12,7 @@ use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
 use App\Modules\Pricing\Domain\Enums\StagePolicy;
 use App\Modules\Pricing\Domain\Services\PriceSanity;
 use App\Modules\Pricing\Domain\Services\QuoteEnricher;
+use App\Modules\Pricing\Domain\ValueObjects\Price;
 
 /**
  * Darvaze: tazegi + salamat e meghdar.
@@ -36,6 +37,11 @@ final readonly class ValidateStage implements Stage
     public function __construct(
         private array $maxDeviation = [],
         private QuoteEnricher $enricher = new QuoteEnricher,
+        /**
+         * Saghf e ekhtelaf ba provider haye digar baraye AVVALIN tick.
+         * `0` ya'ni khamoosh.
+         */
+        private float $maxCrossProviderDeviation = PriceSanity::MAX_CROSS_PROVIDER_DEVIATION_PCT,
     ) {}
 
     public function name(): string
@@ -51,6 +57,11 @@ final readonly class ValidateStage implements Stage
     public function handle(TickContext $context): void
     {
         $accepted = [];
+
+        // Marja' haye cross-provider: gheymat e payedar e provider haye
+        // DIGAR، be tafkik e instrument. Yek bar sakhte mishe va ba har
+        // quote e paziresh-shode ye in tick ham por tar mishe.
+        $references = $this->referenceIndex($context);
 
         foreach ($context->raw as $quote) {
             $key = SnapshotDto::makeKey($quote->providerKey, $quote->instrument, $quote->side);
@@ -111,10 +122,93 @@ final readonly class ValidateStage implements Stage
                 continue;
             }
 
+            // ── 🔴 Cross-provider، FAGHAT baraye avvalin tick ───
+            // `previous` nist -> check e enheraf nemitune ejra beshe، va
+            // band e motlagh khata ye 10x ro nemigire. In tanha darvaze-i
+            // ast ke un rakhne ro mibande.
+            if ($previous === null && $this->maxCrossProviderDeviation > 0) {
+                $verdict = PriceSanity::crossProvider(
+                    $quote->price,
+                    $this->referencesFor($references, $quote->instrument->value, $quote->providerKey),
+                    $this->maxCrossProviderDeviation,
+                );
+
+                if ($verdict->rejected()) {
+                    $context->reject(new RejectionDto(
+                        $quote->providerKey, $quote->instrument, $quote->side,
+                        (string) $verdict->reason, $quote->price->minor,
+                    ));
+
+                    continue;
+                }
+            }
+
+            // Quote e paziresh-shode khodesh baraye baghi ye in tick marja'
+            // mishe. Faghat tu halat e bootstrap asar dare (vaghti hanuz hich
+            // gheymat e payedari nist)، vali hamun ja arzesh dare.
+            $references[$quote->instrument->value][$quote->providerKey] = $quote->price;
+
             $accepted[] = $quote;
         }
 
         $context->raw = $accepted;
+    }
+
+    /**
+     * `instrument => providerKey => Price` az snapshot haye PAYEDAR.
+     *
+     * Faghat gheymat e payedar — na quote haye kham e hamin tick — chun un
+     * ha ghablan az darvaze rad shodan. Moghayese kardan e yek gheymat e
+     * na-sanjide ba yek gheymat e na-sanjide ye dige hich chizi ta'min
+     * nemikone.
+     *
+     * @return array<string, array<string, Price>>
+     */
+    private function referenceIndex(TickContext $context): array
+    {
+        $index = [];
+
+        foreach ($context->previous as $snapshot) {
+            if ($snapshot->price->isPositive()) {
+                $index[$snapshot->instrument->value][$snapshot->providerKey] = $snapshot->price;
+            }
+        }
+
+        return $index;
+    }
+
+    /**
+     * Marja' ha baraye yek instrument — bedun e KHOD e un provider.
+     *
+     * Provider e khodesh kenar gozashte mishe chun `xau-melted-g-irr` do
+     * radif dare (bid va ask) va moghayese ye bid e yek provider ba ask e
+     * HAMUN provider hich chizi ro ta'eed nemikone — un faghat spread e
+     * khodesh ast، va agar vahed esh ghalat bashe HAR DO radif be hamun
+     * nesbat ghalat-and.
+     *
+     * ⚠️ In shart MOHAFEZATI-e، na load-bearing — va amdan test nashode.
+     * Ba mutation check sanjidam: bardashtan esh hich test-i ro ghermez
+     * nemikone، chun (a) `median` ba do marja' hargez natije ro
+     * barnemigardune، va (b) yek provider aslan NEMITUNE chand radif e
+     * ghalat ja bioftad vaghti yek marja' e durost vojud dare — avvalin
+     * radif esh hamun ja rad mishe. Pas shart mimune (mafhumi durost ast:
+     * provider nabayad khodesh ro ta'eed kone) vali eddea ye test-shode
+     * budan esh nemikonim.
+     *
+     * @param  array<string, array<string, Price>>  $index
+     * @return array<int, Price>
+     */
+    private function referencesFor(array $index, string $instrument, string $providerKey): array
+    {
+        $references = [];
+
+        foreach ($index[$instrument] ?? [] as $key => $price) {
+            if ($key !== $providerKey) {
+                $references[] = $price;
+            }
+        }
+
+        return $references;
     }
 
     private function deviationFor(QuoteCurrency $quote): float

@@ -233,4 +233,110 @@ final class PriceSanityTest extends TestCase
             self::assertGreaterThan($min, $max, "{$instrument->value}: saghf bayad az kaf bishtar bashe.");
         }
     }
+
+    // ── 🔴 Cross-provider (faghat AVVALIN tick) — P1-24 ─────────
+
+    /** Gheymat e salem ke nazdik e baghi ye bazaar ast. */
+    public function test_a_first_price_close_to_the_other_providers_is_accepted(): void
+    {
+        // Andaze-giri ye zende: estjt 265,710,000 va tgju 266,400,000 —
+        // 0.26% ekhtelaf.
+        $verdict = PriceSanity::crossProvider(
+            Price::irr(265_710_000),
+            [Price::irr(266_400_000)],
+        );
+
+        self::assertTrue($verdict->accepted);
+    }
+
+    /**
+     * 🔴 Hamun rakhne-i ke in task baraye bastanesh neveshte shod:
+     * provider e taze gheymat ro TOMAN mide dar hali ke config rial mige.
+     *
+     * Band e motlagh in ro NEMIGIRE (tavarrom e rial band ha ro pahn karde)
+     * va check e enheraf ham `previous` nadare. Faghat moghayese ba baghi ye
+     * bazaar un ro migire.
+     */
+    public function test_a_toman_instead_of_rial_first_price_is_rejected(): void
+    {
+        $verdict = PriceSanity::crossProvider(
+            Price::irr(26_640_000),   // toman — yek dahom
+            [Price::irr(266_400_000), Price::irr(265_710_000)],
+        );
+
+        self::assertTrue($verdict->rejected());
+        self::assertStringContainsString('cross_provider', (string) $verdict->reason);
+    }
+
+    public function test_a_ten_times_first_price_is_rejected(): void
+    {
+        $verdict = PriceSanity::crossProvider(
+            Price::irr(2_664_000_000),
+            [Price::irr(266_400_000)],
+        );
+
+        self::assertTrue($verdict->rejected());
+    }
+
+    /**
+     * ⚠️ Mahdudiat e sadeghane: bedun e marja'، in check hich kari nemitune
+     * bokone. Un halat e bootstrap ast (avvalin ejra ye system).
+     */
+    public function test_with_no_reference_the_check_cannot_do_anything(): void
+    {
+        self::assertTrue(PriceSanity::crossProvider(Price::irr(1), [])->accepted);
+    }
+
+    public function test_non_positive_references_are_ignored(): void
+    {
+        // Yek marja' e sefr nabayad be onvan e «marja'» hesab beshe —
+        // vagarna taghsim bar sefr ya rad kardan e hame chiz.
+        self::assertTrue(
+            PriceSanity::crossProvider(Price::irr(266_400_000), [Price::irr(0)])->accepted,
+        );
+    }
+
+    /**
+     * 🔴 MIANE، na miangin.
+     *
+     * Agar yeki az se marja' 10 barabar bashe، MIANGIN ~4 barabar mishe va
+     * un vaght yek gheymat e DOROST ro rad mikonim. Miane ba yek outlier
+     * tekun nemikhore.
+     */
+    public function test_one_broken_reference_does_not_poison_the_decision(): void
+    {
+        $verdict = PriceSanity::crossProvider(
+            Price::irr(266_400_000),
+            [
+                Price::irr(265_710_000),
+                Price::irr(266_800_000),
+                Price::irr(2_664_000_000),   // marja' e kharab
+            ],
+        );
+
+        self::assertTrue($verdict->accepted, 'miane bayad marja\' e kharab ro nadide begire.');
+    }
+
+    public function test_the_threshold_is_configurable(): void
+    {
+        // 5% ekhtelaf: ba saghf e 20% ghabul، ba saghf e 2% rad.
+        $price = Price::irr(279_720_000);
+        $references = [Price::irr(266_400_000)];
+
+        self::assertTrue(PriceSanity::crossProvider($price, $references, 20.0)->accepted);
+        self::assertTrue(PriceSanity::crossProvider($price, $references, 2.0)->rejected());
+    }
+
+    /**
+     * ⚠️ `holdAsOutlier` NEMIDE: ghanun e «do outlier» be yek snapshot e
+     * ghabli niaz dare ke un ro negah dare — daghighan hamun chizi ke inja
+     * nadarim. Alave bar un، >20% ekhtelaf ba bazaar yek eshtebah e CONFIG
+     * ast، na harekat e bazaar؛ bayad admin DOROST esh kone، na sabr.
+     */
+    public function test_a_cross_provider_rejection_is_not_held_as_an_outlier(): void
+    {
+        $verdict = PriceSanity::crossProvider(Price::irr(26_640_000), [Price::irr(266_400_000)]);
+
+        self::assertFalse($verdict->holdAsOutlier);
+    }
 }

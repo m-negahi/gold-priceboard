@@ -57,6 +57,19 @@ return [
         'USD' => (float) env('PRICING_MAX_DEVIATION_USD', 5),
     ],
 
+    /*
+     * Saghf e ekhtelaf ba provider haye DIGAR، faghat baraye AVVALIN tick e
+     * yek (provider, symbol).
+     *
+     * 🔴 In tanha darvaze-i-e ke rakhne ye «provider e taze ba vahed e
+     * eshtebah» ro mibande: band e motlagh khata ye 10x ro nemitune begire
+     * (tavarrom e rial) va check e enheraf be `previous` niaz dare ke
+     * avvalin tick nadare.
+     *
+     * `0` ya'ni khamoosh. Dalil e adad e 20 tu `PriceSanity` ast.
+     */
+    'max_cross_provider_deviation' => (float) env('PRICING_MAX_CROSS_PROVIDER_DEVIATION', 20),
+
     'influx' => [
         'url' => env('PRICING_INFLUX_URL', 'http://influxdb:8086'),
         // Takrar e amdi az `tz_offset` e bala — `rebuildMinuteCandles` faghat
