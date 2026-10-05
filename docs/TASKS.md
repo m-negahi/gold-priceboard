@@ -15,12 +15,12 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P2-05` (`SmsPort` + se driver)
-**Akharin kar**: `P2-04` tamum shod. **696 test (2906 assertion)، hame sabz**، Pint tamiz.
+**Task e fe'li**: `P2-06` (`SendOtpAction` / `VerifyOtpAction` + `OtpThrottle`)
+**Akharin kar**: `P2-05` tamum shod. **710 test (2933 assertion)، hame sabz**، Pint tamiz.
 **Phase 1 amalan tamum ast** — faghat `P1-28` (marja' e e'temad) baz munde، ke AMDAN be ba'd az Phase 3 moghul shode: hall esh yek toggle ya «ta'eed e dasti» tu panel ast، pas sakhtan esh ghabl az vojud e panel ya'ni hads zadan e UI. `scripts/resilience-check.sh` ru mohit e vaghei **29/29 sabz**.
 **ENGINE ZENDE-ST**: `price-worker` tick mizane، `BoardQuery` tablo ye vaghei ro ba moghayese ye do provider bar migardune.
 **Nime-kare**: hich.
-**Gam e ba'di**: `P2-05` — `SmsPort` + `KavenegarSms` (vaghei) / `LogSms` (dev) / `FakeSms` (test، ba `assertSentTo()`) + `SmsManager` e switcher ru `SMS_DRIVER`. 🔴 Payam e SMS hich vaght code ro LOG nemikone (`PhoneHelper::mask` baraye shomare). Kavenegar faghat contract — API key tu env، retry/timeout e sarih.
+**Gam e ba'di**: `P2-06` — `SendOtpAction` / `VerifyOtpAction` + `OtpThrottle` (**phone + IP**). 🔴 Enumeration safety: javab baraye shomare ye mojud va namojud YEKSAN. Karbar vaghti sakhte mishe ke OTP ta'eed she. Ba'd az 3 ghalat code BATEL. Limit ha: send 3/saat/phone + 10/saat/IP؛ verify 5/saat/phone + 20/saat/IP؛ cooldown 60s.
 **Ba'd az un Phase 2** (auth: mobile + OTP).
 **⚠️ `P1-22` (Seeder) ghablan tu `P1-19` anjam shod** — seeder az Action ha rad mishe va re-seed gheyr-mokhareb ast.
 
@@ -316,7 +316,13 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → `put` e jadid shomaresh ro ham **sefr** mikone (resend = shoru' e kamel)؛ cooldown **mostaghel** az entry (batel shodan e code ghofl e resend ro baz nemikone).
   → ⚠️ `.env` e dev `BYPASS_OTP=true` dare va container un ro OS-env mikone — `TestCase` hala config e OTP ro ham mikhkube (hamun masir e ma'ruf e DB). Esm e env ha ba `.env` e mojud e P0 yeki shodan (`OTP_EXPIRES_IN`، `OTP_LENGTH`).
   → `AuthServiceProvider` + sabt + `AuthBindingTest` (hamun ghanun e bind-test).
-- [ ] **P2-05** — `SmsPort` + se driver: `KavenegarSms` (vaghei)، `LogSms` (dev)، `FakeSms` (in-memory، `assertSentTo()` baraye test) + `SmsManager` e switcher ru `SMS_DRIVER`
+- [x] **P2-05** — `SmsPort` + se driver + `SmsManager` (14 test)
+  → Port **FAGHAT `sendOtp(phone, code)`** — na `send(text)` e omumi: matn-sazi tu laye haye bala ya'ni code tu string ha va log ha michake، va `verify/lookup` e Kavenegar (template) tahvil esh az matn e azad behtar ast. Method e jadid rooz-i ke payam e gheyr-OTP lazem shod.
+  → `KavenegarSms` ba do dam e MA'LUM (az hg_website): 🔴 **khata ha ba HTTP 200 miyan** (`return.status` e body check mishe — vagarna shomare ye namotabar va e'tebar e tamam-shode har do «movafagh» dide mishan) va 🔴 **API key tu URL ast** (`ConnectionException` e Laravel URL e kamel ro tu payam esh dare — exception e ma HICH jozyati pass nemide؛ test e leak dare). Receptor ba format e MAHALLI (`PhoneHelper::toLocal`).
+  → `FakeSms` tu **app** ast na tests (khaste ye asli: `SMS_DRIVER=fake` gozine ye vaghei ye env ast) + `assertSentTo`/`lastCodeFor`/`failWith`. 🔴 Singleton — vagarna instance e action va instance e test yeki nistan va har assert «hichi ferestade nashode» mide (test esh hast).
+  → `LogSms` (dev): tanha ja-i tu kol e system ke code e plaintext sabt mishe — amdi، chun dev SMS nadare.
+  → `SmsManager`: driver e nashenas hamin ja miterke (typo ye `SMS_DRIVER` nabayad ta avvalin login penhan bemune).
+  → 🔴 **Bug e vaghei tu `PhoneHelper::mask()` peyda shod**: vorudi-i ke ba E.164 match nemishod DAST-NAKHORDE barmigasht — fail-OPEN baraye method-i ke kol e karesh amn kardan e log ast. Alan fail-CLOSED: har raghame match-nashode setare mishe. (Test e `KavenegarSms` gereft esh.)
 - [ ] **P2-06** — `SendOtpAction` / `VerifyOtpAction` + `OtpThrottle` (**phone + IP**)
 - [ ] **P2-07** — `Livewire/SignIn` (do marhale) + `EnsureAdmin`
   Agar `BYPASS_OTP=true`: (a) code e tolid-shode zir e form neshun dade she، (b) dokme ye «پر کردن خودکار» kenar e input ke code ro mizare tu input. `false` bashe hich kodum nabashe (eyn e production) — **test baraye har do hālat**.

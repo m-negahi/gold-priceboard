@@ -91,6 +91,23 @@ final class PhoneHelperTest extends TestCase
         // kasi ba dastresi be log، lista ye moshtari ha ro dare.
         self::assertSame('+98912***4567', PhoneHelper::mask('+989121234567'));
         self::assertSame('', PhoneHelper::mask(null));
+        self::assertSame('', PhoneHelper::mask(''));
+    }
+
+    /**
+     * 🔴 Fail-CLOSED: vorudi-i ke E.164 nist (khat e sabet، shomare ye
+     * kharab) nabayad dast-nakhorde bargarde — bargardundan e asl hamun
+     * leak-i-e ke mask baraye jologiri azash hast. (Bug e vaghei: test e
+     * `KavenegarSms` gereft esh — shomare ye namotabar kamel tu payam e
+     * exception miumad.)
+     */
+    public function test_mask_never_returns_digits_it_could_not_mask(): void
+    {
+        foreach (['021-2842', '09121234567', 'tel: 12345'] as $input) {
+            $masked = PhoneHelper::mask($input);
+
+            self::assertDoesNotMatchRegularExpression('/\d/', $masked, "vorudi: {$input}");
+        }
     }
 
     public function test_tel_link_also_handles_landlines(): void

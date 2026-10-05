@@ -126,11 +126,25 @@ final class PhoneHelper
      */
     public static function mask(?string $phone): string
     {
-        if ($phone === null) {
+        if ($phone === null || $phone === '') {
             return '';
         }
 
-        return preg_replace('/(\+98\d{3})\d{3}(\d{2})/', '$1***$2', $phone) ?? $phone;
+        $masked = preg_replace('/(\+98\d{3})\d{3}(\d{2})/', '$1***$2', $phone);
+
+        if (is_string($masked) && $masked !== $phone) {
+            return $masked;
+        }
+
+        /*
+         * 🔴 Fail-CLOSED: vorudi-i ke ba pattern e E.164 match nashe (shomare
+         * ye kharab، khat e sabet، matn) nabayad DAST-NAKHORDE bargarde —
+         * in method daghighan baraye log amn kardan ast va bargardundan e
+         * asl، hamun leak-i-e ke bayad jolosh gerefte she. (Test e
+         * `KavenegarSms` in rakhne ro gereft: shomare ye namotabar kamel tu
+         * payam e exception miumad.)
+         */
+        return preg_replace('/\d/', '*', $phone) ?? '***';
     }
 
     private static function toLatinDigits(string $value): string
