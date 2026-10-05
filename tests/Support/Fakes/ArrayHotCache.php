@@ -25,6 +25,8 @@ final class ArrayHotCache implements HotCachePort
 
     private int $spreadVersion = 0;
 
+    private ?int $heartbeatAt = null;
+
     private bool $available = true;
 
     /** 🔴 Write ha miterkan vali read ha salem-and — bebin `failWritesOnly()`. */
@@ -37,16 +39,39 @@ final class ArrayHotCache implements HotCachePort
         return $this->board;
     }
 
+    /**
+     * 🔴 BAZNEVISI ye kamel — na merge.
+     *
+     * Ghablan in fake MERGE mikard dar hali ke `RedisHotCache` yek `SET` ru
+     * YEK kelid mizane، ya'ni JAYGOZIN mikone. Un vagerai yek bug e vaghei
+     * ro az CHESHM e kol e test suite penhan kard:
+     *
+     * Tu production، tablo har tick ba faghat snapshot haye HAMUN tick
+     * bazneveshte mishod، pas shab ha (bazaar e baste، aksar e quote ha
+     * `stale`) tablo AB MIRAFET. Vali tu test، fake merge mikard va tablo
+     * hichvaght kuchik nemishod — pas hich test-i natunest un ro bebine.
+     * (`P1-26`؛ ba mutation check kashf shod، na ba khundan e code.)
+     *
+     * Ghanun: fake bayad GHARARDAD ro emza kone، na yek nasakhe ye
+     * mehrabun tar az un.
+     */
     public function putBoard(array $snapshots): void
     {
         $this->assertWritable();
 
         $this->guard();
 
-        foreach ($snapshots as $snapshot) {
-            $this->board[$snapshot->key()] = $snapshot;
+        if ($snapshots === []) {
+            return;
         }
 
+        $board = [];
+
+        foreach ($snapshots as $snapshot) {
+            $board[$snapshot->key()] = $snapshot;
+        }
+
+        $this->board = $board;
         $this->version++;
     }
 
@@ -87,6 +112,24 @@ final class ArrayHotCache implements HotCachePort
         $this->guard();
 
         return ++$this->spreadVersion;
+    }
+
+    public function putHeartbeat(int $at): void
+    {
+        // Zarabān khodesh yek WRITE ast — pas tu halat e OOM bayad beterke.
+        // Hamin daghighan chizi-e ke yakh-zadegi ro ghabl e kashf mikone.
+        $this->assertWritable();
+
+        $this->heartbeatAt = $at;
+    }
+
+    public function heartbeatAt(): ?int
+    {
+        if (! $this->available) {
+            throw new RuntimeException('Redis dar dastres nist (fake).');
+        }
+
+        return $this->heartbeatAt;
     }
 
     public function putHealth(ProviderHealthDto $health): void

@@ -39,6 +39,13 @@ final readonly class BoardQuery
         private SnapshotStorePort $store,
         private SpreadQuery $spreads,
         private ClockPort $clock,
+        /**
+         * Agar zarabān e nevisande az in ghadim tar bashe، store e dagh
+         * GHABL E E'TEMAD nist. `0` ya'ni khamoosh.
+         *
+         * Dalil e kamel tu `snapshots()`.
+         */
+        private int $freezeAfterSeconds = 120,
     ) {}
 
     /**
@@ -59,7 +66,18 @@ final readonly class BoardQuery
         $rows = [];
 
         foreach ($snapshots as $snapshot) {
-            $rows[] = $this->toRow($snapshot, $map, $kinds, $providers, $now);
+            $row = $this->toRow($snapshot, $map, $kinds, $providers, $now);
+
+            // 🔴 `hide_after_seconds` INJA e'mal mishe، na ru write.
+            //
+            // Sen har saniye avaz mishe، pas natije ash nabayad bake beshe —
+            // hamun mantegh e spread. Alave bar un، admin ke `hide_after` ro
+            // tu panel avaz kone bayad FORI asar bebine، na tick e ba'd.
+            if ($row === null) {
+                continue;
+            }
+
+            $rows[] = $row;
         }
 
         // Tartib e namayesh = tartib e `Instrument::cases()`، ba'd provider.
@@ -86,7 +104,7 @@ final readonly class BoardQuery
         try {
             $hot = $this->cache->board();
 
-            if ($hot !== []) {
+            if ($hot !== [] && $this->writerIsAlive()) {
                 return [$hot, false];
             }
         } catch (Throwable) {
@@ -113,7 +131,7 @@ final readonly class BoardQuery
         array $kinds,
         array $providers,
         CarbonImmutable $now,
-    ): BoardRowDto {
+    ): ?BoardRowDto {
         $spread = SpreadQuery::resolve($map, $snapshot->providerKey, $snapshot->instrument);
 
         $pair = SpreadPricer::applyPair($snapshot->price, $spread);
@@ -127,8 +145,17 @@ final readonly class BoardQuery
         );
 
         $age = $snapshot->ageSeconds($now);
-        $limit = ($providers[$snapshot->providerKey] ?? null)?->freshnessFor($snapshot->instrument)
+        $config = $providers[$snapshot->providerKey] ?? null;
+        $limit = $config?->freshnessFor($snapshot->instrument)
             ?? $snapshot->instrument->freshnessSeconds();
+
+        // Onghadr ghadimi ke dige neshun dadanesh ghalat ast.
+        //
+        // ⚠️ Bedun e config e provider، hazf NEMIKONIM: nadunestan e tanzim
+        // nabayad be hazf e saket e radif ha tarjome beshe.
+        if ($config !== null && $age > $config->hideAfterFor($snapshot->instrument)) {
+            return null;
+        }
 
         return new BoardRowDto(
             providerKey: $snapshot->providerKey,
@@ -149,6 +176,52 @@ final readonly class BoardQuery
             isDerived: $this->isDerived($snapshot, $kinds),
             quotedAt: $snapshot->quotedAt->toIso8601String(),
         );
+    }
+
+    /**
+     * 🔴 Aya nevisande zende ast?
+     *
+     * ── Chera in check vojud dare ───────────────────────────────────
+     * Bad tarin nou' e ghat'i e `redis-prices` un ast ke SALEM be nazar
+     * mirese. Vaghti memory por she (`--maxmemory-policy noeviction`)، Redis
+     * write ha ro ba `OOM command not allowed` rad mikone **vali read ha ro
+     * kamel javab mide** va `PING` ham salem ast.
+     *
+     * Natije ye ghabli: `isAvailable()` `true` mid، `board()` data mid، va
+     * `BoardQuery` `degraded=false` e'lam mikard — pas masir e fallback e
+     * Postgres HICHVAGHT roshan nemishod، dar hali ke Postgres data ye TAZE
+     * dasht. Tablo ru akharin gheymat e neveshte-shode YAKH mizad va tanha
+     * neshane `ageSeconds` bud ke bala mirafet.
+     *
+     * Zarabān khodesh yek WRITE ast، pas tu halat e OOM be-rooz nemishe.
+     * Ghadimi budan esh = «hich kas tablo ro nemineviseh» — che Redis write
+     * ro rad kone، che khod e `price-worker` morde bashe. Har do bayad be
+     * Postgres fallback konan va `degraded` e'lam shan.
+     *
+     * ⚠️ Chera sen e RADIF ha kafi nist: shab ha (bazaar e baste) hame ye
+     * radif ha be-haghghe ghadimi-and va Postgres ham hamun data ro dare.
+     * «Hame bayat-an» ba «hich kas nemineviseh» yeki NIST.
+     */
+    private function writerIsAlive(): bool
+    {
+        if ($this->freezeAfterSeconds <= 0) {
+            return true;
+        }
+
+        try {
+            $heartbeat = $this->cache->heartbeatAt();
+        } catch (Throwable) {
+            return false;
+        }
+
+        if ($heartbeat === null) {
+            // Hanuz hich tick-i nanveshte (ya kelid pak shode). Masir e
+            // Postgres ham hamun data ro mide، pas hazine ash nazdik e sefr
+            // ast va `degraded` sadeghane-ast.
+            return false;
+        }
+
+        return $this->clock->now()->timestamp - $heartbeat <= $this->freezeAfterSeconds;
     }
 
     /**

@@ -13,6 +13,7 @@ use App\Modules\Pricing\Application\Pipeline\Stages\PersistStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\PublishStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\ValidateStage;
 use App\Modules\Pricing\Application\Pipeline\TickPipeline;
+use App\Modules\Pricing\Application\Queries\BoardQuery;
 use App\Modules\Pricing\Application\Queries\CandleQuery;
 use App\Modules\Pricing\Application\Queries\ProviderQuery;
 use App\Modules\Pricing\Application\Queries\SpreadQuery;
@@ -95,6 +96,16 @@ final class PricingServiceProvider extends ServiceProvider
             clock: $app->make(ClockPort::class),
             health: $app->make(RecordProviderHealthAction::class),
             logger: self::logger(),
+        ));
+
+        // `BoardQuery` sarih bind mishe ta `freeze_after_seconds` az config
+        // biad — un adad mohafez e yakh-zadegi ye SAKET e tablo-st.
+        $this->app->singleton(BoardQuery::class, static fn ($app): BoardQuery => new BoardQuery(
+            cache: $app->make(HotCachePort::class),
+            store: $app->make(SnapshotStorePort::class),
+            spreads: $app->make(SpreadQuery::class),
+            clock: $app->make(ClockPort::class),
+            freezeAfterSeconds: (int) config('pricing.board.freeze_after_seconds', 120),
         ));
 
         // `CandleQuery` store esh SARIH ast — na store e default e app.

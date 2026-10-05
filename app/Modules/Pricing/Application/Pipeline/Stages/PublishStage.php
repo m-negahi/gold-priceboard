@@ -13,9 +13,20 @@ use Throwable;
 /**
  * Akharin marhale: gharar dadan e tablo tu dastres e reader ha.
  *
- * Fe'lan faghat version ro mikhune (ke `putBoard` ghablan bump karde) ta
- * `TickReportDto` betune un ro gozaresh kone. Vaghti `/api/board.json` va
- * payload e SSR sakhte shan (Phase 5)، garm kardan e un cache ham inja miad.
+ * Do kar:
+ *   1. Version ro mikhune (ke `putBoard` ghablan bump karde) ta
+ *      `TickReportDto` betune un ro gozaresh kone.
+ *   2. 🔴 **Zarabān** mineviseh — «nevisande zende ast va write esh gereft».
+ *
+ * ── Chera zarabān INJA va na tu `PersistStage` ──────────────────────
+ * `PersistStage::handle()` vaghti hich snapshot va hich hold nabashe FORI
+ * bar migarde. Un daghighan halat e SHABANE-ast: bazaar baste، hame ye
+ * quote ha `stale` rad mishan. Agar zarabān unja bud، har shab motevaghef
+ * mishod va `BoardQuery` eshtebahan «tablo yakh zade» e'lam mikard.
+ *
+ * In Stage hamishe ejra mishe، pas zarabān hamishe be-rooz mishe — magar
+ * inke write e Redis VAGHE'AN shekast bokhore (ke hamun chizi-e ke
+ * mikhahim kashf konim).
  *
  * Amdan Stage e jodagane-ast: «neveshtan» va «montasher kardan» do kar e
  * motefavet-and va shekast e dovomi nabayad avvali ro batel kone.
@@ -38,6 +49,11 @@ final readonly class PublishStage implements Stage
     {
         try {
             $this->cache->boardVersion();
+
+            // Zarabān KHODESH yek write ast، pas tu halat e OOM
+            // (`noeviction` + memory e por) be-rooz nemishe — va hamin
+            // chizi-e ke `BoardQuery` baraye kashf e yakh-zadegi mikhune.
+            $this->cache->putHeartbeat($context->at->timestamp());
         } catch (Throwable) {
             // Redis ghat' ast — ghablan tu `PersistStage` sabt shode.
         }

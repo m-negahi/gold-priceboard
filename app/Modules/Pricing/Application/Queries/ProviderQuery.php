@@ -52,6 +52,7 @@ final readonly class ProviderQuery
                 timeout: $provider->timeout,
                 options: $provider->options ?? [],
                 pollIntervalSeconds: $provider->poll_interval_seconds,
+                hideAfterSeconds: $provider->hide_after_seconds,
             );
         }
 
@@ -75,6 +76,7 @@ final readonly class ProviderQuery
                 timeout: $provider->timeout,
                 options: $provider->options ?? [],
                 pollIntervalSeconds: $provider->poll_interval_seconds,
+                hideAfterSeconds: $provider->hide_after_seconds,
             );
         }
 

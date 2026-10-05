@@ -521,6 +521,104 @@ final class TickPipelineTest extends TestCase
         self::assertStringContainsString('cross_provider', $reasons);
     }
 
+    // ── 🔴 Tablo = akharin-ma'lum e HAME — P1-26 ────────────────
+
+    /**
+     * 🔴 Shab ha tablo nabayad KUCHIK beshe.
+     *
+     * Ghablan `putBoard` faghat `snapshots` ro minevesht — ya'ni faghat
+     * symbol hayi ke HAMIN tick taze budan. Bazaar e Iran ke baste mishe،
+     * `ts` e upstream ghofl mishe va aksar e quote ha `stale` rad mishan،
+     * pas kelid e tablo ab mirafet. Vali Postgres akharin-ma'lum e HAME ro
+     * negah midare — pas masir e fallback BOZORG mimund.
+     *
+     * Do masiri ke bayad eyn e ham bashan، har shab vagera mishodan.
+     */
+    public function test_the_hot_board_keeps_symbols_that_did_not_tick(): void
+    {
+        // Do symbol ja mioftan.
+        $this->tick([
+            $this->quote(266_400_000, Instrument::Gold18Gram),
+            $this->quote(354_240_000, Instrument::Gold24Gram),
+        ]);
+        self::assertCount(2, $this->cache->board());
+
+        $this->clock->advance(15);
+
+        // Tick e ba'di faghat YEKI az un ha ro mide (un yeki bayat shode).
+        $this->tick([$this->quote(267_000_000, Instrument::Gold18Gram)]);
+
+        // Tablo bayad HANUZ har do ro dashte bashe.
+        $board = $this->cache->board();
+        self::assertCount(2, $board);
+        self::assertSame(267_000_000, $board['tgju:xau-18k-g-irr:last']->price->minor);
+        self::assertSame(354_240_000, $board['tgju:xau-24k-g-irr:last']->price->minor);
+    }
+
+    /**
+     * 🔴 Ta'ahod e asli ye `P1-26`: masir e DAGH va masir e FALLBACK bayad
+     * daghighan hamun majmu'e ro bedan.
+     */
+    public function test_the_hot_board_and_postgres_hold_the_same_rows(): void
+    {
+        $this->tick([
+            $this->quote(266_400_000, Instrument::Gold18Gram),
+            $this->quote(354_240_000, Instrument::Gold24Gram),
+        ]);
+        $this->clock->advance(15);
+        $this->tick([$this->quote(267_000_000, Instrument::Gold18Gram)]);
+
+        $hot = array_keys($this->cache->board());
+        $cold = array_keys($this->store->all());
+        sort($hot);
+        sort($cold);
+
+        self::assertSame($cold, $hot);
+    }
+
+    /** Zarabān har tick be-rooz mishe — ham paye ye kashf e yakh-zadegi. */
+    public function test_every_tick_updates_the_writer_heartbeat(): void
+    {
+        $this->tick([$this->quote()]);
+
+        self::assertSame($this->clock->tick()->timestamp(), $this->cache->heartbeatAt());
+    }
+
+    /**
+     * ⚠️ Shab e kamel: HICH quote-i paziresh nemishe (hame `stale`) — vali
+     * zarabān bayad HANUZ be-rooz beshe.
+     *
+     * Vagarna `BoardQuery` har shab eshtebahan «tablo yakh zade» e'lam
+     * mikard va be Postgres fallback mikard. Be hamin dalil zarabān tu
+     * `PublishStage` ast (ke hamishe ejra mishe)، na tu `PersistStage` (ke
+     * vaghti chizi nist fori bar migarde).
+     */
+    public function test_a_fully_stale_tick_still_updates_the_heartbeat(): void
+    {
+        $this->tick([$this->quote()]);
+        $this->clock->advance(3_600);
+
+        // `ageSeconds: 5000` -> kheyli bayat tar az saghf، pas rad mishe.
+        $report = $this->tick([$this->quote(ageSeconds: 5_000)]);
+
+        self::assertSame(0, $report->accepted);
+        self::assertSame($this->clock->tick()->timestamp(), $this->cache->heartbeatAt());
+    }
+
+    /** Tu halat e OOM zarabān ham — ke KHODESH yek write ast — gir mikone. */
+    public function test_a_redis_oom_stops_the_heartbeat(): void
+    {
+        $this->tick([$this->quote()]);
+        $before = $this->cache->heartbeatAt();
+
+        $this->cache->failWritesOnly();
+        $this->clock->advance(15);
+        $this->tick([$this->quote(267_000_000)]);
+
+        // Zarabān pish nemire -> `BoardQuery` yakh-zadegi ro kashf mikone.
+        self::assertSame($before, $this->cache->heartbeatAt());
+    }
+
     // ── 🔴 Shekast e NIME: write miterke، read salem ─────────────
 
     /**

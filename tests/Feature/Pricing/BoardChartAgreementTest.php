@@ -138,6 +138,23 @@ final class BoardChartAgreementTest extends TestCase
         return $chart->candles($request)->candles[0]->close;
     }
 
+    /**
+     * Neveshtan e tablo ye dagh HAMUN tori ke pipeline mineviseh.
+     *
+     * 🔴 Zarabān ham lazem ast: `BoardQuery` tablo-i ke zarabān esh ghadimi
+     * (ya nabud) bashe ro GHABL E E'TEMAD nemidune va be Postgres fallback
+     * mikone. Un check hamun chizi-e ke yakh-zadegi ye saket e OOM ro kashf
+     * mikone (`P1-27`)، pas test ham bayad mesl e `PublishStage` raftar
+     * kone.
+     *
+     * @param  array<int, SnapshotDto>  $snapshots
+     */
+    private function warmBoard(array $snapshots): void
+    {
+        $this->cache->putBoard($snapshots);
+        $this->cache->putHeartbeat($this->clock->now()->timestamp);
+    }
+
     public function test_they_agree_with_no_spread(): void
     {
         $this->seedPrices();

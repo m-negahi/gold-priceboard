@@ -30,6 +30,18 @@ interface HotCachePort
     /**
      * Neveshtan e kol e tablo + bump e version، hameh tu YEK pipeline.
      *
+     * 🔴 **JAYGOZIN mikone، merge NEMIKONE.** Adapter yek `SET` ru yek kelid
+     * mizane، pas har chizi ke tu `$snapshots` nabashe az tablo MIRE.
+     *
+     * Ya'ni caller bayad majmu'e ye KAMEL ro bede — «akharin-ma'lum e hame»
+     * plus «chizi ke in tick umad» — na faghat chizi ke in tick umad.
+     * Vagarna shab ha (bazaar e baste، aksar e quote ha `stale`) tablo AB
+     * MIRE. (`PersistStage::wholeBoard()`.)
+     *
+     * ⚠️ Yek `$snapshots` e KHALI hichi ro pak nemikone (bar migarde) —
+     * vagarna yek tick e khali tablo ro khamoosh mikard. Radif haye kheyli
+     * ghadimi ru READ makhfi mishan (`hide_after_seconds` tu `BoardQuery`).
+     *
      * @param  array<int, SnapshotDto>  $snapshots
      */
     public function putBoard(array $snapshots): void;
@@ -67,6 +79,29 @@ interface HotCachePort
     public function spreadVersion(): int;
 
     public function bumpSpreadVersion(): int;
+
+    /**
+     * Zarabān e nevisande — «man ALAN tablo ro neveshtam».
+     *
+     * 🔴 Chera lazem ast: bad tarin nou' e ghat'i e `redis-prices` un ast ke
+     * SALEM be nazar mirese. Vaghti memory por she (`noeviction`)، Redis
+     * write ha ro ba `OOM command not allowed` rad mikone **vali read ha ro
+     * kamel javab mide** va `PING` ham salem ast. Pas `isAvailable()` `true`
+     * mide، `board()` data mide، va reader HICH rahi nadare befahme ke tablo
+     * YAKH zade.
+     *
+     * In zarabān hamun rah ast: khodesh yek WRITE ast، pas tu halat e OOM
+     * be-rooz NEMISHE. Reader faghat `heartbeatAt()` ro ba `now` moghayese
+     * mikone.
+     *
+     * Bonus: agar khod e `price-worker` morde bashe ham hamin ro mifahmim —
+     * «hich kas gheymat nemineviseh» daghighan chizi-e ke karbar bayad
+     * bedune.
+     */
+    public function putHeartbeat(int $at): void;
+
+    /** Unix timestamp e akharin neveshtan e movafagh، ya `null`. */
+    public function heartbeatAt(): ?int;
 
     public function putHealth(ProviderHealthDto $health): void;
 

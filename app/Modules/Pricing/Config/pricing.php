@@ -70,6 +70,25 @@ return [
      */
     'max_cross_provider_deviation' => (float) env('PRICING_MAX_CROSS_PROVIDER_DEVIATION', 20),
 
+    /*
+     * Tablo.
+     *
+     * `freeze_after_seconds`: agar zarabān e nevisande az in ghadim tar
+     * bashe، `BoardQuery` store e dagh ro ghabl e e'temad nemidune va be
+     * Postgres fallback mikone + `degraded` e'lam mikone.
+     *
+     * 🔴 Chera lazem ast: `redis-prices` ba `noeviction` vaghti por she
+     * write ha ro rad mikone VALI read ha ro salem javab mide va `PING` ham
+     * salem ast — ya'ni tablo yakh mizane va hich khata-i ham nist.
+     *
+     * 120 saniye amdan mohafezekar ast: dore ye VAGHEI ~30 saniye ast (na
+     * 15 — estjt ~11s tool mikeshe va `next_poll_at` +15s ast، pas yeki dar
+     * miyan slot tick mikhore). Saghf e tang tar false alarm mide.
+     */
+    'board' => [
+        'freeze_after_seconds' => (int) env('PRICING_BOARD_FREEZE_AFTER', 120),
+    ],
+
     'influx' => [
         'url' => env('PRICING_INFLUX_URL', 'http://influxdb:8086'),
         // Takrar e amdi az `tz_offset` e bala — `rebuildMinuteCandles` faghat

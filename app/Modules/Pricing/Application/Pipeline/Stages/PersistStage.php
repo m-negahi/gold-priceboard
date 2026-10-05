@@ -74,7 +74,7 @@ final readonly class PersistStage implements Stage
         $startedAt = microtime(true);
 
         try {
-            $this->cache->putBoard($context->snapshots);
+            $this->cache->putBoard($this->wholeBoard($context));
 
             foreach ($context->health as $health) {
                 $this->cache->putHealth($health);
@@ -85,6 +85,38 @@ final readonly class PersistStage implements Stage
             // Tablo be Postgres fallback mikone — site zende mimune.
             $context->recordSink(SinkResultDto::failed('redis', mb_substr($e->getMessage(), 0, 480)));
         }
+    }
+
+    /**
+     * 🔴 Tablo = akharin-ma'lum e HAME ye symbol ha، overlay shode ba chizi
+     * ke in tick umad — na faghat chizi ke in tick umad.
+     *
+     * ── Chera ──────────────────────────────────────────────────────
+     * Ghablan faghat `snapshots` neveshte mishod، pas kelid e tablo faghat
+     * symbol hayi ro dasht ke HAMIN tick taze budan. Natije: shab ha (bazaar
+     * e baste) tablo az masir e Redis KUCHIK mishod — chun aksar e symbol ha
+     * `stale` rad mishodan — vali az masir e fallback e Postgres BOZORG
+     * mimund (unja akharin-ma'lum e hame hast).
+     *
+     * Do masiri ke bayad eyn e ham bashan، har shab vagera mishodan. Alan
+     * Redis daghighan mirror e «akharin-ma'lum» e Postgres ast، pas do masir
+     * BE SAKHT yeki-and.
+     *
+     * Bayat budan ru READ bian mishe (`isStale` + `hide_after_seconds` tu
+     * `BoardQuery`)، na ba hazf kardan az storage — hamun mantegh e spread:
+     * sen har saniye avaz mishe، pas natije ash nabayad bake beshe.
+     *
+     * @return array<int, SnapshotDto>
+     */
+    private function wholeBoard(TickContext $context): array
+    {
+        $board = $context->previous;
+
+        foreach ($context->snapshots as $snapshot) {
+            $board[$snapshot->key()] = $snapshot;
+        }
+
+        return array_values($board);
     }
 
     private function toStore(TickContext $context): void

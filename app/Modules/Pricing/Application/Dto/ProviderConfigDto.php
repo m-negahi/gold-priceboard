@@ -32,6 +32,25 @@ final readonly class ProviderConfigDto
         public int $timeout = 10,
         public array $options = [],
         public int $pollIntervalSeconds = 15,
+        /**
+         * Chand saniye BA'D az bayat shodan، radif az tablo hazf mishe.
+         *
+         * 🔴 NESBI ast، na motlagh — va in tasmim ejbari bud:
+         *
+         * 1. Default haye jadval MA'KUS-and (`freshness_seconds = 900` va
+         *    `hide_after_seconds = 600`). Ba ma'ni ye MOTLAGH، radif tu 600s
+         *    makhfi mishod GHABL az inke tu 900s «bayat» e'lam she — ya'ni
+         *    badge e bayat e'lam kardan HICHVAGHT dide nemishod.
+         * 2. Tazegi PER-INSTRUMENT ast: `xau-oz-usd` e tgju 90,000 saniye
+         *    dare (un feed faghat RUZANE be-rooz mishe). Yek saghf e motlagh
+         *    e 600 saniye ye sath e provider، un symbol ro BARAYE HAMISHE
+         *    makhfi mikard.
+         *
+         * Pas: `hide = effectiveFreshness(instrument) + hideAfterSeconds`.
+         * Do adad mostaghel mishan va khunda mishe «ba'd az 15 daghighe
+         * bayat e'lam kon، 10 daghighe ba'd az un makhfi kon».
+         */
+        public int $hideAfterSeconds = 600,
     ) {}
 
     public function driverKey(): string
@@ -50,6 +69,7 @@ final readonly class ProviderConfigDto
             timeout: (int) ($row['timeout'] ?? 10),
             options: (array) ($row['options'] ?? []),
             pollIntervalSeconds: (int) ($row['poll_interval_seconds'] ?? 15),
+            hideAfterSeconds: (int) ($row['hide_after_seconds'] ?? 600),
         );
     }
 
@@ -64,6 +84,7 @@ final readonly class ProviderConfigDto
             'freshness_seconds' => $this->freshnessSeconds,
             'symbol_freshness' => $this->symbolFreshness,
             'poll_interval_seconds' => $this->pollIntervalSeconds,
+            'hide_after_seconds' => $this->hideAfterSeconds,
         ];
     }
 
@@ -81,5 +102,20 @@ final readonly class ProviderConfigDto
     {
         return $this->symbolFreshness[$instrument->value]
             ?? $instrument->freshnessSeconds();
+    }
+
+    /**
+     * Sen-i ke ba'd az un، radif aslan ru tablo neshun dade NEMISHE.
+     *
+     * Nesbat be `freshnessFor()` hesab mishe — dalil e kamel tu docblock e
+     * `$hideAfterSeconds`. `0` ya'ni hargez makhfi nakon.
+     */
+    public function hideAfterFor(Instrument $instrument): int
+    {
+        if ($this->hideAfterSeconds <= 0) {
+            return PHP_INT_MAX;
+        }
+
+        return $this->freshnessFor($instrument) + $this->hideAfterSeconds;
     }
 }

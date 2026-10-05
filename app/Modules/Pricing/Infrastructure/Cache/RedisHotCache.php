@@ -48,6 +48,8 @@ final readonly class RedisHotCache implements HotCachePort
 
     private const SPREAD_VERSION_KEY = 'pb:spreads:v';
 
+    private const HEARTBEAT_KEY = 'pb:board:hb';
+
     public function board(): array
     {
         $raw = $this->connection()->get(self::BOARD_KEY);
@@ -132,6 +134,19 @@ final readonly class RedisHotCache implements HotCachePort
     public function bumpSpreadVersion(): int
     {
         return (int) $this->connection()->incr(self::SPREAD_VERSION_KEY);
+    }
+
+    public function putHeartbeat(int $at): void
+    {
+        // Bedun e TTL — mesl e baghi ye kelid haye gheymat.
+        $this->connection()->set(self::HEARTBEAT_KEY, (string) $at);
+    }
+
+    public function heartbeatAt(): ?int
+    {
+        $raw = $this->connection()->get(self::HEARTBEAT_KEY);
+
+        return is_string($raw) && $raw !== '' ? (int) $raw : null;
     }
 
     public function putHealth(ProviderHealthDto $health): void
