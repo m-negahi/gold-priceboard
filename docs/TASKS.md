@@ -321,6 +321,7 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 - [ ] **P2-07** — `Livewire/SignIn` (do marhale) + `EnsureAdmin`
   Agar `BYPASS_OTP=true`: (a) code e tolid-shode zir e form neshun dade she، (b) dokme ye «پر کردن خودکار» kenar e input ke code ro mizare tu input. `false` bashe hich kodum nabashe (eyn e production) — **test baraye har do hālat**.
 - [ ] **P2-09** — 🔴 **CODE REVIEW e KOL e projeh** (khaste ye sahebe projeh، 2026-10-05) — ba'd az tamam shodan e Phase 2. Kol e code ta inja: Pricing + Common + Auth. Ba `/code-review` + barresi ye dasti ye memari.
+  Hamchenin (khaste ye 2026-10-05): barresi ye jeddi ye **Influx → TimescaleDB** — Timescale extension e khod e PG ast (continuous aggregate = candle، retention، compression، hame SQL tu YEK db) va mitune Influx + Flux + spool + 2 token + 1 container ro hazf kone. Swap posht e `TimeSeriesPort` mahdud ast (~1-2 rooz). Hazine/faide daghigh sanjide beshe؛ ta'viz faghat ba tasmim e sahebe projeh.
 - [ ] **P2-08** — Test: rate limit e phone **va** IP jodagane، enumeration safety، `max_attempts` code ro batel kone
 
 ---
