@@ -54,4 +54,13 @@ interface OtpStorePort
 
     /** Chand saniye ta mojaz shodan e resend munde؛ `0` ya'ni mojaz ast. */
     public function cooldownRemaining(string $phone): int;
+
+    /**
+     * Pak kardan e cooldown — masraf: `otp:flush` e dev/e2e.
+     *
+     * ⚠️ `startCooldown($phone, 0)` in kar ro NEMIKONE: `SETEX` ba 0 ro
+     * Redis ba khata rad mikone va cooldown e ghabli sar e jash mimune —
+     * hamin bug yek bar e2e ro flaky kard (har test e dovom 429 migereft).
+     */
+    public function clearCooldown(string $phone): void;
 }

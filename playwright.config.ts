@@ -18,7 +18,7 @@ export default defineConfig({
     timeout: 30_000,
     expect: { timeout: 5_000 },
     use: {
-        baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:8400',
+        baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:8300',
         locale: 'fa-IR',
         timezoneId: 'Asia/Tehran',
         trace: 'on-first-retry',

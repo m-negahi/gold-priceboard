@@ -108,6 +108,11 @@ final readonly class RedisOtpStore implements OtpStorePort
         $this->redis()->setex(self::COOLDOWN_PREFIX.$phone, $seconds, '1');
     }
 
+    public function clearCooldown(string $phone): void
+    {
+        $this->redis()->del(self::COOLDOWN_PREFIX.$phone);
+    }
+
     public function cooldownRemaining(string $phone): int
     {
         $ttl = (int) $this->redis()->ttl(self::COOLDOWN_PREFIX.$phone);

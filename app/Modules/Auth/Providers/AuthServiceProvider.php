@@ -6,6 +6,7 @@ namespace App\Modules\Auth\Providers;
 
 use App\Modules\Auth\Application\Actions\SendOtpAction;
 use App\Modules\Auth\Application\Actions\VerifyOtpAction;
+use App\Modules\Auth\Console\Commands\OtpFlushCommand;
 use App\Modules\Auth\Domain\Ports\OtpStorePort;
 use App\Modules\Auth\Domain\Ports\SmsPort;
 use App\Modules\Auth\Domain\Services\OtpCode;
@@ -26,6 +27,12 @@ final class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadViewsFrom(__DIR__.'/../Resources/views', 'auth');
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                OtpFlushCommand::class,
+            ]);
+        }
     }
 
     public function register(): void

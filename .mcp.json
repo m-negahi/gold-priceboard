@@ -2,7 +2,24 @@
   "mcpServers": {
     "laravel-boost": {
       "command": "docker",
-      "args": ["compose", "-f", "docker-compose.local.yml", "exec", "-T", "octane", "php", "artisan", "boost:mcp"]
+      "args": [
+        "compose",
+        "-f",
+        "docker-compose.local.yml",
+        "exec",
+        "-T",
+        "octane",
+        "php",
+        "artisan",
+        "boost:mcp"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
     }
   }
 }

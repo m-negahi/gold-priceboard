@@ -107,6 +107,42 @@ Hālat e daghigh tu `docs/TASKS.md`.
 - **Spread ru `read` e'mal mishe، hargez `write`.** Dalil tu `docs/PLAN.md` §1.7.
 - Ba'd az har task e UI: **Playwright snapshot/screenshot** + moghayese ba `images/dashboard-prefer.webp`.
 
+## E2E (Playwright — az HOST)
+
+```bash
+docker compose -f docker-compose.local.yml up -d   # stack bayad bala bashe
+npx playwright test                                 # kol e e2e/
+npx playwright test e2e/login.spec.ts               # yek spec
+```
+- Spec ha tu `e2e/`؛ helper haye moshtarak tu `e2e/helpers/` (`signInAsAdmin`، `resetOtp`، `artisan`).
+- `otp:flush <phone>` (local-only) vaziat e OTP ro pak mikone ta rate limit ha tu app **kamelan armed** bemunan — hich `if (testing)` tu masir e asli nist.
+- **Asset ha ro dasti build nakon** — `npm run build` faghat vaghti front avaz shode؛ e2e az build e mojud estefade mikone.
+- Spec e UI bayad **token ha ro ham check kone** (computed style az `@theme` resolve shode bashe)، na faghat «safhe bala miad».
+
+## Hargez (az tajrobe ye vaghei، na ehtiyat e khoshk)
+
+- `.env` ro **nakhun** va secret/API-key ro hich ja chap nakon؛ `.env` ro faghat ba darkhast e sarih avaz kon (va yadet bashe: taghir esh `up -d --force-recreate` mikhad).
+- Hich test-i ro skip/weaken nakon ke sabz she؛ «bayad pass she» natije NIST — khoruji e vaghei natije-ast.
+- Az test be provider e vaghei (tgju/estjt/kavenegar) **network nazan** — fixture darim (`tests/Fixtures/`).
+- `migrate:fresh`، `db:wipe`، `docker compose down -v`، `push --force`، `reset --hard`، `clean -fd` — hich kodum، hich vaght ru data ye vaghei.
+- Migration e **apply-shode** ro virayesh nakon (merge faghat ba dastur e sarih e sahebe proje، ghabl az production).
+- File haye tolid-shode (`vendor/`، `node_modules/`، `public/build/`) ro dast nazan va commit nakon.
+- Git: bargasht e movaghat e yek file ro ba `cp` be backup anjam bede، **na `git checkout --`** (yek bar kar e commit-nashode ro khord).
+
+## Workflow e kar (kholase)
+
+- Task az `docs/TASKS.md` miad؛ tamum shod → hamun lahze tick + yek khat e «chi shod».
+- Test aval (fail esh ro bebin)، ba'd piade-sazi. **Mutation check** ru mekanism haye mohem: test e sabz-i ke ba kharab kardan e code sabz bemune، hichi ro sabt nakarde.
+- Done = Pint + full suite + (baraye UI) spec e Playwright e hamun flow — ba khoruji ye vaghei tu gozaresh.
+- Ba'd az har task: doc hayi ke taghir kohne-shun karde update kon — **doc-i ke ba code nemikhune yek bug e**.
+- Age yek rule ye in file ghalat ya nāghes e، **pishnahad e eslah e hamin file ro bede**، dor nazan.
+
+## Zaban (takmil e ghanun e #1)
+
+- **Javab haye chat/gozaresh ha ham Finglish** — na faghat comment/console.
+- Identifier ha، esm e file ha va commit message ha English mimunan؛ matn e UI Farsi ast.
+- Adad tu UI: **raghame Latin** hame ja (`LatinizeDigits` + helper ha)؛ class e `num` ru adad ha، `ltr` ru code haye Latin.
+
 ## Commit
 
 Type: `feat / fix / refactor / docs / chore / test`. Commit e ma'ni-dar، na batch tu akhar e session.

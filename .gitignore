@@ -29,3 +29,5 @@ Thumbs.db
 # PriceBoard
 /.idea
 /images
+/test-results/
+/playwright-report/

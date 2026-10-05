@@ -189,6 +189,23 @@ final class OtpStoreContractTest extends TestCase
         self::assertSame(0, $store->ttlRemaining(self::PHONE));
     }
 
+    /**
+     * 🔴 In test az yek bug e VAGHEI umad: flush e e2e cooldown ro ba
+     * `startCooldown(phone, 0)` «pak» mikard، vali `SETEX 0` tu Redis khata
+     * mide va cooldown e ghabli MIMUND — har test e dovom 429 migereft.
+     */
+    #[DataProvider('stores')]
+    public function test_clear_cooldown_actually_clears_it(string $kind): void
+    {
+        $store = $this->store($kind);
+        $store->startCooldown(self::PHONE, 60);
+        self::assertGreaterThan(0, $store->cooldownRemaining(self::PHONE));
+
+        $store->clearCooldown(self::PHONE);
+
+        self::assertSame(0, $store->cooldownRemaining(self::PHONE));
+    }
+
     // ── TTL (har implementation ba abzar e khodesh) ─────────────────
 
     public function test_the_redis_entry_actually_expires(): void

@@ -72,6 +72,11 @@ final class InMemoryOtpStore implements OtpStorePort
         $this->cooldowns[$phone] = $this->now + $seconds;
     }
 
+    public function clearCooldown(string $phone): void
+    {
+        unset($this->cooldowns[$phone]);
+    }
+
     public function cooldownRemaining(string $phone): int
     {
         return max(0, ($this->cooldowns[$phone] ?? 0) - $this->now);
