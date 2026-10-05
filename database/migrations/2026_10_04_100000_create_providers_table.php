@@ -49,6 +49,11 @@ return new class extends Migration
             $table->string('key', 32)->unique();
             $table->string('driver', 32);
 
+            // `reference` = site e nerkh (tgju) — kharid/foroosh e ma MOSHTAGH
+            // ast va `is_derived` mikhore. `platform` = maghaze ye vaghei ba
+            // nerkh e khodesh. (Jozyat tu enum e `ProviderKind`.)
+            $table->string('kind', 16)->default('reference');
+
             $table->string('name', 64);
             $table->string('name_fa', 64);
             $table->string('website', 255)->nullable();

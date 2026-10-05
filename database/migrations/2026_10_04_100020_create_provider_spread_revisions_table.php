@@ -45,6 +45,11 @@ return new class extends Migration
             $table->string('sell_mode', 8);
             $table->decimal('sell_value', 12, 4);
 
+            // `true` ya'ni in radif yek HAZF ro sabt mikone (meghdar ha =
+            // chizi ke ghabl az hazf dar jarian bud). Bedun e in، «hazf shod»
+            // va «ba hamin meghdar ha set shod» ghabel e tafkik nabudan.
+            $table->boolean('is_removal')->default(false);
+
             // Hoviat e admin (session). `null` = taghir e systemi (seeder).
             $table->string('changed_by', 64)->nullable();
             $table->timestampTz('effective_from');
