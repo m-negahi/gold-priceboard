@@ -15,12 +15,12 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: **Phase 2** (auth: mobile + OTP) — `P2-01`
-**Akharin kar**: `P1-11` tamum shod. **567 test (2470 assertion)، hame sabz**، Pint tamiz.
+**Task e fe'li**: `P2-02` (sabt e middleware ha tu `bootstrap/app.php`)
+**Akharin kar**: `P2-01` tamum shod. **643 test (2609 assertion)، hame sabz**، Pint tamiz.
 **Phase 1 amalan tamum ast** — faghat `P1-28` (marja' e e'temad) baz munde، ke AMDAN be ba'd az Phase 3 moghul shode: hall esh yek toggle ya «ta'eed e dasti» tu panel ast، pas sakhtan esh ghabl az vojud e panel ya'ni hads zadan e UI. `scripts/resilience-check.sh` ru mohit e vaghei **29/29 sabz**.
 **ENGINE ZENDE-ST**: `price-worker` tick mizane، `BoardQuery` tablo ye vaghei ro ba moghayese ye do provider bar migardune.
 **Nime-kare**: hich.
-**Gam e ba'di**: **Phase 2** — `P2-01` (middleware ha: `TrustProxies` e Octane-safe، normalize e adad/phone، `LatinizeDigits`). Tartib e sabt tu `bootstrap/app.php` mohem ast: `TrustProxies` bayad `prepend` beshe، vagarna `$request->ip()` hamishe IP e proxy ast va **rate limit e IP e OTP bi-ma'ni mishe** (hame ye karbar ha ru yek bucket).
+**Gam e ba'di**: `P2-02` — sabt e middleware ha tu `bootstrap/app.php`. 🔴 `TrustProxies` bayad **`prepend`** beshe (avvalin)، vagarna `$request->ip()` hamishe IP e proxy ast va rate limit e IP e OTP bi-ma'ni mishe. Tartib e `web`: `NormalizeString` -> `NormalizePhone` -> `NormalizeRouteParams`، va `LatinizeDigits` AKHAR. `SecurityHeaders` ru hame.
 **Ba'd az un Phase 2** (auth: mobile + OTP).
 **⚠️ `P1-22` (Seeder) ghablan tu `P1-19` anjam shod** — seeder az Action ha rad mishe va re-seed gheyr-mokhareb ast.
 
@@ -285,7 +285,15 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 
 ## Phase 2 — Auth (mobile + OTP)
 
-- [ ] **P2-01** — Middleware ha: `TrustProxies` (Octane-safe)، `NormalizeStringMiddleware`، `NormalizePhoneMiddleware`، `NormalizeRouteParamsMiddleware`، `LatinizeDigits`، `SecurityHeaders` + `PhoneHelper` + `StringHelper`
+- [x] **P2-01** — Middleware ha + helper ha (+76 test)
+  → ⚠️ Panj middleware va do helper **ghablan tu P0 neveshte shode budan** (662 khat) vali **sabt nashode budan va SEFR test dashtan**. `SecurityHeaders` kolan nabud.
+  → 🔴 `TrustProxiesTest` (16 test) — in test AMNIATI-e، na raftari: agar XFF eshtebah parse she، yek attacker ba yek header rate limit e IP e OTP ro dor mizane. Pushesh: ja'l az manba' e GHEYR e mored e e'temad (hame ye 4 header nadide gerefte mishan)، zanjire ye chand-laye (az RAST khunde mishe)، `X-Real-IP` e bazneveshte-shode ba IP e khosusi، entry e ja'li ye prepend-shode، CIDR e IPv4 (marz e `/30`)، IPv6 (`::1`، `fc00::/7`، public)، `REMOTE_ADDR` e nabud.
+  → 🔴 `LatinizeDigits` **fail-CLOSED** shod: ghablan shart «agar content-type MA'LUM ast va html nist rad kon» bud، pas pasokh e BEDUN e header dast mikhord. Baraye Phase 4 (API ba HMAC) un yek bomb bud — avaz kardan e yek raghame vasat e body emza ro mishkune va payam mishe «emza ghalat» bedun e hich sarnakh.
+  → `SecurityHeaders` e jadid. **HSTS faghat ru HTTPS**: frestadanesh ru `http://localhost:8300` un domain ro baraye MAH ha HTTPS-only mikone va dev e hame ye projeh haye digar ru hamun `localhost` ro misheknae. CSP amdan NIST — ba nonce lazem ast (Alpine/Livewire inline script daran) va yek CSP e `unsafe-inline` hess e amniat mide bedun e amniat؛ tu `P3-03` miad.
+  → `PhoneHelperTest` (26 test): 11 shekl e vorudi ye vaghei hame be YEK rishte miresan (`users.phone` `unique` ast va hoviat e login — do khoruji ya'ni yek nafar DO hesab). Tartib e `0098` ghabl az `98` test shod. `mask()` baraye log.
+  → `StringHelperTest` (10 test): `ي`/`ی` do codepoint-and va `=` eshun barabar nist — bedun e normalize، jostoju ye Farsi natije nemide.
+  → **Hame ye comment ha/docblock haye English be Finglish tabdil shodan** (ghanun e #1) — shamel e `BaseAction`/`BaseQuery`/`Dto` ke az P0 munde budan.
+  → Esm e `fullBytes` tu moghayese ye CIDR e IPv6 ghalat bud (vaghe'an NIBBLE ast) — eslah shod.
 - [ ] **P2-02** — Sabt tu `bootstrap/app.php` ba tartib e dorost + test e `LatinizeDigits` (JSON e Livewire rad she)
 - [ ] **P2-03** — Migration e `users` (phone e unique، `phone_verified_at`، `is_admin`)
 - [ ] **P2-04** — `OtpStorePort` + `RedisOtpStore` (code **hash shode**)

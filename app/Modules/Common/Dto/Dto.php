@@ -9,10 +9,12 @@ use Illuminate\Contracts\Support\Arrayable;
 /**
  * Base Data Transfer Object.
  *
- * One DTO per entity (not separate Create/Update DTOs). All properties are
- * nullable with a `null` default; `from()` maps snake_case request data to
- * camelCase properties. Use toArrayWithoutNulls() for create and
- * exceptWithoutNulls(['id']) for partial updates.
+ * Yek DTO be ezaye har entity (na DTO ye jodagane baraye Create/Update).
+ * Hame ye property ha nullable-and ba default e `null`؛ `from()` data ye
+ * snake_case e request ro be property haye camelCase map mikone.
+ *
+ * Baraye sakht: `toArrayWithoutNulls()`. Baraye update e joz'i:
+ * `exceptWithoutNulls(['id'])`.
  *
  * @implements Arrayable<string, mixed>
  */
@@ -75,8 +77,11 @@ abstract class Dto implements Arrayable
     }
 
     /**
-     * Get all properties except specified keys, excluding null values.
-     * Useful for partial updates where null means "not provided".
+     * Hame ye property ha be joz kelid haye dade-shode، bedun e `null` ha.
+     *
+     * Baraye update e JOZ'I: unja `null` ya'ni «frestade nashode»، na
+     * «khali kon». Agar `null` ha ham befrestim، yek form e nime-kare
+     * soton haye dast-nakhorde ro PAK mikone.
      *
      * @param  array<int, string>  $keys
      * @return array<string, mixed>

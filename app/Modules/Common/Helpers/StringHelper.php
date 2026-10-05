@@ -5,24 +5,30 @@ declare(strict_types=1);
 namespace App\Modules\Common\Helpers;
 
 /**
- * String helper for Persian/Arabic text normalization.
- * - Arabic letters → Persian equivalents
- * - Removes Arabic diacritics (اِعراب)
- * - Persian/Arabic digits → English digits
+ * Normalize kardan e matn e Farsi/Arabi.
+ *
+ *   - horoof e Arabi -> mo'adel e Farsi (`ي→ی`، `ك→ک`)
+ *   - hazf e e'raab e Arabi (zir/zebar/tashdid)
+ *   - raghamha ye Farsi/Arabi -> English
+ *
+ * 🔴 Chera lazem ast: karbar e Irani ba keyboard haye motefavet type mikone.
+ * `ي` e Arabi va `ی` e Farsi do CODEPOINT e motefavet-and va `=` eshun
+ * barabar nist — pas bedun e in، jostoju ye «طلای» natije nemide va do
+ * radif e «ظریف» tu DB yeki hesab nemishan.
  */
 final class StringHelper
 {
     private const CHARACTER_MAP = [
-        // Arabic to Persian letters
-        'ي' => 'ی',  // Arabic Ya → Persian Ya
-        'ك' => 'ک',  // Arabic Kaf → Persian Kaf
-        'ة' => 'ه',  // Arabic Ta Marbuta → Persian He
-        'ؤ' => 'و',  // Arabic Waw with Hamza → Persian Waw
-        'إ' => 'ا',  // Arabic Alef with Hamza Below → Persian Alef
-        'أ' => 'ا',  // Arabic Alef with Hamza Above → Persian Alef
-        'ٱ' => 'ا',  // Arabic Alef Wasla → Persian Alef
+        // Horoof e Arabi -> Farsi
+        'ي' => 'ی',  // Ya ye Arabi -> Ya ye Farsi
+        'ك' => 'ک',  // Kaf e Arabi -> Kaf e Farsi
+        'ة' => 'ه',  // Ta ye marbute -> He
+        'ؤ' => 'و',  // Vav ba hamze -> Vav
+        'إ' => 'ا',  // Alef ba hamze (zir) -> Alef
+        'أ' => 'ا',  // Alef ba hamze (bala) -> Alef
+        'ٱ' => 'ا',  // Alef e vasle -> Alef
 
-        // Diacritics (اِعراب) → remove
+        // E'raab -> hazf
         "\u{064E}" => '',   // فتحه
         "\u{0650}" => '',   // کسره
         "\u{064F}" => '',   // ضمه
@@ -32,7 +38,7 @@ final class StringHelper
         "\u{064D}" => '',   // تنوین کسر
         "\u{064C}" => '',   // تنوین ضم
 
-        // Persian numbers → English
+        // Raghame Farsi -> English
         '۰' => '0',
         '۱' => '1',
         '۲' => '2',
@@ -44,7 +50,7 @@ final class StringHelper
         '۸' => '8',
         '۹' => '9',
 
-        // Arabic numbers → English
+        // Raghame Arabi -> English
         '٠' => '0',
         '١' => '1',
         '٢' => '2',
@@ -80,9 +86,7 @@ final class StringHelper
         '٩' => '9',
     ];
 
-    /**
-     * Normalize a string (Arabic → Persian letters + digits → English).
-     */
+    /** Normalize e kamel: horoof e Arabi -> Farsi + ragham -> English. */
     public static function normalize(?string $value): ?string
     {
         if ($value === null || $value === '') {
@@ -96,9 +100,7 @@ final class StringHelper
         return strtr($value, self::CHARACTER_MAP);
     }
 
-    /**
-     * Convert Persian/Arabic digits to English digits only.
-     */
+    /** FAGHAT ragham — horoof dast nemikhoran. */
     public static function numbersToEnglish(?string $value): ?string
     {
         if ($value === null || $value === '') {
@@ -123,7 +125,10 @@ final class StringHelper
     }
 
     /**
-     * Check if a string contains any non-ASCII characters.
+     * Aya hich character e gheyr e ASCII dare?
+     *
+     * Yek short-circuit e arzan: aksar e vorudi ha (email، adad، slug) kolan
+     * ASCII-and va hich normalize-i lazem nadaran.
      */
     public static function hasNonAscii(string $value): bool
     {

@@ -5,15 +5,23 @@ declare(strict_types=1);
 namespace App\Modules\Common\Helpers;
 
 /**
- * Iranian mobile number helpers. Storage format is E.164 (+989XXXXXXXXX).
+ * Shomare ye mobile e Irani. Format e ZAKHIRE: E.164 (`+989XXXXXXXXX`).
+ *
+ * ⚠️ Yek format baraye zakhire، yek format baraye namayesh. Ghati kardan
+ * eshun ya'ni yek karbar ba `09121234567` sabt mishe va yeki ba
+ * `+989121234567` — va un vaght `unique` ru soton e `phone` do radif baraye
+ * YEK nafar ejaze mide va login e un ha ba ham ghati mishe.
  */
 final class PhoneHelper
 {
     /**
-     * Normalize common Iranian mobile inputs to E.164 (+989XXXXXXXXX).
-     * Accepts: 09121234567, 9121234567, 989121234567, +989121234567,
-     * with spaces/dashes/parentheses and Persian/Arabic digits.
-     * Returns null if it is not a valid mobile.
+     * Har shekl e ma'mul e vorudi -> E.164 (`+989XXXXXXXXX`).
+     *
+     * Ghabul mikone: `09121234567`، `9121234567`، `989121234567`،
+     * `+989121234567`، ba fasele/khat-tire/parantez va raghamha ye
+     * Farsi/Arabi.
+     *
+     * `null` ya'ni mobile e motabar nist.
      */
     public static function normalize(?string $input): ?string
     {
@@ -23,9 +31,10 @@ final class PhoneHelper
     }
 
     /**
-     * Normalize to the local Iranian format (09XXXXXXXXX) — the shape used by
-     * the auth/OTP API and shown in the UI. Same lenient parsing as normalize().
-     * Returns null if it is not a valid mobile.
+     * Format e mahalli (`09XXXXXXXXX`) — chizi ke tu UI neshun dade mishe va
+     * API e OTP migire. Hamun parse e narm e `normalize()`.
+     *
+     * `null` ya'ni mobile e motabar nist.
      */
     public static function toLocal(?string $input): ?string
     {
@@ -40,8 +49,10 @@ final class PhoneHelper
     }
 
     /**
-     * The 10-digit 9XXXXXXXXX core of any accepted input, or null if invalid.
-     * Strips separators, Persian/Arabic digits, and leading country/zero prefixes.
+     * Maghz e 10-raghami (`9XXXXXXXXX`) — ya `null`.
+     *
+     * Separator ha، raghamha ye Farsi/Arabi va pishvand haye keshvar/sefr ro
+     * bar midare.
      */
     private static function core(?string $input): ?string
     {
@@ -52,7 +63,12 @@ final class PhoneHelper
         $digits = self::toLatinDigits($input);
         $digits = preg_replace('/\D+/', '', $digits) ?? '';
 
-        // Strip leading country/zero prefixes down to the 10-digit 9XXXXXXXXX core.
+        // Pishvand haye keshvar/sefr bardashte mishan ta be maghz e
+        // 10-raghami ye `9XXXXXXXXX` beresim.
+        //
+        // ⚠️ Tartib MOHEM ast: `0098` bayad GHABL az `98` check beshe،
+        // vagarna `0098…` be `98…` match mishe، do raghame avval bardashte
+        // mishe va `98…` e baghi-munde yek maghz e ghalat misaze.
         if (str_starts_with($digits, '0098')) {
             $digits = substr($digits, 4);
         } elseif (str_starts_with($digits, '98')) {
@@ -65,12 +81,14 @@ final class PhoneHelper
     }
 
     /**
-     * A `tel:` href from any Iranian number — **including landlines**, which the
-     * mobile-only helpers above reject (021… is not a 9XXXXXXXXX core).
-     * Local `0XX…` becomes `+98XX…`. Empty input → ''.
+     * `tel:` href az har shomare ye Irani — **shamel e khat e sabet**، ke
+     * helper haye mobile-only e bala rad mikonan (`021…` maghz e
+     * `9XXXXXXXXX` nist).
      *
-     * The `tel:` scheme is required: without it the browser reads the href as a
-     * relative path and the link never dials.
+     * `0XX…` mishe `+98XX…`. Vorudi e khali -> `''`.
+     *
+     * ⚠️ Scheme e `tel:` ejbari-e: bedun esh browser href ro yek masir e
+     * nesbi mikhune va link HARGEZ zang nemizane.
      */
     public static function telLink(?string $phone): string
     {
@@ -87,8 +105,8 @@ final class PhoneHelper
     }
 
     /**
-     * Readable grouping for display: `021-28421130`. Anything that is not a
-     * Tehran landline is returned as bare digits.
+     * Group-bandi baraye namayesh: `021-28421130`. Har chizi ke khat e sabet
+     * e Tehran nist، khali (faghat ragham) bar migarde.
      */
     public static function pretty(?string $phone): string
     {
@@ -100,7 +118,11 @@ final class PhoneHelper
     }
 
     /**
-     * Mask a stored phone for logs/UI: +98912***4567
+     * Mask kardan baraye LOG va UI: `+98912***4567`.
+     *
+     * 🔴 Shomare ye mobile data ye shakhsi-e. Log e khali ye yek shomare ye
+     * kamel ya'ni har kasi ke be log dastresi dare، lista ye moshtari ha ro
+     * dare. `SendOtpAction` bayad az hamin estefade kone.
      */
     public static function mask(?string $phone): string
     {

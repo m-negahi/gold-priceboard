@@ -10,10 +10,19 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
 /**
- * Trust proxies for proper client IP and scheme detection.
- * Note: Laravel's default TrustProxies uses Symfony's static setTrustedProxies()
- * which doesn't work reliably with Octane's long-running process model.
- * Workaround: Directly modify REMOTE_ADDR and HTTPS server variables.
+ * IP e VAGHEI ye client + scheme، az posht e proxy/CDN.
+ *
+ * ── 🔴 Chera in middleware HAYATI ast ────────────────────────────────
+ * Bedun e un، `$request->ip()` HAMISHE neshani e proxy ast — ya'ni HAME ye
+ * karbar ha az yek IP miad. Un vaght **rate limit e IP e OTP kamelan
+ * bi-ma'ni mishe**: ya hame ba ham ban mishan، ya hichkas. Hamin tor
+ * allowlist e API tu Phase 4.
+ *
+ * ── Chera `extends Middleware` kafi NIST (Octane) ────────────────────
+ * `TrustProxies` e Laravel az `SymfonyRequest::setTrustedProxies()` e STATIC
+ * estefade mikone. Ba process e long-running e Octane un halat beyn e
+ * request ha mimune va ghabl e etminan nist. Pas `REMOTE_ADDR` va `HTTPS`
+ * ro MOSTAGHIM ru hamin request set mikonim.
  *
  * @see https://github.com/laravel/framework/issues/57667
  * @see https://github.com/laravel/octane/issues/371
@@ -27,33 +36,35 @@ final class TrustProxies extends Middleware
         Request::HEADER_X_FORWARDED_PROTO;
 
     /**
-     * Trusted local/private IP ranges.
-     * Includes all RFC 1918 private ranges + common infrastructure IPs.
+     * Range haye dakheli/khosusi ye mored e e'temad.
      *
-     * @var array<string>
+     * Hame ye range haye RFC 1918 + IP haye ma'mul e infrastructure (Docker،
+     * Kubernetes، VPC).
+     *
+     * @var array<int, string>
      */
     private const TRUSTED_IPS = [
-        // IPv4 Loopback
+        // IPv4 loopback
         '127.0.0.0/8',
 
-        // IPv4 Private Ranges (RFC 1918)
-        '10.0.0.0/8',       // Class A - Docker Swarm, Kubernetes, AWS VPC
-        '172.16.0.0/12',    // Class B - Docker default bridge (172.17-31.x.x)
-        '192.168.0.0/16',   // Class C - Home networks, Docker Compose
+        // IPv4 khosusi (RFC 1918)
+        '10.0.0.0/8',       // Docker Swarm، Kubernetes، AWS VPC
+        '172.16.0.0/12',    // bridge e default e Docker (172.17-31.x.x)
+        '192.168.0.0/16',   // shabake ye khunegi، Docker Compose
 
-        // IPv4 Link-Local (APIPA)
+        // IPv4 link-local (APIPA)
         '169.254.0.0/16',
 
-        // IPv4 CGNAT (Carrier-grade NAT)
-        '100.64.0.0/10',    // Some cloud providers use this
+        // IPv4 CGNAT — ba'zi cloud ha azash estefade mikonan
+        '100.64.0.0/10',
 
-        // IPv6 Loopback
+        // IPv6 loopback
         '::1',
 
-        // IPv6 Unique Local Addresses (RFC 4193) - equivalent to private IPv4
+        // IPv6 unique-local (RFC 4193) — mo'adel e khosusi ye IPv4
         'fc00::/7',
 
-        // IPv6 Link-Local
+        // IPv6 link-local
         'fe80::/10',
     ];
 
@@ -61,7 +72,7 @@ final class TrustProxies extends Middleware
      * Range haye IP e CDN — sabet tu hamin file (bedun e fetch/command).
      * Range haye CDN avaz shodan → hamin lista ro dasti be-rooz kon.
      *
-     * @var array<string>
+     * @var array<int, string>
      */
     private const CDN_IPS = [
         '185.143.232.0/22',
@@ -83,9 +94,11 @@ final class TrustProxies extends Middleware
 
     public function handle(Request $request, Closure $next): mixed
     {
+        // Hanuz seda zade mishe ta `$request->getClientIp()` e Symfony ham
+        // kar kone — vali be TANHA-i ghabl e etminan nist (bebin docblock e
+        // bala)، pas paeen server var ha ro mostaghim set mikonim.
         SymfonyRequest::setTrustedProxies($this->proxies(), $this->getTrustedHeaderNames());
 
-        // Octane workaround: directly set server variables
         if ($this->isFromTrustedProxy($request)) {
             $this->overrideClientIp($request);
             $this->overrideScheme($request);
@@ -96,18 +109,18 @@ final class TrustProxies extends Middleware
 
     private function overrideClientIp(Request $request): void
     {
-        // Priority: CDN-specific headers > Standard proxy headers.
+        // Olaviat: header haye makhsus e CDN > header haye ma'mul e proxy.
         // Har candidate-i ke khodesh yek proxy e mored e e'temad bashe rad mishe:
         // tu zanjire ye chand-laye (CDN -> Traefik -> Nginx) laye ye dakheli
         // `X-Real-IP` ro ba neshani e **khodesh** baznevise mikone (masalan
         // `10.10.3.41`). Agar hamun ro bavar konim IP e vaghei ye client gom
         // mishe — va rate limit e IP e OTP ya allowlist e API bi-dalil kharab mishe.
         $realIp = $this->firstExternalIp([
-            $request->header('AR-Real-IP'),         // CDN (real-IP header)
+            $request->header('AR-Real-IP'),         // CDN e Irani (ArvanCloud)
             $request->header('CF-Connecting-IP'),   // Cloudflare
-            $request->header('True-Client-IP'),     // Akamai, Cloudflare Enterprise
+            $request->header('True-Client-IP'),     // Akamai، Cloudflare Enterprise
             $request->header('X-Real-IP'),          // Nginx
-        ]) ?? $this->getForwardedClientIp($request); // X-Forwarded-For (Traefik, HAProxy, etc.)
+        ]) ?? $this->getForwardedClientIp($request); // X-Forwarded-For (Traefik، HAProxy، …)
 
         if ($realIp !== null) {
             $request->server->set('REMOTE_ADDR', $realIp);
@@ -175,6 +188,7 @@ final class TrustProxies extends Middleware
         return $this->ipInRange($remoteAddr, $this->proxies());
     }
 
+    /** @param array<int, string> $ranges */
     private function ipInRange(string $ip, array $ranges): bool
     {
         foreach ($ranges as $range) {
@@ -209,19 +223,26 @@ final class TrustProxies extends Middleware
             if ($ipBin !== false && $subnetBin !== false && strlen($ipBin) === 16 && strlen($subnetBin) === 16) {
                 $ipHex = bin2hex($ipBin);
                 $subnetHex = bin2hex($subnetBin);
-                // Compare the first $bits bits
-                $fullBytes = intdiv($bits, 4);
-                if (substr($ipHex, 0, $fullBytes) === substr($subnetHex, 0, $fullBytes)) {
-                    $remainingBits = $bits % 4;
-                    if ($remainingBits === 0) {
-                        return true;
-                    }
-                    $ipNibble = intval($ipHex[$fullBytes], 16);
-                    $subnetNibble = intval($subnetHex[$fullBytes], 16);
-                    $mask = (0xF << (4 - $remainingBits)) & 0xF;
-                    if (($ipNibble & $mask) === ($subnetNibble & $mask)) {
-                        return true;
-                    }
+
+                // ⚠️ Ru NIBBLE (yek raghame hex = 4 bit) moghayese mishe، na
+                // byte. Esm e `fullBytes` ghalat bud va gij mikard.
+                $fullNibbles = intdiv($bits, 4);
+
+                if (substr($ipHex, 0, $fullNibbles) !== substr($subnetHex, 0, $fullNibbles)) {
+                    continue;
+                }
+
+                $remainingBits = $bits % 4;
+
+                if ($remainingBits === 0) {
+                    return true;
+                }
+
+                $mask = (0xF << (4 - $remainingBits)) & 0xF;
+
+                if ((intval($ipHex[$fullNibbles], 16) & $mask)
+                    === (intval($subnetHex[$fullNibbles], 16) & $mask)) {
+                    return true;
                 }
             }
         }

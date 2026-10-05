@@ -18,9 +18,22 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * nahayi va mokammel e helper ha (Jalali/StringHelper) ke khodeshun dige
  * raghame Farsi tolid nemikonan.
  *
- * 🔴 FAGHAT text/html — JSON e Livewire dast nemikhore chun snapshot esh
- * checksum dare va dastkari esh state e component ro na-motabar mikone
- * (fragment haye Livewire adadeshun az helper ha miad ke hala Latin ast).
+ * 🔴 FAGHAT `text/html` — va fail-CLOSED: content-type e NA-MA'LUM ham rad
+ * mishe.
+ *
+ * Do dalil، har do vaghei:
+ *   1. **JSON e Livewire**: snapshot esh checksum dare، pas bazneveshtan e
+ *      byte haye un state e component ro na-motabar mikone. (Fragment haye
+ *      Livewire adadeshun az helper ha miad ke hala Latin ast، pas niazi
+ *      ham nist.)
+ *   2. **Payload e emza-shode** (Phase 4: API ba HMAC): avaz kardan e yek
+ *      raghame vasat e body، emza ro mishkune. Un ja'li tarin nou' e bug
+ *      ast — «emza ghalat ast» va hichkas nemidune chera.
+ *
+ * Be hamin dalil shart «agar `text/html` NIST rad kon» ast، na «agar
+ * ma'lum ast va `text/html` nist rad kon». Yek pasokh e bedun e header
+ * ghablan AZ qalat rad mishod va alan rad MISHE.
+ *
  * Bi-halat va Octane-safe.
  */
 final class LatinizeDigits
@@ -42,7 +55,8 @@ final class LatinizeDigits
 
         $contentType = (string) $response->headers->get('Content-Type', '');
 
-        if ($contentType !== '' && ! str_contains($contentType, 'text/html')) {
+        // Fail-closed: faghat `text/html` e SARIH dast mikhore.
+        if (! str_contains($contentType, 'text/html')) {
             return $response;
         }
 

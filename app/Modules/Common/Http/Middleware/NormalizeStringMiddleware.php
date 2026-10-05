@@ -8,10 +8,12 @@ use App\Modules\Common\Helpers\StringHelper;
 use Illuminate\Foundation\Http\Middleware\TransformsRequest;
 
 /**
- * Normalizes every string in the request input:
- * Arabic letters → Persian equivalents, and Persian/Arabic digits → English.
- * Should run BEFORE NormalizePhoneMiddleware so phone fields already have
- * English digits when they are normalized to E.164.
+ * Normalize kardan e HAR string e vorudi: horoof e Arabi -> Farsi (`ي→ی`،
+ * `ك→ک`) va raghamha ye Farsi/Arabi -> English.
+ *
+ * 🔴 Bayad GHABL az `NormalizePhoneMiddleware` ejra beshe، vagarna un yeki
+ * yek shomare ba raghame Farsi (`۰۹۱۲…`) mibine va nemitune parse kone.
+ * Tartib e sabt tu `bootstrap/app.php` load-bearing ast.
  */
 final class NormalizeStringMiddleware extends TransformsRequest
 {

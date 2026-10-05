@@ -8,17 +8,24 @@ use App\Modules\Common\Helpers\PhoneHelper;
 use Illuminate\Foundation\Http\Middleware\TransformsRequest;
 
 /**
- * Normalize phone-like fields to E.164 format (+989XXXXXXXXX).
- * This middleware should run AFTER NormalizeStringMiddleware so that
- * Persian/Arabic digits are already converted.
- * NOTE: If normalization fails (invalid format) the original value is
- * preserved. Use a validation rule in the form request to reject invalid
- * phone numbers.
+ * Tabdil e field haye shomare-manand be E.164 (`+989XXXXXXXXX`).
+ *
+ * BA'D az `NormalizeStringMiddleware` ejra mishe، ta raghamha ghablan
+ * English shode bashan.
+ *
+ * ── ⚠️ Shekast = meghdar e ASLI hefz mishe ──────────────────────────
+ * Agar normalize nashod، meghdar e vorudi dast NAKHORDE bar migarde — AMDAN.
+ * Rad kardan e yek shomare ye na-motabar kar e VALIDATION ast، na kar e
+ * middleware: agar inja `null` bezarim، payam e khata ye form mishe «field
+ * ejbari-e» jaye «shomare motabar nist»، va karbar nemifahme chi ghalat bud.
  */
 final class NormalizePhoneMiddleware extends TransformsRequest
 {
     /**
-     * Field names (or *_suffix) treated as phone numbers.
+     * Esm e field hayi (ya `*_suffix`) ke be onvan e shomare telefon raftar
+     * mishan.
+     *
+     * @var array<int, string>
      */
     protected const PHONE_FIELDS = [
         'phone',

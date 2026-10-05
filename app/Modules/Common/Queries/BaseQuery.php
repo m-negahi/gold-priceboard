@@ -11,13 +11,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Base query providing standard read operations.
+ * Paye ye Query ha — faghat KHUNDAN.
  *
- * All concrete queries extend this and implement model(). Queries are
- * read-only: NO writes, NO side effects. Custom domain reads are added as
- * methods that always start from a fresh query() builder.
+ * Query ha `model()` ro implement mikonan. Hich neveshtan، hich side effect.
+ * Khundan haye makhsus e domain be onvan e method ezafe mishan va HAMISHE
+ * az yek `query()` e TAZE shoru' mikonan.
  *
- * Stateless: no mutable instance state, safe as a singleton under Swoole/Octane.
+ * ⚠️ Bi-halat: zire Swoole/Octane be onvan e singleton salem ast. Yek
+ * Builder e zakhire-shode tu property beyn e request ha nasht mikone.
  *
  * @template TModel of Model
  */
@@ -29,7 +30,11 @@ abstract readonly class BaseQuery
     abstract protected function model(): string;
 
     /**
-     * Get a fresh query builder. Always returns a new instance (stateless).
+     * Builder e TAZE — har bar yek instance e jadid.
+     *
+     * 🔴 Hargez Builder ro tu property cache nakon: zire Octane un beyn e
+     * request ha mimune va `where` haye request e ghabli ru request e ba'di
+     * e'mal mishan.
      *
      * @return Builder<TModel>
      */
@@ -92,7 +97,7 @@ abstract readonly class BaseQuery
     }
 
     /**
-     * Build query with common options. Returns a NEW builder every time (stateless).
+     * Sakhtan e query ba option haye ma'mul. Har bar yek Builder e JADID.
      *
      * @param  array<int, string>  $with
      * @param  array<int, string>  $withCount

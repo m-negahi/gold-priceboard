@@ -11,12 +11,15 @@ use InvalidArgumentException;
 use Throwable;
 
 /**
- * Base action providing standard CRUD write operations.
+ * Paye ye Action haye CRUD.
  *
- * All concrete CRUD actions extend this and implement model(). Business-logic
- * actions ({Verb}{Entity}Action) do NOT extend this — they are standalone.
+ * Action haye CRUD in ro extend mikonan va `model()` ro implement mikonan.
+ * Action haye MANTEGH e kasb-o-kar (`{Verb}{Entity}Action`) in ro extend
+ * **NEMIKONAN** — un ha khodkafa-and.
  *
- * Stateless: no mutable instance state, safe as a singleton under Swoole/Octane.
+ * ⚠️ Bi-halat: hich state e mutable ru instance nist، pas zire
+ * Swoole/Octane be onvan e singleton salem ast. Yek Builder e zakhire-shode
+ * tu property beyn e request ha NASHT mikone.
  *
  * @template TModel of Model
  */
