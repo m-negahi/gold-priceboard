@@ -41,6 +41,14 @@ interface OtpStorePort
     /** Batel kardan e sarih — ba'd az verify e movafagh (yek-bar-masraf) ya 3 ghalat. */
     public function invalidate(string $phone): void;
 
+    /**
+     * Chand saniye az omr e code e zende munde؛ `0` ya'ni code-i nist.
+     *
+     * Baraye halat e avvaliye ye safhe ye login: refresh e safhe bayad be
+     * step e code bargarde ba SHOMARANDE ye server، na az aval.
+     */
+    public function ttlRemaining(string $phone): int;
+
     /** Sabt e cooldown e resend. */
     public function startCooldown(string $phone, int $seconds): void;
 

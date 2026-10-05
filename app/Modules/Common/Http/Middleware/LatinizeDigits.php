@@ -63,7 +63,21 @@ final class LatinizeDigits
         $content = $response->getContent();
 
         if (is_string($content) && $content !== '') {
+            /*
+             * ⚠️ `setContent` e Illuminate `original` ro HAM ba string
+             * jaygozin mikone — va `original` hamun chizi-e ke
+             * `assertViewHas` va har abzar e dige-i ke be VIEW e asli kar
+             * dare azash mikhune. Bedun e hefz esh، in middleware har
+             * `assertViewHas` tu kol e proje ro mishkast («The response is
+             * not a view») — test e login hamin-tori gereftesh.
+             */
+            $original = $response instanceof \Illuminate\Http\Response ? $response->original : null;
+
             $response->setContent(strtr($content, self::DIGITS));
+
+            if ($original !== null && $response instanceof \Illuminate\Http\Response) {
+                $response->original = $original;
+            }
         }
 
         return $response;

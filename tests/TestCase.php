@@ -35,6 +35,16 @@ abstract class TestCase extends BaseTestCase
 
         $app->make(Kernel::class)->bootstrap();
 
+        /*
+         * 🔴 Hamun dastan e ma'ruf e in proje: container `APP_ENV=local` ro
+         * be onvan e env e VAGHEI ye OS export mikone va bar phpunit.xml
+         * barande mishe. `runningUnitTests()` e Laravel az `$app['env']`
+         * mikhune — pas bedun e in khat، test «testing» shenasayi NEMISHE va
+         * `PreventRequestForgery` (CSRF) tu test ha ham fa'al mimune: har
+         * POST e feature-test 419 migire.
+         */
+        $app['env'] = 'testing';
+
         $this->forceTestConfig($app);
 
         return $app;

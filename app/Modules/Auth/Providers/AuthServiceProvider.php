@@ -23,6 +23,11 @@ use Psr\Log\LoggerInterface;
  */
 final class AuthServiceProvider extends ServiceProvider
 {
+    public function boot(): void
+    {
+        $this->loadViewsFrom(__DIR__.'/../Resources/views', 'auth');
+    }
+
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../Config/otp.php', 'otp');

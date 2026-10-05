@@ -60,6 +60,13 @@ final class InMemoryOtpStore implements OtpStorePort
         unset($this->entries[$phone]);
     }
 
+    public function ttlRemaining(string $phone): int
+    {
+        $entry = $this->live($phone);
+
+        return $entry === null ? 0 : max(0, $entry['expiresAt'] - $this->now);
+    }
+
     public function startCooldown(string $phone, int $seconds): void
     {
         $this->cooldowns[$phone] = $this->now + $seconds;

@@ -168,6 +168,27 @@ final class OtpStoreContractTest extends TestCase
         self::assertGreaterThan(0, $store->cooldownRemaining(self::PHONE));
     }
 
+    #[DataProvider('stores')]
+    public function test_ttl_remaining_is_zero_without_an_entry(string $kind): void
+    {
+        self::assertSame(0, $this->store($kind)->ttlRemaining(self::PHONE));
+    }
+
+    #[DataProvider('stores')]
+    public function test_ttl_remaining_counts_down_from_put(string $kind): void
+    {
+        $store = $this->store($kind);
+        $store->put(self::PHONE, 'hash-1', 120);
+
+        $ttl = $store->ttlRemaining(self::PHONE);
+
+        self::assertGreaterThan(100, $ttl);
+        self::assertLessThanOrEqual(120, $ttl);
+
+        $store->invalidate(self::PHONE);
+        self::assertSame(0, $store->ttlRemaining(self::PHONE));
+    }
+
     // ── TTL (har implementation ba abzar e khodesh) ─────────────────
 
     public function test_the_redis_entry_actually_expires(): void
