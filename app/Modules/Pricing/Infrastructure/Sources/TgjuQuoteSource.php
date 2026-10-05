@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Pricing\Infrastructure\Sources;
 
 use App\Modules\Pricing\Application\Dto\RawQuoteDto;
+use App\Modules\Pricing\Application\Dto\SourceRequestDto;
 use App\Modules\Pricing\Application\Dto\SourceResultDto;
 use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
@@ -95,6 +96,16 @@ final readonly class TgjuQuoteSource implements QuoteSourcePort
         return self::KEY;
     }
 
+    public function request(): SourceRequestDto
+    {
+        return new SourceRequestDto(
+            method: 'GET',
+            url: (string) ($this->options['url'] ?? self::DEFAULT_URL),
+            headers: ['User-Agent' => $this->userAgent(), 'Accept' => 'application/json'],
+            timeout: $this->timeout,
+        );
+    }
+
     public function fetch(): SourceResultDto
     {
         $url = (string) ($this->options['url'] ?? self::DEFAULT_URL);
@@ -114,13 +125,13 @@ final readonly class TgjuQuoteSource implements QuoteSourcePort
 
         $payload = $response->json();
 
-        if (! is_array($payload) || ! isset($payload['current']) || ! is_array($payload['current'])) {
-            throw new RuntimeException('tgju: payload shekl e entezari nadare (`current` nist).');
+        if (! is_array($payload)) {
+            throw new RuntimeException('tgju: pasokh JSON nist.');
         }
 
         $body = $response->body();
 
-        return $this->parse($payload['current'])->withPayloadMeta(md5($body), strlen($body));
+        return $this->parse($payload)->withPayloadMeta(md5($body), strlen($body));
     }
 
     /**
@@ -131,10 +142,18 @@ final readonly class TgjuQuoteSource implements QuoteSourcePort
      *
      * Hich facade seda nemizane ta ghabl e unit test bashe.
      *
-     * @param  array<string, mixed>  $current
+     * @param  array<string, mixed>  $payload  payload e kamel (ba kelid e `current`)
      */
-    public function parse(array $current): SourceResultDto
+    public function parse(array $payload): SourceResultDto
     {
+        $current = $payload['current'] ?? null;
+
+        if (! is_array($current)) {
+            // Shekl e payload avaz shode — in yek shekast ast, na «hich
+            // gheymati nabud». Pipeline bayad provider ro na-salem bebine.
+            throw new RuntimeException('tgju: payload shekl e entezari nadare (`current` nist).');
+        }
+
         $quotes = [];
         $missing = [];
 

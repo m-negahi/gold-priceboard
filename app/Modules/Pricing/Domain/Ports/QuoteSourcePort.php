@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Pricing\Domain\Ports;
 
+use App\Modules\Pricing\Application\Dto\SourceRequestDto;
 use App\Modules\Pricing\Application\Dto\SourceResultDto;
 
 /**
@@ -50,4 +51,26 @@ interface QuoteSourcePort
      *                           baste ast» eshtebah gerefte mishe.
      */
     public function fetch(): SourceResultDto;
+
+    /**
+     * Tosif e request — bedun e ejra.
+     *
+     * 🔴 Dalil e jodā budanesh HAMZAMANI ast: `FetchStage` hame ye request ha
+     * ro ba `Http::pool` ba ham mizane. estjt ~7s javab mide va tgju ~0.5s؛
+     * poshte-sar-e-ham zadan ya'ni ba se provider az budget e 15 saniye-i e
+     * tick rad mikonim.
+     *
+     * `null` = in Source request e HTTP nadare (masalan `MockQuoteSource`) —
+     * caller bayad `fetch()` ro mostaghim seda bezane.
+     */
+    public function request(): ?SourceRequestDto;
+
+    /**
+     * Khundan e payload e ghablan-gerefte-shode.
+     *
+     * Hich facade seda nemizane، pas unit-test-pazir ast.
+     *
+     * @param  array<string, mixed>  $payload  body e decode-shode
+     */
+    public function parse(array $payload): SourceResultDto;
 }

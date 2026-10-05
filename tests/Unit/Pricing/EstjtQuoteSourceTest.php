@@ -124,7 +124,7 @@ final class EstjtQuoteSourceTest extends TestCase
 
         $tgjuJson = (string) file_get_contents(__DIR__.'/../../Fixtures/tgju-ajax.json');
         $tgjuResult = (new TgjuQuoteSource)->parse(
-            json_decode($tgjuJson, true, 512, JSON_THROW_ON_ERROR)['current'],
+            json_decode($tgjuJson, true, 512, JSON_THROW_ON_ERROR),
         );
 
         $tgju = [];

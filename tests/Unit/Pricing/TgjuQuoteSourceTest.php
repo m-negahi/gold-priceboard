@@ -20,17 +20,17 @@ use PHPUnit\Framework\TestCase;
 final class TgjuQuoteSourceTest extends TestCase
 {
     /** @return array<string, mixed> */
-    private function current(): array
+    private function payload(): array
     {
         $json = (string) file_get_contents(__DIR__.'/../../Fixtures/tgju-ajax.json');
 
-        return json_decode($json, true, 512, JSON_THROW_ON_ERROR)['current'];
+        return json_decode($json, true, 512, JSON_THROW_ON_ERROR);
     }
 
     /** @return array<string, RawQuoteDto> */
     private function quotes(): array
     {
-        $result = (new TgjuQuoteSource)->parse($this->current());
+        $result = (new TgjuQuoteSource)->parse($this->payload());
 
         $byKey = [];
         foreach ($result->quotes as $quote) {
@@ -111,10 +111,10 @@ final class TgjuQuoteSourceTest extends TestCase
     /** `"\t8520000"` nabayad parse ro beshkane (`mesghal_buy` vaghe'an injuri-e). */
     public function test_tolerates_values_with_leading_whitespace(): void
     {
-        $current = $this->current();
-        $current['geram18']['p'] = "\t266400000";
+        $payload = $this->payload();
+        $payload['current']['geram18']['p'] = "\t266400000";
 
-        $result = (new TgjuQuoteSource)->parse($current);
+        $result = (new TgjuQuoteSource)->parse($payload);
         $gold18 = array_values(array_filter(
             $result->quotes,
             static fn (RawQuoteDto $q): bool => $q->instrument === Instrument::Gold18Gram,
@@ -196,10 +196,10 @@ final class TgjuQuoteSourceTest extends TestCase
     /** Kelid e gom-shode = tgju esm esh ro avaz karde — bayad gozaresh beshe. */
     public function test_reports_mapped_keys_that_vanished_from_the_payload(): void
     {
-        $current = $this->current();
-        unset($current['geram18'], $current['sekee']);
+        $payload = $this->payload();
+        unset($payload['current']['geram18'], $payload['current']['sekee']);
 
-        $result = (new TgjuQuoteSource)->parse($current);
+        $result = (new TgjuQuoteSource)->parse($payload);
 
         self::assertContains('geram18', $result->unmappedLabels);
         self::assertContains('sekee', $result->unmappedLabels);
@@ -208,10 +208,10 @@ final class TgjuQuoteSourceTest extends TestCase
 
     public function test_skips_unparsable_prices_without_failing(): void
     {
-        $current = $this->current();
-        $current['geram18']['p'] = '—';
+        $payload = $this->payload();
+        $payload['current']['geram18']['p'] = '—';
 
-        $result = (new TgjuQuoteSource)->parse($current);
+        $result = (new TgjuQuoteSource)->parse($payload);
 
         $symbols = array_map(static fn (RawQuoteDto $q): string => $q->instrument->value, $result->quotes);
 
@@ -222,20 +222,37 @@ final class TgjuQuoteSourceTest extends TestCase
     /** Gheymat e sefr rad mishe — `0` yek gheymat nist, yek feed e kharab ast. */
     public function test_skips_zero_prices(): void
     {
-        $current = $this->current();
-        $current['geram18']['p'] = '0';
+        $payload = $this->payload();
+        $payload['current']['geram18']['p'] = '0';
 
-        $result = (new TgjuQuoteSource)->parse($current);
+        $result = (new TgjuQuoteSource)->parse($payload);
 
         self::assertSame(15, $result->count());
     }
 
-    public function test_handles_a_completely_empty_payload(): void
+    /**
+     * `current` e khali ya'ni hame ye kelid ha gom shodan — na yek shekast.
+     * Provider javab dade، faghat chizi ke mikhastim toosh nabud.
+     */
+    public function test_handles_an_empty_current_block(): void
     {
-        $result = (new TgjuQuoteSource)->parse([]);
+        $result = (new TgjuQuoteSource)->parse(['current' => []]);
 
         self::assertTrue($result->isEmpty());
         self::assertCount(16, $result->unmappedLabels);
+    }
+
+    /**
+     * 🔴 Nabud e khod e `current` fargh dare: ya'ni SHEKL e payload avaz
+     * shode. Un yek SHEKAST ast، na «hich gheymati nabud» — vagarna
+     * pipeline provider ro salem hesab mikone dar hali ke feed kharab ast.
+     */
+    public function test_a_payload_without_current_is_a_failure(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('current');
+
+        (new TgjuQuoteSource)->parse([]);
     }
 
     public function test_exposes_its_key(): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Pricing\Infrastructure\Sources;
 
 use App\Modules\Pricing\Application\Dto\RawQuoteDto;
+use App\Modules\Pricing\Application\Dto\SourceRequestDto;
 use App\Modules\Pricing\Application\Dto\SourceResultDto;
 use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Pricing\Domain\Enums\Side;
@@ -81,6 +82,22 @@ final readonly class MockQuoteSource implements QuoteSourcePort
     public function key(): string
     {
         return self::KEY;
+    }
+
+    /** Hich HTTP-i nadare — `FetchStage` mostaghim `fetch()` ro seda mizane. */
+    public function request(): ?SourceRequestDto
+    {
+        return null;
+    }
+
+    /**
+     * Mock payload e biruni nadare — `fetch()` khodesh hame chiz ro misaze.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public function parse(array $payload): SourceResultDto
+    {
+        return $this->fetch();
     }
 
     public function fetch(): SourceResultDto

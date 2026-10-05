@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Pricing\Infrastructure\Sources;
 
 use App\Modules\Pricing\Application\Dto\RawQuoteDto;
+use App\Modules\Pricing\Application\Dto\SourceRequestDto;
 use App\Modules\Pricing\Application\Dto\SourceResultDto;
 use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
@@ -93,6 +94,23 @@ final readonly class EstjtQuoteSource implements QuoteSourcePort
     public function key(): string
     {
         return self::KEY;
+    }
+
+    public function request(): SourceRequestDto
+    {
+        return new SourceRequestDto(
+            method: 'POST',
+            url: (string) ($this->options['url'] ?? self::DEFAULT_URL),
+            headers: [
+                'User-Agent' => $this->userAgent(),
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Referer' => (string) ($this->options['referer'] ?? 'https://www.estjt.ir/'),
+            ],
+            body: ['action' => self::ACTION],
+            timeout: $this->timeout,
+            // 🔴 Bedun e in، request timeout mikhore.
+            httpVersion: '1.1',
+        );
     }
 
     public function fetch(): SourceResultDto

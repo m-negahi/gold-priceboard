@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Support\Fakes;
 
 use App\Modules\Pricing\Application\Dto\RawQuoteDto;
+use App\Modules\Pricing\Application\Dto\SourceRequestDto;
 use App\Modules\Pricing\Application\Dto\SourceResultDto;
 use App\Modules\Pricing\Domain\Ports\QuoteSourcePort;
 use RuntimeException;
@@ -25,6 +26,17 @@ final class FakeQuoteSource implements QuoteSourcePort
     public function key(): string
     {
         return $this->key;
+    }
+
+    public function request(): ?SourceRequestDto
+    {
+        return null;
+    }
+
+    /** @param array<string, mixed> $payload */
+    public function parse(array $payload): SourceResultDto
+    {
+        return $this->fetch();
     }
 
     public function fetch(): SourceResultDto

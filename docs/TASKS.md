@@ -15,16 +15,30 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-15` (TickPipeline) → ba'd `P1-16`/`P1-17`
-**Akharin kar**: `P1-13` va `P1-14` tamum shodan. **295 test، 1726 assertion، hame sabz**، Pint tamiz. Influx kamelan provision shode va token haye mahdud tu `.env` neshastan.
-**Nime-kare**: `QuoteEnricher` hanuz neveshte nashode — `P1-15` khodesh un ro misaze.
-**Gam e ba'di**: `P1-15` — `TickPipeline` + Stage ha. ⚠️ Fetch bayad **MOVAZI** bashe (`Http::pool`): estjt ~7s tool mikeshe va tick 15s ast.
+**Task e fe'li**: `P1-16` (`IngestTickAction`) → ba'd `P1-17` (`pricing:tick`)
+**Akharin kar**: `P1-15` tamum shod. **318 test، 1816 assertion، hame sabz**، Pint tamiz.
+**Nime-kare**: hich.
+**Gam e ba'di**: `P1-16`/`P1-17` — `IngestTickAction` (sakhtan e context + ejra ye pipeline) va command e nazok e `pricing:tick` ba lock. Ba'd `P1-18` (`ProviderQuery` ke `ProviderConfigDto` ro az DB misaze).
 
 ### 🔴 Yek rakhne ye vaghei ke peyda shod va baste shod
 **Replay e spool tick e kham ro bar migardund vali candle ro NA.**
 Task e `candles_1m` lookback e `-3m` dare. Agar Influx bishtar az se daghighe ghat' bashe، `drain` tick ha ro ba timestamp e ASLI (ghadimi) mineveshte — va un timestamp ha dige tu panjere ye task nabudan. Natije: `m1` (ke mostaghim az `ticks` mikhune) kar mikard vali `m5`–`d1` yek **surakh e daemi** peyda mikardan.
 Hall: `InfluxTimeSeries::rebuildMinuteCandles()` ke `drain` ba'd az har replay ru hamun bazeh seda mizane.
 Ta'eed: 12 tick e **20 daghighe-i** tu spool → `drain` → har 3 daghighe candle e salem ba `count=4`.
+
+### 🔴 Andaze-giri ye vaghei ye fetch (da'va ro sanjidim، farz nakardim)
+`scripts/fetch-benchmark.php` ru endpoint haye zende، 3 ejra:
+
+| | poshte-sar-e-ham | hamzaman |
+|---|---|---|
+| 1 | 13.1s | 6.3s |
+| 2 | 12.8s | 9.1s |
+| 3 | 12.2s | 8.4s |
+
+tgju 2.4–3.6s، estjt 6.2–9.1s (kheyli nowsan dare — bar'aks e 7.1s e avvaliye ke andaze gerefte budam).
+**Ba HAMIN DO provider، poshte-sar-e-ham ~13s migire va budget 15s ast** — ya'ni provider e sevom tick ro mishkane. Hamzaman ejbari-e، na behine-sazi.
+
+⚠️ Hamchenin: tgju gah-gah ba `cURL 35 TLS connect error` shekast mikhore (hamun khata-i ke avval ru GitHub ham didim — ehtemalan shabake ye in mohit ast، na code e ma). Pipeline durost raftar mikone (provider FAIL mikhore va baghi salem mimunan)، vali **retry baraye khata haye gozara ye TLS** arzesh e barresi dare → `P1-25`.
 
 ### Model e ejaze ye Influx (se bar gir kardim، pas benevis)
 Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
@@ -48,6 +62,8 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 - **`Price::multipliedBy(float)` hazf shod.** `100 * 1.005` tu float mishe `100.49999999999999` va `round()` un ro 100 mikone. Har zarb e nesbati tu `SpreadPricer` ba mantegh e delta anjam mishe.
 - **PHP `int / int` vaghti baghi-munde nadare INT bar migardune.** Baraye IRR (`scale 0`) in ya'ni series e chart int mishod va baraye USD float — cast e sarih e `(float)` ezafe shod.
 - **Client e Redis e Laravel KHODESH prefix mizare.** Agar tu test dasti `config('database.redis.options.prefix')` ro jolo ye kelid bechasbuni، be yek kelid e khiali eshare mikoni va test saket be dalil e GHALAT pass mishe (do ta az test haye `RedisHotCache` daghighan hamin tur bud).
+- **`microtime()` dor e `Http::pool` bi-ma'ni-st**: vaghti javab ha miyan، pool ghablan tamum shode va ma faghat parse mikonim. Latency bayad az `handlerStats()['total_time']` biad — vagarna har provider «1ms» gozaresh mishe va monitoring e panel dorugh mige. (Hamin ro tu benchmark e avval didim.)
+- **`run()` tu `PHPUnit\Framework\TestCase` FINAL ast** — method e komaki ye test ro nemishe `run()` esm gozasht.
 - **`scripts/` be mount haye compose ezafe shod** — baraye script e yek-bare ye dev (`outage-drill.php`، `reset-influx-tokens.php`). Ghablan mount nabud va `php scripts/…` tu container kar nemikard.
 - Image e `pb-octane` ffmpeg ro nasb mikone (az Dockerfile e hg_website ers reside) — baraye in projeh lazem NIST va ~2 daghighe be build ezafe mikone. Yek tamiz-kari ye ekhtiari ast.
 
@@ -153,7 +169,11 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → `routes/console.php`: drain har daghighe، health har 5 daghighe. `pricing:tick` AMDAN inja nist (scheduler kamtarin daghighat esh 1 daghighe-ast).
 
 ### Pipeline
-- [ ] **P1-15** — `TickPipeline` + Stage ha (`Fetch`/`Normalize`/`Validate`/`Persist`/`Publish`) + `StagePolicy`
+- [x] **P1-15** — `TickPipeline` + Stage ha + `StagePolicy` (22 test)
+  → Marhale ha: `Fetch` → `Validate` → `Enrich` → `Persist` → `Publish`. («Normalize» marhale nashod — un kar e khod e Source ast.)
+  → `QuoteEnricher` (az `P1-05` aghab oftade bud) neveshte shod: band e rooz ba rooz e **Tehran** reset mishe (na UTC — vagarna «بیشترین امروز» har rooz 3:30 e sobh reset mishe)، va gheymat e bi-taghir jahat ro be `flat` bar nemigardune.
+  → **Fetch e HAMZAMAN** ba `Http::pool` — port `request()` gereft ta «chetor beporsim» az «chetor bekhunim» joda beshe.
+  → Kol e pipeline **bedun e Docker/DB/Redis/Influx** test mishe (22 test ba fake ha).
 - [ ] **P1-16** — `IngestTickAction` + `TickReportDto`
 - [ ] **P1-17** — `pricing:tick` (command e nazok) + khoruji e Finglish
 - [ ] **P1-18** — `ProviderQuery` / `SpreadQuery` / `BoardQuery` / `CandleQuery`
@@ -163,6 +183,7 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 - [ ] **P1-22** — Seeder e provider ha (tgju + estjt، `is_active=false`) + spread e wildcard
   ⚠️ Bayad `freshness_seconds` ro baraye tgju override kone ru `xau-oz-usd`، `xag-oz-usd`، `xcu-lb-usd` va `xau-coin-gerami-irr` (~90000 = yek rooz): in chahar ta tu feed e tgju faghat RUZANE be-rooz mishan، vali default e `Instrument::freshnessSeconds()` baraye jahani 180s ast va har tick radeshun mikone.
 - [ ] **P1-23** — Test e taab-avari: Influx down → spool؛ Redis down → PG fallback؛ PG down → polling edame
+- [ ] **P1-25** — Retry baraye khata haye gozara ye shabake (`cURL 35 TLS`) tu `FetchStage`. Fe'lan har shekast provider ro baraye un tick FAIL mikone؛ ba yek retry e kutah (~300ms) aksar e in ha jobran mishan.
 - [ ] **P1-24** — 🔴 **Check e cross-provider baraye AVVALIN tick** (rakhne ye kashf-shode tu `P1-05`)
   Band e motlagh khata ye 10x ro **nemigire** (tavarrom e rial — tozih tu `Instrument::sanityBand()`)، va enheraf e tick-be-tick baraye avvalin tick e yek (provider, symbol) e jadid `previous` nadare. Pas yek provider e taze ba unit e eshtebah mitune avvalin gheymat esh ro bedun e moghe'iat benevise.
   Hall: avvalin tick ba gheymat e provider haye **digar** baraye hamun symbol moghayese she (in site e moghayese ast — in data ro darim). Ekhtelaf > ~20% → rad + hoshdar e admin.
