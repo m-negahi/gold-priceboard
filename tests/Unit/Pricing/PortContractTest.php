@@ -435,4 +435,117 @@ final class PortContractTest extends TestCase
 
         return $out;
     }
+
+    // ── 🔴 Shekast e NIME (write miterke، read salem) ────────────
+
+    /**
+     * Fake bayad betune «OOM» ro model kone: write rad mishe، read salem.
+     *
+     * In halat e farzi nist — `redis-prices` ba `noeviction` ejra mishe، pas
+     * vaghti por she daghighan hamin kar ro mikone. Bedun e in، fake faghat
+     * «hame chiz ghat'» ro model mikone va un halat e khatarnak tar (ke hame
+     * chiz salem be nazar mirese) hichvaght test nemishe.
+     */
+    public function test_the_hot_cache_fake_can_fail_writes_while_reads_work(): void
+    {
+        $cache = new ArrayHotCache;
+        $cache->putBoard([$this->snapshot()]);
+
+        $cache->failWritesOnly();
+
+        // Read salem…
+        self::assertCount(1, $cache->board());
+        self::assertTrue($cache->isAvailable());
+
+        // …vali har write miterke.
+        foreach ([
+            static fn () => $cache->putBoard([]),
+            static fn () => $cache->putProviders(['tgju' => []]),
+            static fn () => $cache->bumpSpreadVersion(),
+        ] as $write) {
+            try {
+                $write();
+                self::fail('write bayad miterkid.');
+            } catch (RuntimeException $e) {
+                self::assertStringContainsString('OOM', $e->getMessage());
+            }
+        }
+    }
+
+    public function test_repairing_the_hot_cache_fake_clears_the_write_failure(): void
+    {
+        $cache = (new ArrayHotCache)->failWritesOnly()->repair();
+
+        $cache->putBoard([$this->snapshot()]);
+
+        self::assertCount(1, $cache->board());
+    }
+
+    public function test_the_time_series_fake_can_fail_writes_while_queries_work(): void
+    {
+        $series = (new FakeTimeSeries)->willReturn([])->failWritesOnly();
+
+        try {
+            $series->writeTicks([$this->snapshot()], (new FrozenClock)->tick());
+            self::fail('write bayad miterkid.');
+        } catch (RuntimeException $e) {
+            self::assertStringContainsString('422', $e->getMessage());
+        }
+
+        // Query salem — pas `CandleQuery` be tabaghe ye `:last` fallback
+        // nemikone.
+        self::assertTrue($series->isAvailable());
+        self::assertSame([], $series->candles(CandleRequestDto::make(
+            providerKey: 'tgju',
+            instrument: Instrument::Gold18Gram,
+            interval: Interval::M1,
+            from: 1_760_000_000,
+            to: 1_760_003_600,
+        )));
+    }
+
+    // ── Tavanaei haye jadid e `FakeQuoteSource` ─────────────────
+
+    public function test_the_quote_source_fake_can_take_the_pooled_path(): void
+    {
+        $direct = new FakeQuoteSource('mock');
+        self::assertNull($direct->request(), 'default bayad masir e mostaghim bashe.');
+
+        $pooled = (new FakeQuoteSource('tgju'))->pooled('https://example.test/p');
+        self::assertNotNull($pooled->request());
+        self::assertSame('GET', $pooled->request()->method);
+
+        $posting = (new FakeQuoteSource('estjt'))->posting('https://estjt.test/a', ['action' => 'new_price']);
+        self::assertTrue($posting->request()->isPost());
+        self::assertSame(['action' => 'new_price'], $posting->request()->body);
+    }
+
+    public function test_the_quote_source_fake_fails_only_the_requested_number_of_times(): void
+    {
+        $source = (new FakeQuoteSource('tgju'))->returns([])->failsOnce(2);
+
+        foreach ([1, 2] as $attempt) {
+            try {
+                $source->fetch();
+                self::fail("talash e {$attempt} bayad miterkid.");
+            } catch (RuntimeException) {
+                self::assertTrue(true);
+            }
+        }
+
+        // Talash e sevom bayad salem bashe.
+        self::assertSame([], $source->fetch()->quotes);
+    }
+
+    public function test_the_quote_source_fake_records_the_payload_it_parsed(): void
+    {
+        $source = (new FakeQuoteSource('tgju'))->returns([])->unmapped(['پلاتین']);
+
+        $result = $source->parse(['current' => ['geram18' => []]]);
+
+        self::assertSame(['current' => ['geram18' => []]], $source->lastPayload());
+        self::assertSame(['پلاتین'], $result->unmappedLabels);
+        self::assertSame(1, $source->parseCount());
+        self::assertSame(0, $source->fetchCount());
+    }
 }

@@ -27,6 +27,9 @@ final class ArrayHotCache implements HotCachePort
 
     private bool $available = true;
 
+    /** 🔴 Write ha miterkan vali read ha salem-and — bebin `failWritesOnly()`. */
+    private bool $writesFail = false;
+
     public function board(): array
     {
         $this->guard();
@@ -36,6 +39,8 @@ final class ArrayHotCache implements HotCachePort
 
     public function putBoard(array $snapshots): void
     {
+        $this->assertWritable();
+
         $this->guard();
 
         foreach ($snapshots as $snapshot) {
@@ -54,6 +59,8 @@ final class ArrayHotCache implements HotCachePort
 
     public function putProviders(array $providers): void
     {
+        $this->assertWritable();
+
         $this->guard();
 
         $this->providers = $providers;
@@ -75,6 +82,8 @@ final class ArrayHotCache implements HotCachePort
 
     public function bumpSpreadVersion(): int
     {
+        $this->assertWritable();
+
         $this->guard();
 
         return ++$this->spreadVersion;
@@ -82,6 +91,8 @@ final class ArrayHotCache implements HotCachePort
 
     public function putHealth(ProviderHealthDto $health): void
     {
+        $this->assertWritable();
+
         $this->guard();
 
         $this->health[$health->providerKey] = $health;
@@ -100,6 +111,35 @@ final class ArrayHotCache implements HotCachePort
     }
 
     /** Shabih-sazi ye ghat'i ye Redis. */
+    /**
+     * 🔴 OOM: write ha rad mishan، read ha salem.
+     *
+     * In halat e FARZI nist — daghighan chizi-e ke `redis-prices` mikone.
+     * Un instance `--maxmemory 64mb --maxmemory-policy noeviction` dare، pas
+     * vaghti por she Redis ba `OOM command not allowed` write ha ro rad
+     * mikone **vali read ha ro kamel javab mide** va `PING` ham salem ast.
+     *
+     * Natije: tablo YAKH mizane. `isAvailable()` `true` mide، `board()` data
+     * bar migardune، `BoardQuery` `degraded=false` e'lam mikone — va faghat
+     * chizi ke dad mizane `ageSeconds` ast ke bala mire. In bad tarin nou' e
+     * ghat'i-e: hame chiz salem be nazar mirese.
+     */
+    public function failWritesOnly(): self
+    {
+        $this->writesFail = true;
+
+        return $this;
+    }
+
+    private function assertWritable(): void
+    {
+        if ($this->writesFail) {
+            throw new RuntimeException(
+                'OOM command not allowed when used memory > \'maxmemory\'.',
+            );
+        }
+    }
+
     public function breakIt(): self
     {
         $this->available = false;
@@ -109,6 +149,8 @@ final class ArrayHotCache implements HotCachePort
 
     public function repair(): self
     {
+        $this->writesFail = false;
+
         $this->available = true;
 
         return $this;

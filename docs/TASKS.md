@@ -15,11 +15,11 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-21` (takmil e fake ha + pushesh e test e pipeline)
-**Akharin kar**: `P1-20` tamum shod. **457 test، 2142 assertion، hame sabz**، Pint tamiz.
+**Task e fe'li**: `P1-23` (test haye taab-avari)
+**Akharin kar**: `P1-21` tamum shod. **484 test، 2222 assertion، hame sabz**، Pint tamiz.
 **ENGINE ZENDE-ST**: `price-worker` tick mizane، `BoardQuery` tablo ye vaghei ro ba moghayese ye do provider bar migardune.
 **Nime-kare**: hich.
-**Gam e ba'di**: `P1-21` — takmil e fake ha (`tests/Support/Fakes/`) va pushesh e test e `TickPipeline`. Ba'd `P1-23` (test haye taab-avari)، `P1-24` (check e cross-provider baraye AVVALIN tick)، `P1-25` (retry baraye `cURL 35`)، `P1-26` (`hide_after_seconds`).
+**Gam e ba'di**: `P1-23` — test haye taab-avari ru mohit e VAGHEI (na fake): `stop influxdb` -> spool por -> `start` + `drain` -> hich gap. Hamin baraye `redis-prices` va `postgresql`. Ba'd `P1-24` (check e cross-provider baraye AVVALIN tick)، `P1-25` (retry baraye `cURL 35` — `FakeQuoteSource::failsOnce()` amade-st)، va `P1-26`/`P1-27` ke ba ham tasmim gerefte mishan.
 **⚠️ `P1-22` (Seeder) ghablan tu `P1-19` anjam shod** — seeder az Action ha rad mishe va re-seed gheyr-mokhareb ast.
 
 ### 🔴🔴 MOHEM TARIN DARS: `force="true"` e phpunit KAFI NABUD
@@ -228,6 +228,8 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   ⚠️ Bayad `freshness_seconds` ro baraye tgju override kone ru `xau-oz-usd`، `xag-oz-usd`، `xcu-lb-usd` va `xau-coin-gerami-irr` (~90000 = yek rooz): in chahar ta tu feed e tgju faghat RUZANE be-rooz mishan، vali default e `Instrument::freshnessSeconds()` baraye jahani 180s ast va har tick radeshun mikone.
 - [ ] **P1-23** — Test e taab-avari: Influx down → spool؛ Redis down → PG fallback؛ PG down → polling edame
 - [ ] **P1-25** — Retry baraye khata haye gozara ye shabake (`cURL 35 TLS`) tu `FetchStage`. Fe'lan har shekast provider ro baraye un tick FAIL mikone؛ ba yek retry e kutah (~300ms) aksar e in ha jobran mishan.
+- [ ] **P1-27** — 🔴 **yakh-zadegi ye SAKET e tablo** (ba `P1-21` kashf shod، test esh `TickPipelineTest::test_a_redis_oom_freezes_the_board_but_keeps_postgres_current`). Vaghti `redis-prices` por she: write ha rad mishan، **read ha salem-and**، `PING` salem ast. Pas `HotCachePort::isAvailable()` `true` mide، `board()` data mide، va `BoardQuery` `degraded=false` e'lam mikone — masir e fallback e Postgres HICHVAGHT roshan nemishe، dar hali ke Postgres data ye TAZE dare. Tablo ru akharin gheymat e neveshte-shode yakh mizane va tanha neshane `ageSeconds` ast ke bala mire.
+  Gozine ha: (a) `BoardQuery` agar sen e HAME ye radif ha az yek saghf rad kard، `degraded` bede va az Postgres bekhune؛ (b) `PersistStage` shekast e sink e redis ro yek ja benevise ke masir e READ bebine. Ba `P1-26` (`hide_after_seconds`) ham-pushani dare — ba ham tasmim gerefte shan.
 - [ ] **P1-26** — tasmim: aya tablo radif haye BAYAT ro negah dare? Alan masir e Redis faghat symbol hayi ro dare ke hamin tick taze umadan، vali Postgres akharin-ma'lum ro baraye HAME negah midare — pas shab ha (bazaar e baste) tablo az masir e Redis kuchik mishe va az masir e fallback bozorg. Soton e `providers.hide_after_seconds` (default 600) sakhte shode vali **hichvaght khunde nemishe**: neyat e asli in bude ke gheymat e bayat ta un moddat ba marker neshun dade she va ba'd makhfi she. Bayad tu `PersistStage`/`PublishStage` e'mal she ta do masir TOOL e shabaneh ham yeki bashan. (Ba `BoardQueryTest` e agreement check mishe.)
 - [ ] **P1-24** — 🔴 **Check e cross-provider baraye AVVALIN tick** (rakhne ye kashf-shode tu `P1-05`)
   Band e motlagh khata ye 10x ro **nemigire** (tavarrom e rial — tozih tu `Instrument::sanityBand()`)، va enheraf e tick-be-tick baraye avvalin tick e yek (provider, symbol) e jadid `previous` nadare. Pas yek provider e taze ba unit e eshtebah mitune avvalin gheymat esh ro bedun e moghe'iat benevise.

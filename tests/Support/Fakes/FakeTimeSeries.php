@@ -21,8 +21,18 @@ final class FakeTimeSeries implements TimeSeriesPort
 
     private bool $available = true;
 
+    /** Write rad mishe vali query salem — bebin `failWritesOnly()`. */
+    private bool $writesFail = false;
+
     public function writeTicks(array $snapshots, TickTime $at): void
     {
+        if ($this->writesFail) {
+            // Halat e VAGHEI: Influx yek write ro ba 422 rad mikone (timestamp
+            // birun e retention، type mismatch e field) dar hali ke query ha
+            // kamelan salem-and. Tu `P1` hamin ro zende didim.
+            throw new RuntimeException('HTTP 422: points beyond retention period');
+        }
+
         $this->guard();
 
         $this->writes[] = ['at' => $at->timestamp(), 'snapshots' => $snapshots];
@@ -55,8 +65,18 @@ final class FakeTimeSeries implements TimeSeriesPort
         return $this;
     }
 
+    /** Write rad mishe، query salem. */
+    public function failWritesOnly(): self
+    {
+        $this->writesFail = true;
+
+        return $this;
+    }
+
     public function repair(): self
     {
+        $this->writesFail = false;
+
         $this->available = true;
 
         return $this;

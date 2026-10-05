@@ -337,6 +337,98 @@ final class TickPipelineTest extends TestCase
         self::assertSame(2, $report->failedSinks());
     }
 
+    // ── 🔴 Shekast e NIME: write miterke، read salem ─────────────
+
+    /**
+     * 🔴 OOM e Redis — bad tarin nou' e ghat'i، chun hame chiz SALEM be nazar
+     * mirese.
+     *
+     * `redis-prices` ba `--maxmemory 64mb --maxmemory-policy noeviction`
+     * ejra mishe. Vaghti por she، Redis write ha ro ba
+     * `OOM command not allowed` rad mikone **vali read ha ro kamel javab
+     * mide** va `PING` ham salem ast.
+     *
+     * Natije: tablo YAKH mizane ru akharin chizi ke neveshte shode.
+     * `isAvailable()` `true` mide، `board()` data mide، `BoardQuery`
+     * `degraded=false` e'lam mikone — pas masir e fallback e Postgres
+     * HICHVAGHT roshan nemishe. Tanha chizi ke dad mizane `ageSeconds` e
+     * radif hast ke bala mire va `isStale` mikone.
+     *
+     * In test un raftar ro MIKHKUB mikone: tick nabayad beterke، Postgres
+     * bayad data ye taze ro begire، va sink e redis bayad SHEKAST e'lam kone
+     * ta `TickMonitor` betune neshun esh bede.
+     */
+    public function test_a_redis_oom_freezes_the_board_but_keeps_postgres_current(): void
+    {
+        // Tick e avval salem — tablo yek gheymat dare.
+        $this->tick([$this->quote(266_400_000)]);
+        self::assertSame(266_400_000, $this->cache->board()['tgju:xau-18k-g-irr:last']->price->minor);
+
+        // Alan Redis por mishe: write rad mishe، read salem.
+        $this->cache->failWritesOnly();
+        $this->clock->advance(15);
+
+        $report = $this->tick([$this->quote(267_000_000)]);
+
+        self::assertSame(1, $report->accepted, 'tick nabayad beterke.');
+        self::assertFalse($report->sinks['redis']->succeeded, 'bayad shekast e sarih e\'lam she.');
+        self::assertStringContainsString('OOM', (string) $report->sinks['redis']->error);
+
+        // Postgres taze-st…
+        self::assertSame(267_000_000, $this->store->all()['tgju:xau-18k-g-irr:last']->price->minor);
+        self::assertTrue($report->sinks['postgres']->succeeded);
+
+        // …vali tablo ye dagh YAKH zade ru gheymat e ghadim. Read kar mikone،
+        // pas hich fallback-i roshan nemishe.
+        self::assertSame(266_400_000, $this->cache->board()['tgju:xau-18k-g-irr:last']->price->minor);
+        self::assertTrue($this->cache->isAvailable(), 'Redis khodesh ro salem gozaresh mide.');
+    }
+
+    /**
+     * Influx mitune yek write ro ba 422 rad kone (timestamp birun e
+     * retention، type mismatch e field) dar hali ke query ha salem-and — tu
+     * `P1` hamin ro zende didim.
+     */
+    public function test_an_influx_write_rejection_only_fails_that_sink(): void
+    {
+        $this->series->failWritesOnly();
+
+        $report = $this->tick([$this->quote()]);
+
+        self::assertSame(1, $report->accepted);
+        self::assertFalse($report->sinks['influx']->succeeded);
+        self::assertStringContainsString('422', (string) $report->sinks['influx']->error);
+
+        // Query salem munde — `isAvailable()` hanuz `true` ast، pas
+        // `CandleQuery` be tabaghe ye `:last` fallback NEMIKONE. Chart
+        // chizi ke ghablan neveshte shode ro mide، na khata.
+        self::assertTrue($this->series->isAvailable());
+
+        // Do sink e digar dast nakhordan.
+        self::assertTrue($report->sinks['redis']->succeeded);
+        self::assertTrue($report->sinks['postgres']->succeeded);
+        self::assertSame(1, $report->failedSinks());
+    }
+
+    public function test_the_board_recovers_as_soon_as_redis_accepts_writes_again(): void
+    {
+        $this->tick([$this->quote(266_400_000)]);
+
+        $this->cache->failWritesOnly();
+        $this->clock->advance(15);
+        $this->tick([$this->quote(267_000_000)]);
+
+        // Memory azad shod.
+        $this->cache->repair();
+        $this->clock->advance(15);
+        $report = $this->tick([$this->quote(268_000_000)]);
+
+        // Hich kar e dasti lazem nist: tick e ba'di kol e kelid e tablo ro
+        // BAZNEVISI mikone، pas yakh-zadegi khod-be-khod bar-taraf mishe.
+        self::assertTrue($report->sinks['redis']->succeeded);
+        self::assertSame(268_000_000, $this->cache->board()['tgju:xau-18k-g-irr:last']->price->minor);
+    }
+
     // ── chand provider ───────────────────────────────────────────
 
     public function test_two_providers_quote_the_same_symbol_independently(): void
