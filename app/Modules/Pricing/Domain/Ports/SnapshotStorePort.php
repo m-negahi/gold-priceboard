@@ -18,7 +18,12 @@ use App\Modules\Pricing\Application\Dto\SnapshotDto;
 interface SnapshotStorePort
 {
     /**
-     * Hame ye snapshot ha، keyed ba `SnapshotDto::key()`.
+     * Snapshot haye provider haye FA'AL، keyed ba `SnapshotDto::key()`.
+     *
+     * 🔴 «Fa'al» bakhshi az contract ast، na yek jozyat e adapter. Masir e
+     * Redis tablo ro har tick bazneveshte mikone، pas provider e khamoosh
+     * khod-be-khod mire؛ agar in method un ro bar gardund، masir e fallback
+     * chizi neshun mide ke masir e asli neshun nemide.
      *
      * Pipeline in ro GHABL az har tick mikhune: ham baraye enrich (dayOpen،
      * direction) ham baraye `PriceSanity` (gheymat e ghabli + outlier e

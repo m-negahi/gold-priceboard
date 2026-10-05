@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Pricing;
 
+use App\Modules\Pricing\Application\Actions\ProviderAction;
 use App\Modules\Pricing\Application\Dto\ProviderConfigDto;
 use App\Modules\Pricing\Application\Dto\SnapshotDto;
 use App\Modules\Pricing\Application\Queries\BoardQuery;
@@ -89,6 +90,72 @@ final class BoardQueryTest extends TestCase
             'buy_mode' => 'percent', 'buy_value' => $buy,
             'sell_mode' => 'percent', 'sell_value' => $sell,
         ]);
+    }
+
+    // ── 🔴 Provider e khamoosh: do masir bayad EYN e ham bashan ──
+
+    /**
+     * Masir e Redis (`putBoard`) kol e kelid ro bazneveshte mikone، pas
+     * provider e khamoosh khod-be-khod az tablo mire. Vali `join` e kham tu
+     * `EloquentSnapshotStore` scope e `is_active`/SoftDeletes ro NEMIBINE —
+     * pas bedun e filter e sarih، masir e FALLBACK hamun provider ro bar
+     * migardund.
+     *
+     * Natije: do masiri ke bayad eyn e ham bashan، daghighan tu bad tarin
+     * lahze (ghat'i ye Redis) vagera mishan — tablo provider haye khamoosh ro
+     * neshun mide.
+     */
+    public function test_a_deactivated_provider_leaves_both_the_hot_and_the_fallback_board(): void
+    {
+        $provider = $this->provider();
+        $store = $this->app->make(SnapshotStorePort::class);
+
+        $store->save([$this->snapshot()]);
+        $this->cache->putBoard([$this->snapshot()]);
+
+        $this->assertCount(1, $this->boardQuery()->board()->rows);
+
+        (new ProviderAction)->deactivate($provider);
+
+        // Masir e dagh: tick e ba'di kelid ro bazneveshte mikone (provider
+        // dige poll nemishe) — inja simulate mishe.
+        $this->cache->putBoard([]);
+        $this->cache->breakIt();
+
+        // Masir e fallback bayad HAMUN javab ro bede: khali.
+        $this->assertCount(0, $this->boardQuery()->board()->rows);
+    }
+
+    public function test_a_soft_deleted_provider_leaves_the_fallback_board(): void
+    {
+        $provider = $this->provider();
+        $this->app->make(SnapshotStorePort::class)->save([$this->snapshot()]);
+
+        (new ProviderAction)->delete($provider);
+
+        $this->cache->breakIt();
+
+        // `join` e kham scope e SoftDeletes ro e'mal nemikone — in radif
+        // bedun e shart e `deleted_at` bar migasht.
+        $this->assertCount(0, $this->boardQuery()->board()->rows);
+    }
+
+    public function test_reactivating_brings_the_rows_back_with_their_day_band(): void
+    {
+        $provider = $this->provider();
+        $this->app->make(SnapshotStorePort::class)->save([$this->snapshot()]);
+
+        $action = new ProviderAction;
+        $action->deactivate($provider);
+        $action->activate($provider->refresh());
+
+        $this->cache->breakIt();
+        $board = $this->boardQuery()->board();
+
+        // `price_snapshots` amdan PAK NEMISHE: `dayOpen`/`direction` e un
+        // rooz sar e jash mimunan.
+        $this->assertCount(1, $board->rows);
+        $this->assertSame(265_400_000, $board->rows[0]->dayOpen?->minor);
     }
 
     // ── masir e asli ─────────────────────────────────────────────

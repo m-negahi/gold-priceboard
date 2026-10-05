@@ -37,8 +37,23 @@ final readonly class EloquentSnapshotStore implements SnapshotStorePort
     {
         // Yek query ba join — `providers.key` mostaghim miad va niazi be
         // query e dovom baraye tarjome ye id nist.
+        //
+        // 🔴 Filter e `is_active` + `deleted_at` ejbari ast، na ekhtiari.
+        // Masir e Redis (`putBoard`) kol e kelid ro BAZNEVISI mikone ba
+        // snapshot haye hamun tick، pas provider e khamoosh-shode khod-be-khod
+        // az tablo mire. Vali `join` e kham scope e SoftDeletes ro e'mal
+        // nemikone، pas bedun e in do shart، masir e FALLBACK e Postgres
+        // hamun provider ro BAR MIGARDUND — ya'ni tablo zamani ke Redis
+        // ghat' ast provider haye khamoosh ro neshun mide. Do masiri ke
+        // bayad eyn e ham bashan، daghighan tu bad tarin lahze vagera
+        // mishan.
+        //
+        // Pipeline ham az hamin method `previous` ro migire va un ham faghat
+        // provider haye fa'al ro poll mikone — pas filter unja ham durost ast.
         $rows = PriceSnapshot::query()
             ->join('providers', 'providers.id', '=', 'price_snapshots.provider_id')
+            ->where('providers.is_active', true)
+            ->whereNull('providers.deleted_at')
             ->select([
                 'price_snapshots.*',
                 'providers.key as provider_key',

@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float $buy_value
  * @property SpreadMode $sell_mode
  * @property float $sell_value
+ * @property bool $is_removal
  * @property string|null $changed_by
  * @property CarbonImmutable $effective_from
  * @property CarbonImmutable $created_at
@@ -33,7 +34,7 @@ class ProviderSpreadRevision extends Model
     protected $fillable = [
         'provider_id', 'symbol',
         'buy_mode', 'buy_value', 'sell_mode', 'sell_value',
-        'changed_by', 'effective_from', 'created_at',
+        'is_removal', 'changed_by', 'effective_from', 'created_at',
     ];
 
     /** @return array<string, string> */
@@ -42,6 +43,7 @@ class ProviderSpreadRevision extends Model
         return [
             'buy_value' => 'float',
             'sell_value' => 'float',
+            'is_removal' => 'boolean',
             'buy_mode' => SpreadMode::class,
             'sell_mode' => SpreadMode::class,
             'effective_from' => 'immutable_datetime',

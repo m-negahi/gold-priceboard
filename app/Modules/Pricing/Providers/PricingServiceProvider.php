@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Pricing\Providers;
 
+use App\Modules\Pricing\Application\Actions\ProviderSpreadAction;
 use App\Modules\Pricing\Application\Pipeline\Stages\EnrichStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\FetchStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\PersistStage;
@@ -58,6 +59,17 @@ final class PricingServiceProvider extends ServiceProvider
 
         $this->app->singleton(InfluxSpool::class, static fn (): InfluxSpool => new InfluxSpool(
             (int) config('pricing.influx.spool_max_lines', 40_000),
+        ));
+
+        // `ProviderSpreadAction` sarih bind mishe faghat baraye yek chiz:
+        // logger esh bayad channel e `pricing` bashe. Autowire `LoggerInterface`
+        // ro be channel e default resolve mikone، va un vaght yek
+        // `spread_version_bump_failed` — ke ya'ni cache e nemudar bayat mune —
+        // tu log e omumi gom mishe jaye inke tu log e pricing bashe.
+        $this->app->singleton(ProviderSpreadAction::class, static fn ($app): ProviderSpreadAction => new ProviderSpreadAction(
+            cache: $app->make(HotCachePort::class),
+            clock: $app->make(ClockPort::class),
+            logger: Log::channel((string) config('pricing.log.channel', 'stack')),
         ));
 
         // Tartib e Stage ha MOHEM ast:

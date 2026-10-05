@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Pricing\Infrastructure\Persistence\Models;
 
 use App\Modules\Pricing\Domain\Enums\HealthState;
+use App\Modules\Pricing\Domain\Enums\ProviderKind;
 use App\Modules\Pricing\Domain\Enums\UpstreamUnit;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,7 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $id
  * @property string $key
  * @property string $driver
- * @property string $kind
+ * @property ProviderKind $kind
  * @property string $name
  * @property string $name_fa
  * @property string|null $website
@@ -81,6 +82,7 @@ class Provider extends Model
             'last_symbol_count' => 'integer',
             'last_rejected_count' => 'integer',
             'options' => 'array',
+            'kind' => ProviderKind::class,
             'upstream_unit' => UpstreamUnit::class,
             'health_state' => HealthState::class,
             'next_poll_at' => 'immutable_datetime',

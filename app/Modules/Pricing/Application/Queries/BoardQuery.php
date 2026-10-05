@@ -9,6 +9,7 @@ use App\Modules\Pricing\Application\Dto\BoardRowDto;
 use App\Modules\Pricing\Application\Dto\ProviderConfigDto;
 use App\Modules\Pricing\Application\Dto\SnapshotDto;
 use App\Modules\Pricing\Domain\Enums\Instrument;
+use App\Modules\Pricing\Domain\Enums\ProviderKind;
 use App\Modules\Pricing\Domain\Ports\ClockPort;
 use App\Modules\Pricing\Domain\Ports\HotCachePort;
 use App\Modules\Pricing\Domain\Ports\SnapshotStorePort;
@@ -103,7 +104,7 @@ final readonly class BoardQuery
 
     /**
      * @param  array<string, array<string, SpreadPair>>  $map
-     * @param  array<string, string>  $kinds
+     * @param  array<string, ProviderKind>  $kinds
      * @param  array<string, ProviderConfigDto>  $providers
      */
     private function toRow(
@@ -159,7 +160,7 @@ final readonly class BoardQuery
      *     khodesh ro mide
      * Har chiz e digar arithmetic e MA-st va bayad barchasb bokhore.
      *
-     * @param  array<string, string>  $kinds
+     * @param  array<string, ProviderKind>  $kinds
      */
     private function isDerived(SnapshotDto $snapshot, array $kinds): bool
     {
@@ -167,7 +168,12 @@ final readonly class BoardQuery
             return false;
         }
 
-        return ($kinds[$snapshot->providerKey] ?? 'reference') !== 'platform';
+        // Default e `Reference` amdi-e: agar `kind` ro nadunim، bayad
+        // MOHAFEZEKAR bashim va radif ro «moshtagh» e'lam konim. Eshtebah tu
+        // in jahat yek footnote e ezafi-e؛ eshtebah tu jahat e dige
+        // arithmetic e ma ro be onvan e nerkh e vaghei ye yek maghaze ja
+        // mizane.
+        return ! ($kinds[$snapshot->providerKey] ?? ProviderKind::Reference)->hasRealSides();
     }
 
     /** @return array<string, array<string, SpreadPair>> */
@@ -182,7 +188,7 @@ final readonly class BoardQuery
         }
     }
 
-    /** @return array<string, string> */
+    /** @return array<string, ProviderKind> */
     private function providerKinds(): array
     {
         try {

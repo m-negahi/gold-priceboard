@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Modules\Pricing\Application\Actions\ProviderAction;
+use App\Modules\Pricing\Application\Actions\ProviderSpreadAction;
+use App\Modules\Pricing\Application\Dto\ProviderInputDto;
+use App\Modules\Pricing\Application\Dto\SpreadInputDto;
 use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\Provider;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\ProviderSpread;
@@ -15,6 +19,18 @@ use Illuminate\Database\Seeder;
  * ⚠️ `is_active = false` shoru' mishan. Ravesh e kar (skill e
  * `add-price-provider`): avval `pricing:tick` ro dasti bezan، `TickMonitor`
  * ro check kon، va faghat vaghti `last_rejected_count` sefr bud roshan kon.
+ *
+ * ── 🔴 Chera az Action rad mishe va na `Provider::updateOrCreate()` ──
+ * Seeder ghablan mostaghim minevesht، va natije in bud ke mitunest config-i
+ * besaze ke `ProviderAction` un ro rad mikone. Daghighan hamin ettefagh
+ * oftad: vaghti `ProviderAction` neveshte shod، do ta «invariant» esh config
+ * e VAGHEI ye hamin seeder ro rad kardan (`timeout = 20` baraye estjt va
+ * `freshness_seconds = 90_000` baraye symbol haye jahani). Un do invariant
+ * eshtebah budan va eslah shodan — vali faghat chun test un ha ro kenar e
+ * ham gozasht.
+ *
+ * Alan seeder HAMUN darvaze ro rad mishe ke panel: config e ghabl e ghabul
+ * bedun e hich test e ezafi, mohal ast.
  */
 final class ProviderSeeder extends Seeder
 {
@@ -88,26 +104,65 @@ final class ProviderSeeder extends Seeder
      */
     private function provider(array $attributes, array $freshnessOverrides): void
     {
-        $provider = Provider::query()->updateOrCreate(
-            ['key' => $attributes['key']],
-            array_merge(['is_active' => false], $attributes),
-        );
+        $providers = new ProviderAction;
+
+        /** @var Provider|null $existing */
+        $existing = Provider::withTrashed()->where('key', $attributes['key'])->first();
+
+        if ($existing === null) {
+            $provider = $providers->create(ProviderInputDto::fromArray(
+                array_merge(['is_active' => false], $attributes),
+            ));
+        } else {
+            // 🔴 `is_active` e MOJUD hefz mishe. Bedun e in، yek `db:seed` ye
+            // ma'muli har provider-i ke admin roshan karde ro KHAMOOSH mikone
+            // — ya'ni site bedun e hich khata az gheymat mioftad.
+            $provider = $providers->update($existing, ProviderInputDto::fromArray(
+                array_merge($attributes, ['is_active' => $existing->is_active]),
+            ));
+        }
+
+        $this->seedSpreads($provider, $freshnessOverrides);
+    }
+
+    /**
+     * Faghat radif haye NABUDE sakhte mishan.
+     *
+     * 🔴 Radif haye mojud dast NEMIKHORAN. Seeder spread e wildcard ro ba
+     * SEFR minevise؛ agar re-seed un ro bazneveshte kone، spread haye vaghei
+     * ke admin tanzim karde pak mishan — va chun `ProviderSpreadAction` un
+     * ro yek taghir e vaghei mibine، yek revision ham minevise va cache ro
+     * batel mikone. Ya'ni `db:seed` tabdil mishe be «hame ye nerkh ha sefr
+     * shodan» bedun e hich ekhtar.
+     *
+     * @param  array<string, int>  $freshnessOverrides
+     */
+    private function seedSpreads(Provider $provider, array $freshnessOverrides): void
+    {
+        $existing = ProviderSpread::query()
+            ->where('provider_id', $provider->id)
+            ->pluck('symbol')
+            ->all();
+
+        $rows = [];
 
         // Spread e wildcard: sefr — admin ba'dan tu panel tanzim mikone.
-        ProviderSpread::query()->updateOrCreate(
-            ['provider_id' => $provider->id, 'symbol' => ProviderSpread::WILDCARD],
-            ['buy_mode' => 'percent', 'buy_value' => 0, 'sell_mode' => 'percent', 'sell_value' => 0],
-        );
+        if (! in_array(ProviderSpread::WILDCARD, $existing, true)) {
+            $rows[] = new SpreadInputDto(symbol: ProviderSpread::WILDCARD);
+        }
 
         foreach ($freshnessOverrides as $symbol => $seconds) {
-            ProviderSpread::query()->updateOrCreate(
-                ['provider_id' => $provider->id, 'symbol' => $symbol],
-                [
-                    'buy_mode' => 'percent', 'buy_value' => 0,
-                    'sell_mode' => 'percent', 'sell_value' => 0,
-                    'freshness_seconds' => $seconds,
-                ],
-            );
+            if (in_array($symbol, $existing, true)) {
+                continue;
+            }
+
+            $rows[] = new SpreadInputDto(symbol: $symbol, freshnessSeconds: $seconds);
         }
+
+        if ($rows === []) {
+            return;
+        }
+
+        app(ProviderSpreadAction::class)->sync($provider, $rows, changedBy: 'seeder');
     }
 }

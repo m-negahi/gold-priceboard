@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Pricing\Application\Queries;
 
 use App\Modules\Pricing\Domain\Enums\Instrument;
+use App\Modules\Pricing\Domain\Enums\ProviderKind;
 use App\Modules\Pricing\Domain\ValueObjects\SpreadPair;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\Provider;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\ProviderSpread;
@@ -54,12 +55,24 @@ final readonly class SpreadQuery
             ?? SpreadPair::none();
     }
 
-    /** @return array<string, string> providerKey => kind */
+    /**
+     * `providerKey => ProviderKind`.
+     *
+     * ⚠️ `pluck()` estefade NEMISHE: pluck az masir e query builder mire va
+     * cast e Eloquent ro rad mikone، pas string e kham bar migardund va
+     * caller majbur bud ba `!== 'platform'` moghayese kone — yek typo tu DB
+     * saket hame ro «reference» mikard.
+     *
+     * @return array<string, ProviderKind>
+     */
     public function providerKinds(): array
     {
-        return Provider::query()
-            ->pluck('kind', 'key')
-            ->map(static fn ($kind): string => (string) $kind)
-            ->all();
+        $kinds = [];
+
+        foreach (Provider::query()->get(['key', 'kind']) as $provider) {
+            $kinds[$provider->key] = $provider->kind;
+        }
+
+        return $kinds;
     }
 }

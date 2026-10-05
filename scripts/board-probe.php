@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 /* Tablo ye ZENDE az masir e vaghei (Redis -> fallback e Postgres). */
 
+use App\Modules\Pricing\Application\Queries\BoardQuery;
+use App\Modules\Pricing\Application\Queries\ProviderQuery;
+use Illuminate\Contracts\Console\Kernel;
+
 require __DIR__.'/../vendor/autoload.php';
 
 $app = require __DIR__.'/../bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-
-use App\Modules\Pricing\Application\Queries\BoardQuery;
-use App\Modules\Pricing\Application\Queries\ProviderQuery;
+$app->make(Kernel::class)->bootstrap();
 
 $board = $app->make(BoardQuery::class)->board($app->make(ProviderQuery::class)->allActive());
 
