@@ -1,9 +1,317 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Price Board — design tokens.
+
+   SINGLE SOURCE OF TRUTH for every colour, size, radius and shadow in this
+   project. Nothing outside this file defines a hex or a raw px: Blade uses
+   Tailwind utilities generated from `@theme`, and the page-builder uses the
+   `--bp-*` variables through `Page\Blocks\DesignTokens`.
+
+   Adding a token = add it here FIRST, then mirror the key in DesignTokens.
+   A test asserts both sides stay in sync.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@import '@fontsource-variable/vazirmatn';
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
+@source '../../app/Modules/**/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* ── Typeface ───────────────────────────────────────────────────────────
+       Vazirmatn Variable, self-hosted through @fontsource-variable (no CDN,
+       no external request — the woff2 subsets ship in our own build).
+       It is the ONLY family in this project: Persian, Latin and digits. */
+    --font-sans: 'Vazirmatn Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'Vazirmatn Variable', ui-monospace, monospace;
+
+    /* ── Brand ──────────────────────────────────────────────────────────────
+       Sampled from the reference screenshots in images/ui/, not invented:
+       #246AEF is the exact fill of every primary button and link in them.
+       4.79:1 on white for text AND 4.79:1 for white text on the button. */
+    --color-brand: #246aef;
+    --color-brand-2: #1551c4; /* hover / pressed — 6.99:1 */
+    --color-brand-3: #0d3f9e; /* deepest — 9.45:1 */
+    /* The lighter blue the reference uses for LARGE filled cards (the FAQ
+       banner, the footer "Pricing" card). White on it is 3.29:1, so it is for
+       large or bold text only — never body copy. */
+    --color-brand-bright: #4d8afe;
+    --color-brand-soft: #f0f5ff;
+    --color-brand-soft-2: #d9e5fc;
+    /* Brand on the dark band: #246AEF only reaches 3.51:1 there, so links and
+       labels on navy-black use this lightened variant (4.52:1). */
+    --color-brand-on-dark: #4180f6;
+    /* The same blue as a triplet, for rgba() shadows and halos only — so a
+       brand change never leaves a hardcoded hex behind. */
+    --color-brand-rgb: 36, 106, 239;
+    --color-on-brand: #ffffff;
+    --color-on-brand-2: #e3ecfd;
+
+    /* ── Market semantics ───────────────────────────────────────────────────
+       RESERVED for price direction and freshness — never a save button, never
+       a form error. `-strong` is the badge/fill tone taken from the reference
+       ("Market open" is exactly #2DC87F); the plain tone is the same hue
+       darkened until it passes AA as text. */
+    --color-up: #1c8654; /* text — 4.58:1 */
+    --color-up-strong: #2dc87f; /* fill — dark text on it 7.76:1 */
+    --color-up-soft: #e3fcf1;
+    --color-down: #c02e38; /* text — 5.69:1 */
+    --color-down-strong: #e8434e; /* fill */
+    --color-down-soft: #ffebec;
+    --color-flat: #6b6b6b;
+    --color-flat-soft: #eceef2;
+    /* A price older than `stale_after` is a first-class UI state (F1/F11).
+       The fill is the reference's amber (the "watchlist" button, #FFE69F). */
+    --color-stale: #8a5a00;
+    --color-stale-strong: #ffe69f;
+    --color-stale-soft: #fff6e0;
+
+    /* ── Metals ─────────────────────────────────────────────────────────────
+       Instrument identity (icon discs, chips). Ours, not in the reference —
+       it has no gold/silver/copper vocabulary. Never used for text tone. */
+    --color-gold: #d69e2e;
+    --color-gold-soft: #fef6e7;
+    --color-silver: #8fa0b5;
+    --color-silver-soft: #f1f5f9;
+    --color-copper: #b45f3f;
+    --color-copper-soft: #fdf1ec;
+    --color-coin: #b8860b;
+    --color-coin-soft: #fdf6e3;
+
+    /* ── UI status (panel, forms, toasts) — distinct from market tones ──────
+       `danger` is a warmer red than `down` on purpose: a failed form and a
+       falling price must not look like the same event. */
+    --color-ok: #1c8654;
+    --color-ok-soft: #e3fcf1;
+    --color-warn: #8a5a00;
+    --color-warn-soft: #fff6e0;
+    --color-info: #1551c4;
+    --color-info-soft: #f0f5ff;
+    --color-danger: #b42318;
+    --color-danger-soft: #fef3f2;
+
+    /* ── Neutrals ───────────────────────────────────────────────────────────
+       Sampled from the reference, which is a NEUTRAL grey ramp (body copy
+       measures #717171), not the cool slate a Tailwind default would give.
+       Contrast on white: ink 16.8:1, ink-3 8.8:1, muted 4.9:1.
+       muted-2 is 3.4:1 — large or decorative text only, never body copy. */
+    --color-ink: #1d1d1f;
+    --color-ink-2: #2e2e31;
+    --color-ink-3: #4a4a4e;
+    /* The reference's body grey measures #717171, which is AA on white (4.88:1)
+       but only 4.20:1 on the chip surface — so it is darkened one imperceptible
+       step to #6B6B6B, which passes on white (5.33), canvas (4.94) and chips
+       (4.59) alike. A test enforces all three. */
+    --color-muted: #6b6b6b;
+    --color-muted-2: #8a8a8f;
+    --color-muted-3: #adadb2;
+
+    --color-surface: #ffffff;
+    --color-surface-2: #fafafc;
+    --color-surface-3: #eceef2; /* chips, inset rows */
+    --color-canvas: #f6f6f9;
+
+    /* Full-width dark bands (closing CTA, footer). The reference's band is a
+       neutral near-black (#1D1D1F), not navy. */
+    --color-surface-dark: #1d1d1f;
+    --color-surface-dark-2: #2a2a2d;
+    --color-ink-invert: #ededf0; /* 14.4:1 on the band */
+    --color-muted-invert: #a7a7ad; /* 7.0:1 */
+    --color-line-invert: #323236;
+
+    --color-line: #e4e6e9; /* the reference hairline */
+    --color-line-2: #edeef1;
+    --color-line-3: #cfcfd4;
+
+    /* Card radius as a named utility (`rounded-card`) so Tailwind's numeric
+       scale stays untouched. */
+    --radius-card: 16px;
+    --radius-chip: 999px;
+}
+
+/* ── Page-builder token axes ────────────────────────────────────────────────
+   Deliberately OUTSIDE `@theme` so they never shadow Tailwind's own numeric
+   scales (text-lg, p-4, rounded-lg). Keys mirror `Page\Blocks\DesignTokens`. */
+:root {
+    --bp-space-2xs: 2px;
+    --bp-space-xs: 4px;
+    --bp-space-sm: 8px;
+    --bp-space-md: 16px;
+    --bp-space-lg: 24px;
+    --bp-space-xl: 36px;
+    --bp-space-2xl: 56px;
+    --bp-space-3xl: 80px;
+
+    /* Fluid scale: every size walks with the viewport, so a 4xl headline is
+       32px on a 360px phone instead of 56px. Keys never change — saved pages
+       must keep meaning the same thing forever. */
+    --bp-text-xs: clamp(11px, 0.2vw + 10.4px, 12px);
+    --bp-text-sm: clamp(13px, 0.25vw + 12.2px, 14px);
+    --bp-text-md: clamp(15px, 0.3vw + 14px, 16px);
+    --bp-text-lg: clamp(17px, 0.9vw + 14px, 20px);
+    --bp-text-xl: clamp(20px, 1.7vw + 14px, 26px);
+    --bp-text-2xl: clamp(24px, 3vw + 13px, 34px);
+    --bp-text-3xl: clamp(28px, 4.5vw + 12px, 44px);
+    --bp-text-4xl: clamp(32px, 6.5vw + 9px, 56px);
+
+    /* Persian needs more line-height than Latin at the same size: Vazirmatn's
+       ascenders/descenders plus diacritics collide at 1.5. */
+    --bp-leading-tight: 1.45;
+    --bp-leading-snug: 1.7;
+    --bp-leading-normal: 1.95;
+    --bp-leading-loose: 2.3;
+    --bp-track-tight: -0.02em;
+    --bp-track-normal: 0;
+
+    --bp-weight-normal: 400;
+    --bp-weight-medium: 500;
+    --bp-weight-semibold: 600;
+    --bp-weight-bold: 700;
+
+    /* Rounder than a document, flatter than a toy — matches the reference. */
+    --bp-radius-sm: 8px;
+    --bp-radius-md: 12px;
+    --bp-radius-lg: 16px;
+    --bp-radius-xl: 20px;
+    --bp-radius-2xl: 28px;
+    --bp-radius-full: 999px;
+
+    /* Yek pixel-e fizeki-e sabet, baraye un calc()-haye nadere ke yek khat-e 1px ro dagigh
+       vasat mikonan (khat-e "aknoon" rooye timeline-e sa'at-e bazar-e mizkar) — kutchik-tarin
+       ghadam-e --bp-space (2xs) 2px-e, baraye in kar dorosht-e. Amdan joz'-e space scale nist,
+       pas hich vaght tuye option-haye PartStyle/SectionSettings zaher nemishe. */
+    --bp-hairline: 1px;
+
+    /* Few, and weak. The default surface is flat with a hairline border;
+       a shadow means the thing genuinely floats. */
+    --bp-elev-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+    --bp-elev-md: 0 2px 4px rgba(15, 23, 42, 0.05), 0 8px 16px -10px rgba(15, 23, 42, 0.16);
+    --bp-elev-lg: 0 4px 8px rgba(15, 23, 42, 0.05), 0 20px 34px -18px rgba(15, 23, 42, 0.22);
+    --bp-elev-brand: 0 8px 24px -12px rgba(var(--color-brand-rgb), 0.55);
+
+    /* Stacking order, named so a new overlay never guesses a number: sticky chrome,
+       overlays (modal, confirm, help drawer), toasts above everything. */
+    --bp-z-header: 40;
+    --bp-z-overlay: 50;
+    --bp-z-toast: 60;
+
+    --bp-dur-fast: 120ms;
+    --bp-dur-base: 180ms;
+    --bp-dur-slow: 280ms;
+    --bp-ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --bp-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+    --bp-icon-sm: 16px;
+    --bp-icon-md: 20px;
+    --bp-icon-lg: 28px;
+    --bp-icon-stroke: 1.75;
+
+    --bp-focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-brand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --bp-dur-fast: 0ms;
+        --bp-dur-base: 0ms;
+        --bp-dur-slow: 0ms;
+    }
+}
+
+/* One content width, everywhere. Declared with `@utility` because Tailwind v4
+   ships its own breakpoint-based `container` in the utilities layer, which
+   would otherwise win over any `.container` rule we write in a layer. */
+@utility container {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: 16px;
+    max-width: 1200px;
+}
+
+/* Data-dense pages (the board, the provider dashboard) get more room. */
+@utility container-wide {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: 16px;
+    max-width: 1440px;
+}
+
+/* `num` and `ltr` are declared as plain rules, NOT with `@utility`: a Tailwind v4
+   utility is only emitted when the class appears in scanned source, and the board
+   builds its price cells in JavaScript at runtime — the class would be missing
+   exactly where it matters most. */
+@layer utilities {
+    /* Prices must never jitter while polling. Vazirmatn's `tnum` feature maps the
+       Persian digits U+06F0–06F9 to fixed-advance variants (1349/2048 em each),
+       which is what keeps a column of numbers a column. */
+    .num {
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: 'tnum' 1;
+    }
+
+    /* Symbol codes (XAU/USD, GOLD_18K_G) stay left-to-right inside RTL text. */
+    .ltr {
+        direction: ltr;
+        unicode-bidi: isolate;
+    }
+}
+
+@layer base {
+    html {
+        direction: rtl;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        background: var(--color-canvas);
+        color: var(--color-ink);
+        font-family: var(--font-sans);
+        line-height: var(--bp-leading-normal);
+    }
+
+    :focus-visible {
+        outline: none;
+        box-shadow: var(--bp-focus-ring);
+        border-radius: var(--bp-radius-sm);
+    }
+
+    ::selection {
+        background: var(--color-brand-soft-2);
+    }
+}
+
+/* Alpine: ta init nashode, element-haye x-cloak dide nashan (jelo-ye flash-e modal/drawer). */
+[x-cloak] {
+    display: none !important;
+}
+
+@layer components {
+    /* Matn-e rahnama: chand tag-e sade ba fasele-ye khandani. */
+    .prose-help h3 { @apply mt-2 text-sm font-bold text-ink; }
+    .prose-help p { @apply text-ink-2; }
+    .prose-help ul { @apply list-disc space-y-1 pe-5; }
+    .prose-help dl { @apply grid grid-cols-[auto_1fr] gap-x-3 gap-y-1; }
+    .prose-help dt { @apply font-medium text-ink; }
+    .prose-help code { direction: ltr; unicode-bidi: isolate; @apply rounded bg-surface-2 px-1 text-xs; }
+
+    /* Rich text (Tiptap tu panel, badane-ye safhe tu site): hamun allow-list-e HtmlSanitizer (ADR-0037). */
+    .prose-rich, .prose-editor { @apply text-ink leading-(--bp-leading-relaxed); }
+    .prose-rich > * + *, .prose-editor > * + * { @apply mt-4; }
+    .prose-rich h2, .prose-editor h2 { @apply mt-8 text-2xl font-bold text-ink; }
+    .prose-rich h3, .prose-editor h3 { @apply mt-6 text-xl font-bold text-ink; }
+    .prose-rich h4, .prose-editor h4 { @apply mt-5 text-lg font-semibold text-ink; }
+    .prose-rich p, .prose-editor p { @apply text-ink-2; }
+    .prose-rich a, .prose-editor a { @apply text-brand-2 underline decoration-brand/40 underline-offset-4 hover:decoration-brand; }
+    .prose-rich ul, .prose-editor ul { @apply list-disc space-y-1 pe-6; }
+    .prose-rich ol, .prose-editor ol { @apply list-decimal space-y-1 pe-6; }
+    .prose-rich li p, .prose-editor li p { @apply mt-0; }
+    .prose-rich blockquote, .prose-editor blockquote { @apply border-e-4 border-line-3 bg-surface-2 pe-4 ps-4 py-2 text-ink-2 italic rounded-lg; }
+    .prose-rich img, .prose-editor img { @apply mx-auto max-w-full rounded-card; }
+    .prose-rich hr, .prose-editor hr { @apply my-8 border-line; }
+    .prose-rich code, .prose-editor code { direction: ltr; unicode-bidi: isolate; @apply rounded bg-surface-2 px-1 text-sm; }
+    .prose-rich pre, .prose-editor pre { direction: ltr; unicode-bidi: isolate; @apply overflow-x-auto rounded-lg bg-surface-2 p-4 text-sm; }
+    .prose-rich p:empty::before, .prose-editor p:empty::before { content: '\00a0'; }
+
+    /* Editor-e Tiptap: hamun prose + placeholder + tasvir-e entekhab-shode. */
+    .prose-editor img.ProseMirror-selectednode { @apply ring-2 ring-brand; }
+    .prose-editor p.is-editor-empty:first-child::before { @apply text-muted-3; content: attr(data-placeholder); float: right; pointer-events: none; height: 0; }
 }

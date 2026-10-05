@@ -15,12 +15,12 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P2-06` (`SendOtpAction` / `VerifyOtpAction` + `OtpThrottle`)
-**Akharin kar**: `P2-05` tamum shod. **710 test (2933 assertion)، hame sabz**، Pint tamiz.
+**Task e fe'li**: `P2-07` (`Livewire/SignIn` + `EnsureAdmin`)
+**Akharin kar**: `P2-06` tamum shod. **734 test (2984 assertion)، hame sabz**، Pint tamiz.
 **Phase 1 amalan tamum ast** — faghat `P1-28` (marja' e e'temad) baz munde، ke AMDAN be ba'd az Phase 3 moghul shode: hall esh yek toggle ya «ta'eed e dasti» tu panel ast، pas sakhtan esh ghabl az vojud e panel ya'ni hads zadan e UI. `scripts/resilience-check.sh` ru mohit e vaghei **29/29 sabz**.
 **ENGINE ZENDE-ST**: `price-worker` tick mizane، `BoardQuery` tablo ye vaghei ro ba moghayese ye do provider bar migardune.
 **Nime-kare**: hich.
-**Gam e ba'di**: `P2-06` — `SendOtpAction` / `VerifyOtpAction` + `OtpThrottle` (**phone + IP**). 🔴 Enumeration safety: javab baraye shomare ye mojud va namojud YEKSAN. Karbar vaghti sakhte mishe ke OTP ta'eed she. Ba'd az 3 ghalat code BATEL. Limit ha: send 3/saat/phone + 10/saat/IP؛ verify 5/saat/phone + 20/saat/IP؛ cooldown 60s.
+**Gam e ba'di**: `P2-07` — `Livewire/SignIn` (do marhale: phone → code) + middleware ye `EnsureAdmin`. BYPASS_OTP: code neshun dade she + dokme ye por kardan e khodkar (va FAGHAT vaghti `app.debug` ham roshan e — do ghofl). Ba'd `P2-08` (test haye takmili) va `P2-09` (CODE REVIEW e kol + Timescale + symbol-az-DB).
 **Ba'd az un Phase 2** (auth: mobile + OTP).
 **⚠️ `P1-22` (Seeder) ghablan tu `P1-19` anjam shod** — seeder az Action ha rad mishe va re-seed gheyr-mokhareb ast.
 
@@ -324,7 +324,11 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → `LogSms` (dev): tanha ja-i tu kol e system ke code e plaintext sabt mishe — amdi، chun dev SMS nadare.
   → `SmsManager`: driver e nashenas hamin ja miterke (typo ye `SMS_DRIVER` nabayad ta avvalin login penhan bemune).
   → 🔴 **Bug e vaghei tu `PhoneHelper::mask()` peyda shod**: vorudi-i ke ba E.164 match nemishod DAST-NAKHORDE barmigasht — fail-OPEN baraye method-i ke kol e karesh amn kardan e log ast. Alan fail-CLOSED: har raghame match-nashode setare mishe. (Test e `KavenegarSms` gereft esh.)
-- [ ] **P2-06** — `SendOtpAction` / `VerifyOtpAction` + `OtpThrottle` (**phone + IP**)
+- [x] **P2-06** — `SendOtpAction` / `VerifyOtpAction` + `OtpThrottle` (22 test، 4 mutation gerefte shod)
+  → `OtpThrottle`: phone **va** IP jodagane (faghat phone → attacker ba shomare haye jadid SMS-khoone ro khali mikone؛ faghat IP → botnet yek shomare ro bombaran mikone). Send: 3/saat/phone + 10/saat/IP؛ verify: 5 + 20. `clearVerifies` FAGHAT phone ro pak mikone — IP e attacker ba har movafaghiat sahmie ye taze nemigire.
+  → `SendOtpAction`: 🔴 enumeration-safe (HICH check e vojud e karbar — raftar baraye mojud/namojud byte-be-byte yeksan، test esh hast). 🔴 `hit`+`cooldown` FAGHAT ba'd az SMS e MOVAFAGH: shekast e Kavenegar sahmie nemikhore va code e yatim ham batel mishe — karbar fori retry mikone. Zakhire GHABL az ersal. Bypass → code tu result (faghat dev).
+  → `VerifyOtpAction`: 🔴 karbar FAGHAT ba'd az ta'eed sakhte mishe (send hich user nemisaze — jadval e users ashghal nemishe). 🔴 ba'd az 3 ghalat code BATEL (hatta code e dorost e ba'di fail mishe — test). Yek-bar-masraf. 🔴 «ghalat/monghazi/nabude» hame YEK payam (enumeration — test e uniqueness e payam ha). `hitVerify` GHABL az check.
+  → Mutation: batel-sazi، yek-bar-masraf، hit-ghabl-az-SMS، payam e jodagane — har 4 ta fail dadan.
 - [ ] **P2-07** — `Livewire/SignIn` (do marhale) + `EnsureAdmin`
   Agar `BYPASS_OTP=true`: (a) code e tolid-shode zir e form neshun dade she، (b) dokme ye «پر کردن خودکار» kenar e input ke code ro mizare tu input. `false` bashe hich kodum nabashe (eyn e production) — **test baraye har do hālat**.
 - [ ] **P2-09** — 🔴 **CODE REVIEW e KOL e projeh** (khaste ye sahebe projeh، 2026-10-05) — ba'd az tamam shodan e Phase 2. Kol e code ta inja: Pricing + Common + Auth. Ba `/code-review` + barresi ye dasti ye memari.

@@ -38,4 +38,16 @@ return [
     // Connection e Redis baraye store (Redis e OMUMI — OTP cache e vaghei-e).
     'connection' => env('OTP_REDIS_CONNECTION', 'default'),
 
+    /*
+     * Rate limit — PHONE **va** IP، jodagane (dalil tu `OtpThrottle`).
+     * ⚠️ Limit e IP faghat ba `TrustProxies` e salem ma'ni dare.
+     */
+    'limits' => [
+        'send_per_phone' => 3,
+        'send_per_ip' => 10,
+        'verify_per_phone' => 5,
+        'verify_per_ip' => 20,
+        'decay_seconds' => 3_600,
+    ],
+
 ];
