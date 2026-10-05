@@ -1,5 +1,24 @@
 # PriceBoard — Plan e Sakht
 
+> ## ⚠️ Taghirat e BA'D az tasvib (hengam e sakht) — aval in ro bekhun
+> In plan manba' e «chi va chera» ye AVALIYE ast. Vaziat e lahze-i tu `docs/TASKS.md` ast va
+> un HAMISHE bar in moghaddam e. Mavared e zir hengam e sakht avaz shodan (jozyat + dalil tu
+> entry e hamun task tu TASKS):
+>
+> | Chi | Plan migoft | Alan | Koja |
+> |---|---|---|---|
+> | Tartib e Stage ha | Fetch → Normalize → Validate → Persist → Publish | **Fetch → Validate → Enrich → Persist → Publish** (Normalize dakhel e Source ha-st؛ Validate GHABL az Enrich ta `dayHigh` ba meghdar e kharab aludeh nashe) | `P1-15`, `P1-20` |
+> | SMS e dev | driver e `LogSms` e joda | **hazf shod** — `FakeSms` khodesh log mizane (tashkhis e sahebe projeh) | `P2-05` |
+> | Retry e fetch | nabud | khata haye GOZARA ye ettesal (cURL 35/7/…) yek bar retry، clamp be budget؛ timeout HARGEZ retry nemishe | `P1-25` |
+> | Avvalin tick e provider | faghat band e motlagh | **check e cross-provider** (miane ye provider haye dige، saghf 20%) | `P1-24` |
+> | Radif e bayat ru tablo | moshakhas nabud | tablo akharin-ma'lum e HAME ro negah midare؛ `hide_after_seconds` **NESBI** (`freshness + hide`) va ru READ | `P1-26` |
+> | Yakh-zadegi ye Redis | nabud | **zarabān e nevisande** + fallback e khodkar be PG + `degraded` | `P1-27` |
+> | Schema | — | `providers.kind` (reference/platform)، `provider_spread_revisions.is_removal`؛ migration haye ezafe-shi tu asli ha merge shodan (ghabl az production) | `P1-19`, 2026-10-06 |
+> | `users` | — | `User` tu module e Auth؛ `phone` hoviat e login؛ `is_admin` fillable NIST | `P2-03` |
+> | UI e Phase 3 | Livewire e sefareshi az sefr | **kit e amade az noskhe ye ghabli** (form/panel components، Alpine، Media/Panel module) — `P3-00` integration | 2026-10-06 |
+> | Barresi haye baz | — | Influx↔Timescale va symbol-az-DB tu **code review e P2-09** tasmim mishan | `P2-09` |
+
+
 <!-- In file ba `docs/TASKS.md` joft ast: inja «chi va chera», unja «koja hastim». -->
 
 
@@ -74,7 +93,7 @@ app/Modules/Pricing/
 │   ├── Actions/        (WRITE) IngestTickAction · ProviderAction
 │   │                   · ProviderSpreadAction · RecordHealthAction
 │   ├── Queries/        (READ)  BoardQuery · CandleQuery · ProviderQuery · SpreadQuery
-│   ├── Pipeline/       TickPipeline + Stages/{Fetch,Normalize,Validate,Persist,Publish}Stage
+│   ├── Pipeline/       TickPipeline + Stages/{Fetch,Validate,Enrich,Persist,Publish}Stage
 │   └── Dto/            RawQuoteDto · TickDto · SnapshotDto · CandleDto
 │                       · BoardRowDto · TickReportDto · SinkResultDto
 ├── Infrastructure/              ← hame ye chiz e "biruni" faghat inja
@@ -426,10 +445,10 @@ Dalil e asli (na «durability») **asymmetry e shekast** ast: PG down + tartib e
 Auth/Domain/Ports/{OtpStorePort,SmsPort}
 Auth/Application/Actions/{SendOtpAction,VerifyOtpAction}
 Auth/Infrastructure/Otp/RedisOtpStore      // code HASH shode, na plaintext
-Auth/Infrastructure/Sms/{KavenegarSms,LogSms}
+Auth/Infrastructure/Sms/{KavenegarSms,FakeSms,SmsManager}
 Auth/Support/OtpThrottle · Livewire/SignIn · Http/Middleware/EnsureAdmin
 ```
-**SMS faghat Kavenegar**، posht e `SmsPort` → fallback ba'dan **yek file**. Dev: `LogSms`.
+**SMS faghat Kavenegar**، posht e `SmsPort` → fallback ba'dan **yek file**. Dev/test/demo: `FakeSms` (log + hafeze — `LogSms` e joda hazf shod، bebin changelog).
 - Code **hash shode** tu Redis، `expires_in` 120s، `resend_cooldown` 60s، `max_attempts` 3 → ba'd az 3 ghalat code **batel** (na faghat shomaresh).
 - **Enumeration safety**: javab baraye shomare ye mojud va namojud yeksan. User vaghti sakhte mishe ke OTP ta'eed she.
 

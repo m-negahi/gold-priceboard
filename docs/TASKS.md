@@ -18,14 +18,13 @@
 `resources/views/components/**` (form kit: input/select/jalali-date/otp-input/media-picker/…، panel kit: sidebar/modal/datatable/toasts/…، captcha، layout e panel)، `resources/js/alpine/**` (11 component: login، datatable، jalali-date، media-upload، …)، `resources/views/kit/**` (safhe haye namayesh e kit)، module e **Media** (upload + ketabkhane، 21 file) va **Panel** (dashboard + navigation، 12 file).
 🔴 **Hich kodum REGISTER NASHODAN** (provider hashun tu `bootstrap/providers.php` nist، js ha import nashodan) — bi-asar-and ta Phase 3. Tu P3 bayad: review + register + test + hamahangi ba memari (Livewire e ma vs controller e una) + token haye theme. `HtmlSanitizer` (baraye rich-text) amdan nayamade — age lazem shod az Desktop biad.
 
-**Phase**: 1 — Pricing engine
+**Phase**: 2 — Auth (mobile + OTP)
 **Task e fe'li**: `P2-07` (`Livewire/SignIn` + `EnsureAdmin`) — ⚠️ `resources/js/alpine/login.js` va `components/form/otp-input.blade.php` e amade az noskhe ghabli hast؛ SignIn bayad az una estefade kone na az sefr
-**Akharin kar**: `P2-06` tamum shod. **734 test (2984 assertion)، hame sabz**، Pint tamiz.
+**Akharin kar**: integration e helper ha + asset haye UI az noskhe ye ghabli (2026-10-06). **750 test (3015 assertion)، hame sabz**، Pint tamiz.
 **Phase 1 amalan tamum ast** — faghat `P1-28` (marja' e e'temad) baz munde، ke AMDAN be ba'd az Phase 3 moghul shode: hall esh yek toggle ya «ta'eed e dasti» tu panel ast، pas sakhtan esh ghabl az vojud e panel ya'ni hads zadan e UI. `scripts/resilience-check.sh` ru mohit e vaghei **29/29 sabz**.
 **ENGINE ZENDE-ST**: `price-worker` tick mizane، `BoardQuery` tablo ye vaghei ro ba moghayese ye do provider bar migardune.
 **Nime-kare**: hich.
 **Gam e ba'di**: `P2-07` — `Livewire/SignIn` (do marhale: phone → code) + middleware ye `EnsureAdmin`. BYPASS_OTP: code neshun dade she + dokme ye por kardan e khodkar (va FAGHAT vaghti `app.debug` ham roshan e — do ghofl). Ba'd `P2-08` (test haye takmili) va `P2-09` (CODE REVIEW e kol + Timescale + symbol-az-DB).
-**Ba'd az un Phase 2** (auth: mobile + OTP).
 **⚠️ `P1-22` (Seeder) ghablan tu `P1-19` anjam shod** — seeder az Action ha rad mishe va re-seed gheyr-mokhareb ast.
 
 ### 🔴🔴 MOHEM TARIN DARS: `force="true"` e phpunit KAFI NABUD
