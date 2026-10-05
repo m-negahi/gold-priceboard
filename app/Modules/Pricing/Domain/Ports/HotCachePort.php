@@ -55,6 +55,19 @@ interface HotCachePort
     /** @return array<string, array<string, mixed>>|null */
     public function providers(): ?array;
 
+    /**
+     * Version e spread — ba HAR taghir e spread yeki ziad mishe.
+     *
+     * 🔴 In adad tu HAME ye kelid e cache e gheymat-dar va har ETag miad.
+     * Bedun esh، ba'd az taghir e spread، tablo va chart ta enghaza ye tulani
+     * tarin TTL do javab e MOTEFAVET midan — va karbar un ro be onvan e bug
+     * gozaresh mikone. Yek `INCR` har se (tablo، chart، API) ro ba ham batel
+     * mikone.
+     */
+    public function spreadVersion(): int;
+
+    public function bumpSpreadVersion(): int;
+
     public function putHealth(ProviderHealthDto $health): void;
 
     /** @return array<string, ProviderHealthDto> */

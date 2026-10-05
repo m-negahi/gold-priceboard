@@ -15,11 +15,11 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-18` (baghi ye Query ha: `BoardQuery`/`CandleQuery`/`SpreadQuery`)
-**Akharin kar**: `P1-16` va `P1-17` tamum shodan. **338 test، 1852 assertion، hame sabz**، Pint tamiz.
-**ENGINE ZENDE-ST**: `price-worker` ru mohit e vaghei tick mizane va Redis/Postgres/Influx har se minevisan.
+**Task e fe'li**: `P1-19` (`ProviderAction` / `ProviderSpreadAction`)
+**Akharin kar**: `P1-18` tamum shod. **376 test، 1917 assertion، hame sabz**، Pint tamiz.
+**ENGINE ZENDE-ST**: `price-worker` tick mizane، `BoardQuery` tablo ye vaghei ro ba moghayese ye do provider bar migardune.
 **Nime-kare**: hich.
-**Gam e ba'di**: `P1-18` — `BoardQuery` (Redis → Postgres fallback)، `CandleQuery` (cache e do tabaghe)، `SpreadQuery`. Ba'd `P1-19` (`ProviderSpreadAction` ba `spread_version`).
+**Gam e ba'di**: `P1-19` — `ProviderAction` (CRUD) va `ProviderSpreadAction` ke bayad: (a) spread ha ro sync kone، (b) `provider_spread_revisions` benevise، (c) `spreadVersion` ro bump kone — har se tu YEK transaction. Ba'd `P1-20` (ServiceProvider + test e bind) va `P1-21`/`P1-22`/`P1-23`.
 
 ### 🔴🔴 MOHEM TARIN DARS: `force="true"` e phpunit KAFI NABUD
 Container e `octane` `DB_CONNECTION=pgsql` va `DB_DATABASE=priceboard` ro be onvan e env e **vaghei ye OS** export mikone، va un bar `phpunit.xml` **BARANDE shod**.
@@ -77,6 +77,7 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 - **PHP `int / int` vaghti baghi-munde nadare INT bar migardune.** Baraye IRR (`scale 0`) in ya'ni series e chart int mishod va baraye USD float — cast e sarih e `(float)` ezafe shod.
 - **Client e Redis e Laravel KHODESH prefix mizare.** Agar tu test dasti `config('database.redis.options.prefix')` ro jolo ye kelid bechasbuni، be yek kelid e khiali eshare mikoni va test saket be dalil e GHALAT pass mishe (do ta az test haye `RedisHotCache` daghighan hamin tur bud).
 - **`microtime()` dor e `Http::pool` bi-ma'ni-st**: vaghti javab ha miyan، pool ghablan tamum shode va ma faghat parse mikonim. Latency bayad az `handlerStats()['total_time']` biad — vagarna har provider «1ms» gozaresh mishe va monitoring e panel dorugh mige. (Hamin ro tu benchmark e avval didim.)
+- 🔴 **`TestCase` e Laravel method haye PUBLIC dare ke esm haye ma'muli daran**: `seed()`، `query()`، `artisan()`، `get()`، `post()`، `call()`، `withoutMiddleware()`… Yek helper e `private` ba un esm ha **fatal** mide: «Access level must be public». Se bar gir kardim (`run`، `query`، `seed`). Esm e helper ro makhsus bezar: `tick()`، `boardQuery()`، `seedPrices()`.
 - **`run()` tu `PHPUnit\Framework\TestCase` FINAL ast** — method e komaki ye test ro nemishe `run()` esm gozasht.
 - **`scripts/` be mount haye compose ezafe shod** — baraye script e yek-bare ye dev (`outage-drill.php`، `reset-influx-tokens.php`). Ghablan mount nabud va `php scripts/…` tu container kar nemikard.
 - Image e `pb-octane` ffmpeg ro nasb mikone (az Dockerfile e hg_website ers reside) — baraye in projeh lazem NIST va ~2 daghighe be build ezafe mikone. Yek tamiz-kari ye ekhtiari ast.
@@ -197,7 +198,13 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → ⚠️ Shekast e yek provider ya sink `FAILURE` **nist** — halghe ye worker nabayad be khatere yek ghat'i ye gozara motevaghef beshe.
   → Seeder ba override haye `freshness_seconds` baraye `ons`/`silver`/`copper`/`gerami` e tgju.
   → **Ru mohit e zende kar mikone**: `price-worker` har dore tick mizane va har se sink minevisan.
-- [ ] **P1-18** — `ProviderQuery` / `SpreadQuery` / `BoardQuery` / `CandleQuery`
+- [x] **P1-18** — `ProviderQuery` / `SpreadQuery` / `BoardQuery` / `CandleQuery` (38 test)
+  → `BoardQuery`: Redis → **fallback e Postgres** (ham baraye ghat'i ham baraye evict e saket)، spread ru read، `isDerived`، `isStale`، ETag.
+  → `CandleQuery`: cache e **do tabaghe** (taze ba TTL e interval + `:last` e 6 saate)، spread ru series، `degraded` vaghti Influx javab nade.
+  → `SpreadQuery`: map ba fallback e wildcard.
+  → `spreadVersion` be `HotCachePort` ezafe shod — tu kelid e cache va ETag.
+  → 🔴 **`BoardChartAgreementTest`**: 6 test ke sabt mikone tablo va chart baraye hamun spread DAGHIGHAN hamun adad ro midan (percent، manfi، amount، samt e bid، va ba'd az taghir e spread). In ta'ahod e asli ye tasmim e «spread ru read» ast.
+  → Ru data ye **zende** check shod: `xau-oz-usd` har do provider ro kenar e ham neshun mide (estjt 41,530,000 / tgju 41,508,700) va abshode ye tgju jofte bid/ask esh be dorosti `isDerived=false` ast.
 - [ ] **P1-19** — `ProviderAction` / `ProviderSpreadAction` (ba `spread_version` bump + revision)
 - [ ] **P1-20** — `PricingServiceProvider` + `Config/pricing.php` + **test e bind**
 - [ ] **P1-21** — Fake ha (`InMemorySnapshotStore`، `ArrayHotCache`، `FakeTimeSeries`، `FrozenClock`) + test e kol e pipeline **bedun e Docker**

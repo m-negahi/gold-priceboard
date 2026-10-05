@@ -46,6 +46,8 @@ final readonly class RedisHotCache implements HotCachePort
 
     private const PROVIDERS_KEY = 'pb:providers';
 
+    private const SPREAD_VERSION_KEY = 'pb:spreads:v';
+
     public function board(): array
     {
         $raw = $this->connection()->get(self::BOARD_KEY);
@@ -120,6 +122,16 @@ final readonly class RedisHotCache implements HotCachePort
         $decoded = json_decode($raw, true);
 
         return is_array($decoded) ? $decoded : null;
+    }
+
+    public function spreadVersion(): int
+    {
+        return (int) ($this->connection()->get(self::SPREAD_VERSION_KEY) ?? 0);
+    }
+
+    public function bumpSpreadVersion(): int
+    {
+        return (int) $this->connection()->incr(self::SPREAD_VERSION_KEY);
     }
 
     public function putHealth(ProviderHealthDto $health): void

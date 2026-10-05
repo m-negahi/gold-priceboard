@@ -23,6 +23,8 @@ final class ArrayHotCache implements HotCachePort
     /** @var array<string, array<string, mixed>>|null */
     private ?array $providers = null;
 
+    private int $spreadVersion = 0;
+
     private bool $available = true;
 
     public function board(): array
@@ -62,6 +64,20 @@ final class ArrayHotCache implements HotCachePort
         $this->guard();
 
         return $this->providers;
+    }
+
+    public function spreadVersion(): int
+    {
+        $this->guard();
+
+        return $this->spreadVersion;
+    }
+
+    public function bumpSpreadVersion(): int
+    {
+        $this->guard();
+
+        return ++$this->spreadVersion;
     }
 
     public function putHealth(ProviderHealthDto $health): void
