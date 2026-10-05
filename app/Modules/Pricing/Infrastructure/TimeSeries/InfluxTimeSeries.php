@@ -110,6 +110,68 @@ final readonly class InfluxTimeSeries implements TimeSeriesPort
         return FluxCsv::toCandles($csv);
     }
 
+    /**
+     * Dobare sakhtan e candle haye 1 daghighe-i baraye yek bazeh.
+     *
+     * ── 🔴 Chera lazem ast ──────────────────────────────────────────
+     * Task e `candles_1m` lookback e `-3m` dare. Agar Influx bishtar az se
+     * daghighe ghat' bashe، `pricing:influx:drain` tick ha ro ba timestamp e
+     * ASLI eshun (ghadimi) bar migardune — va un timestamp ha dige tu
+     * panjere ye task nistan. Natije: tick e kham bar migarde vali candle
+     * HARGEZ sakhte nemishe، va `m5`–`d1` yek surakh e daemi peyda mikonan.
+     *
+     * Pas ba'd az har drain، hamun bazeh dasti dobare aggregate mishe.
+     *
+     * Hamun mantegh e `resources/influx/tasks/candles_1m.flux` ast، faghat
+     * ba range e sarih jaye `-3m`.
+     */
+    public function rebuildMinuteCandles(int $from, int $to, string $org): void
+    {
+        if ($to <= $from) {
+            return;
+        }
+
+        $start = $this->rfc3339($from);
+        $stop = $this->rfc3339($to);
+        $tz = (string) ($this->config['tz_offset'] ?? '3h30m');
+        $bucket = (string) ($this->config['buckets']['m1'] ?? 'candles_1m');
+
+        $flux = <<<FLUX
+        import "timezone"
+        option location = timezone.fixed(offset: {$tz})
+
+        from(bucket: "ticks")
+            |> range(start: {$start}, stop: {$stop})
+            |> filter(fn: (r) => r._measurement == "price" and r._field == "value")
+            |> window(every: 1m)
+            |> reduce(
+                identity: {open: 0.0, high: 0.0, low: 0.0, close: 0.0, count: 0.0, seeded: false},
+                fn: (r, accumulator) => ({
+                    open: if accumulator.seeded then accumulator.open else r._value,
+                    high: if accumulator.seeded and accumulator.high > r._value then accumulator.high else r._value,
+                    low: if accumulator.seeded and accumulator.low < r._value then accumulator.low else r._value,
+                    close: r._value,
+                    count: accumulator.count + 1.0,
+                    seeded: true,
+                }),
+            )
+            |> drop(columns: ["seeded"])
+            |> duplicate(column: "_start", as: "_time")
+            |> window(every: inf)
+            |> set(key: "_measurement", value: "ohlc")
+            |> to(
+                bucket: "{$bucket}",
+                org: "{$org}",
+                tagColumns: ["provider", "symbol", "side", "quote"],
+                fieldFn: (r) => ({open: r.open, high: r.high, low: r.low, close: r.close, count: r.count}),
+            )
+        FLUX;
+
+        // ⚠️ Ba token e WRITE ejra mishe، na read — `to()` ejaze ye neveshtan
+        // ru `candles_1m` mikhad.
+        $this->queryWith($this->writeToken(), $flux);
+    }
+
     /** Akharin bar e yek bucket — baraye `pricing:influx:health`. */
     public function latestCandleAt(string $bucket): ?CarbonImmutable
     {
@@ -132,10 +194,15 @@ final readonly class InfluxTimeSeries implements TimeSeriesPort
      */
     private function query(string $flux): string
     {
+        return $this->queryWith($this->readToken(), $flux);
+    }
+
+    private function queryWith(string $token, string $flux): string
+    {
         $url = $this->url().'/api/v2/query?org='.urlencode($this->org());
 
         try {
-            $response = Http::withToken($this->readToken(), 'Token')
+            $response = Http::withToken($token, 'Token')
                 ->withHeaders([
                     'Content-Type' => 'application/vnd.flux',
                     'Accept' => 'application/csv',
@@ -208,6 +275,11 @@ final readonly class InfluxTimeSeries implements TimeSeriesPort
     private function float(float $value): string
     {
         return rtrim(rtrim(sprintf('%.6F', $value), '0'), '.') ?: '0';
+    }
+
+    private function rfc3339(int $timestamp): string
+    {
+        return CarbonImmutable::createFromTimestampUTC($timestamp)->format('Y-m-d\\TH:i:s\\Z');
     }
 
     private function url(): string

@@ -44,6 +44,10 @@ return [
 
     'influx' => [
         'url' => env('PRICING_INFLUX_URL', 'http://influxdb:8086'),
+        // Takrar e amdi az `tz_offset` e bala — `rebuildMinuteCandles` faghat
+        // config e `influx` ro migire va nabayad majbur bashe be riste ye
+        // config e bala sar bezane.
+        'tz_offset' => env('PRICING_TZ_OFFSET', '3h30m'),
         'org' => env('PRICING_INFLUX_ORG', 'priceboard'),
 
         // Do token e joda: worker faghat mineviseh, web faghat mikhune.

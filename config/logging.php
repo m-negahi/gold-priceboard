@@ -1,5 +1,6 @@
 <?php
 
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -56,6 +57,20 @@ return [
             'driver' => 'stack',
             'channels' => explode(',', (string) env('LOG_STACK', 'single')),
             'ignore_exceptions' => false,
+        ],
+
+        /*
+         * Feed e gheymat — yek JSON dar har khat, rotate e ruzane.
+         * «kodum provider che gheymat-i dad» — baraye Filebeat/Kibana.
+         * Sath e `pricing.upstream` / `.stored` / `.rejected` / `.unmapped`.
+         */
+        'pricing' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/pricing/pricing.log'),
+            'level' => env('PRICING_LOG_LEVEL', 'info'),
+            'days' => env('PRICING_LOG_DAYS', 14),
+            'formatter' => JsonFormatter::class,
+            'replace_placeholders' => true,
         ],
 
         'single' => [

@@ -15,10 +15,22 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-13` (task haye Influx + `pricing:influx:provision`)
-**Akharin kar**: `P1-10` va `P1-12` tamum shodan. **285 test، 1654 assertion، hame sabz**، Pint tamiz.
-**Nime-kare**: `QuoteEnricher` hanuz neveshte nashode (be `P1-15` moghol shod).
-**Gam e ba'di**: `P1-13` — `resources/influx/tasks/*.flux` (6 task) + command e `pricing:influx:provision` e idempotent (bucket ha + task ha + do token). Ba'd `P1-14` (`drain`/`health`).
+**Task e fe'li**: `P1-15` (TickPipeline) → ba'd `P1-16`/`P1-17`
+**Akharin kar**: `P1-13` va `P1-14` tamum shodan. **295 test، 1726 assertion، hame sabz**، Pint tamiz. Influx kamelan provision shode va token haye mahdud tu `.env` neshastan.
+**Nime-kare**: `QuoteEnricher` hanuz neveshte nashode — `P1-15` khodesh un ro misaze.
+**Gam e ba'di**: `P1-15` — `TickPipeline` + Stage ha. ⚠️ Fetch bayad **MOVAZI** bashe (`Http::pool`): estjt ~7s tool mikeshe va tick 15s ast.
+
+### 🔴 Yek rakhne ye vaghei ke peyda shod va baste shod
+**Replay e spool tick e kham ro bar migardund vali candle ro NA.**
+Task e `candles_1m` lookback e `-3m` dare. Agar Influx bishtar az se daghighe ghat' bashe، `drain` tick ha ro ba timestamp e ASLI (ghadimi) mineveshte — va un timestamp ha dige tu panjere ye task nabudan. Natije: `m1` (ke mostaghim az `ticks` mikhune) kar mikard vali `m5`–`d1` yek **surakh e daemi** peyda mikardan.
+Hall: `InfluxTimeSeries::rebuildMinuteCandles()` ke `drain` ba'd az har replay ru hamun bazeh seda mizane.
+Ta'eed: 12 tick e **20 daghighe-i** tu spool → `drain` → har 3 daghighe candle e salem ba `count=4`.
+
+### Model e ejaze ye Influx (se bar gir kardim، pas benevis)
+Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
+1. `read` ru **orgs** — vagarna `404 could not find org "priceboard"`.
+2. `read` ru bucket e **manba'** (`ticks`).
+3. **`read` ru bucket e MAGHSAD** (`candles_1m`) alave bar `write` — Flux baraye resolve kardan e ESM e bucket، hatta bucket e maghsad e `to()`، read mikhad. Ba faghat `write`: `404 could not find bucket "candles_1m"`.
 
 ### Chiz hayi ke vasat e `P1-12` fahmidim
 - **Retention e bucket vaghe'an e'mal mishe**: neveshtan ba timestamp e kharej az 30 rooz ba `422` rad mishe («violates a Retention Policy Lower Bound»). Test ha bayad timestamp e DAKHEL e retention bezanan.
@@ -36,6 +48,7 @@
 - **`Price::multipliedBy(float)` hazf shod.** `100 * 1.005` tu float mishe `100.49999999999999` va `round()` un ro 100 mikone. Har zarb e nesbati tu `SpreadPricer` ba mantegh e delta anjam mishe.
 - **PHP `int / int` vaghti baghi-munde nadare INT bar migardune.** Baraye IRR (`scale 0`) in ya'ni series e chart int mishod va baraye USD float — cast e sarih e `(float)` ezafe shod.
 - **Client e Redis e Laravel KHODESH prefix mizare.** Agar tu test dasti `config('database.redis.options.prefix')` ro jolo ye kelid bechasbuni، be yek kelid e khiali eshare mikoni va test saket be dalil e GHALAT pass mishe (do ta az test haye `RedisHotCache` daghighan hamin tur bud).
+- **`scripts/` be mount haye compose ezafe shod** — baraye script e yek-bare ye dev (`outage-drill.php`، `reset-influx-tokens.php`). Ghablan mount nabud va `php scripts/…` tu container kar nemikard.
 - Image e `pb-octane` ffmpeg ro nasb mikone (az Dockerfile e hg_website ers reside) — baraye in projeh lazem NIST va ~2 daghighe be build ezafe mikone. Yek tamiz-kari ye ekhtiari ast.
 
 ---
@@ -129,8 +142,15 @@
   → `FluxCsv` dasti parse mikone (yek series e `h1` e yek-sale tu SDK ≈ 44k object misazad).
   → Round-trip e **vaghei** ru Influx e zende: neveshtan + khundan + **ta'eed e idempotency** (neveshtan e dobare ye hamun tick OVERWRITE mikone، na duplicate — hamin chizi-e ke replay e spool ro emn mikone).
   → `app/Modules/Pricing/Config/pricing.php` ham neveshte shod.
-- [ ] **P1-13** — `resources/influx/tasks/*.flux` (6 task) + `pricing:influx:provision` e idempotent
-- [ ] **P1-14** — `pricing:influx:drain` + `pricing:influx:health`
+- [x] **P1-13** — 6 task e Flux + `pricing:influx:provision` (10 test)
+  → `resources/influx/tasks/*.flux` ba placeholder e `{{org}}`/`{{tz_offset}}`. Manba' e haghighat FILE ast، na UI — provision agar flux e deploy-shode ba file fargh dashte bashe، file ro barande mikone.
+  → `InfluxAdmin` (bucket/task/token) — faghat CLI، ba token e admin.
+  → Ru Influx e **zende** ejra shod: 7 bucket + 6 task sakhte shodan، va ejra ye dovom hame «bi-taghir» dad (idempotency ta'eed shod).
+  → Mantegh e task ru data ye vaghei ta'eed shod: 3 daghighe tick → 3 candle ba OHLC e daghigh va `count=4`.
+- [x] **P1-14** — `pricing:influx:drain` + `pricing:influx:health`
+  → `drain`: replay e spool + **rebuild e candle** (paeen ro bebin). Agar neveshtan shekast bokhore، khat ha BAR MIGARDAN tu spool — test shod.
+  → `health`: 5 check (dastresi، tazegi ye `candles_1m`، bar e ruzane be vaght e Tehran، hālat e task ha، andaze ye spool). `--json` ham dare.
+  → `routes/console.php`: drain har daghighe، health har 5 daghighe. `pricing:tick` AMDAN inja nist (scheduler kamtarin daghighat esh 1 daghighe-ast).
 
 ### Pipeline
 - [ ] **P1-15** — `TickPipeline` + Stage ha (`Fetch`/`Normalize`/`Validate`/`Persist`/`Publish`) + `StagePolicy`
