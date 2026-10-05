@@ -7,15 +7,29 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Tarikhche ye append-only ye taghirat e spread.
+ * ╔═══════════════════════════════════════════════════════════════════╗
+ * ║ provider_spread_revisions — daftarche: «KI، KEY، spread ro avaz kard»║
+ * ╚═══════════════════════════════════════════════════════════════════╝
  *
- * Chera lazem ast: ma gheymat e kharid/foroosh ro ba label e «نرخ فلان مغازه»
- * neshun midim dar hali ke arithmetic e KHODEMUN ru yek mid price ast. Avvalin
- * bar ke yek maghaze e'teraz kone «shoma nerkh e man ro ghalat zadid», in
- * jadval javab ast: ki, key, chi ro avaz karde.
+ * CHI HAST:   har bar admin yek spread ro avaz (ya hazf) kone، yek radif e
+ *             GHEYR e ghabel e taghir inja mishine. In jadval hich naghshi tu
+ *             mohasebe ye gheymat NADARE — faghat shahed ast.
  *
- * Tavasot e `ProviderSpreadAction` tu HAMUN transaction e upsert e spread
- * neveshte mishe.
+ * MESAL:      | provider | symbol | sell  | changed_by | effective_from   |
+ *             | tgju     | *      | +0.5% | admin:7    | 2026-10-05 14:00 |
+ *             | tgju     | *      | +0.8% | admin:7    | 2026-10-05 16:30 |
+ *             -> «sa'at e 15:00 chand neshun midadim?» = radif e aval.
+ *
+ * CHERA LAZEM AST:
+ *   Ma nerkh e «kharid/foroosh e maghaze X» ro neshun midim dar hali ke
+ *   arithmetic e KHODEMUN ru yek gheymat e kham ast. Avvalin bar ke yek
+ *   maghaze zang bezane «shoma nerkh e man ro ghalat zadid»، ya yek moshtari
+ *   ye API e'teraz kone، IN jadval tanha javab ast. Bedun esh: harf e ma
+ *   dar barabar e harf e un.
+ *
+ * GHANUN:     APPEND-ONLY — hich `update`، hich `delete`، hargez.
+ *             Tu HAMUN transaction e taghir e spread neveshte mishe
+ *             (`ProviderSpreadAction`)، pas nemitune ja bemune.
  */
 return new class extends Migration
 {

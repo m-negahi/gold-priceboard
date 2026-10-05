@@ -7,13 +7,32 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Spread e har (provider, instrument) — «chi ru tablo neshun midim».
+ * ╔═══════════════════════════════════════════════════════════════════╗
+ * ║ provider_spreads — «chand darsad balatar/paeen-tar NESHUN bedim»   ║
+ * ╚═══════════════════════════════════════════════════════════════════╝
  *
- * 🔴 Esm amdan `provider_spreads` ast, na `price_groups`.
- * Phase 4 (API e foroshi) be yek mehvar e KAMELAN JODA niaz dare:
- *   provider_spreads     -> chi ru tablo neshun midim (har maghaze)
- *   api_price_groups     -> chi be har MOSHTARI ye API mohasebe mikonim
- * Ghati kardan e in do ba'd az avvalin surat-hesab ghabl e bargasht nist.
+ * CHI HAST:   tgju faghat YEK gheymat mide (masalan 266,400,000 rial).
+ *             Vali tablo ye ma «kharid» va «foroosh» neshun mide. In jadval
+ *             mige un do adad chetor az gheymat e kham sakhte mishan.
+ *
+ * MESAL:      | provider | symbol        | buy        | sell       |
+ *             | tgju     | *             | -0.5%      | +0.5%      |
+ *             | tgju     | xau-18k-g-irr | -0.3%      | +0.8%      |
+ *             `*` = default baraye hame ye symbol haye un provider.
+ *             Resolve: (provider, symbol) -> (provider, '*') -> sefr.
+ *             Meghdar ELAMATDAR ast: manfi kam mikone.
+ *
+ * KEY NEVESHTE MISHE:  faghat admin az panel (`ProviderSpreadAction`).
+ * KEY KHUNDE MISHE:    har bar tablo/chart render mishe — spread ru READ
+ *                      e'mal mishe، HICHVAGHT ru storage (dalil e kamel tu
+ *                      `SpreadPricer`: spread e bake-shode pele ye ja'li tu
+ *                      chart mizare va ghabl e bargasht nist).
+ *
+ * 🔴 CHERA ESM ESH `price_groups` NIST:
+ *   Phase 4 yek mehvar e KAMELAN joda mikhad:
+ *     provider_spreads -> chi ru TABLO neshun midim (har maghaze)
+ *     api_price_groups -> chi be har MOSHTARI ye API hesab mikonim
+ *   Ghati kardaneshun ba'd az avvalin surat-hesab ghabl e bargasht nist.
  */
 return new class extends Migration
 {

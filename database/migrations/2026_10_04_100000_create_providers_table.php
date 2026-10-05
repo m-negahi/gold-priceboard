@@ -7,10 +7,31 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Manba' haye gheymat (tgju, estjt, va ba'dan platform ha).
+ * ╔═══════════════════════════════════════════════════════════════════╗
+ * ║ providers — «az KOJA gheymat migirim»                              ║
+ * ╚═══════════════════════════════════════════════════════════════════╝
  *
- * Admin az inja provider ro roshan/khamoosh mikone va raftar esh ro tanzim
- * mikone — bedun e deploy.
+ * CHI HAST:   har manba' e gheymat yek radif. Alan 3 ta: tgju، estjt، mock.
+ *             Ba'dan wallgold، taline، … har kodum faghat yek radif e jadid.
+ *
+ * MESAL:      | key   | driver | is_active | timeout | poll_interval |
+ *             | tgju  | tgju   | true      | 15s     | 15s           |
+ *             | estjt | estjt  | true      | 20s     | 15s           |
+ *
+ * KEY NEVESHTE MISHE:
+ *   - admin az panel (roshan/khamoosh، timeout، …) — bedun e deploy
+ *   - worker har tick soton haye salamat ro update mikone (last_error،
+ *     consecutive_failures، …) — vali DAMPED، faghat vaghti chizi avaz shode
+ *
+ * KEY KHUNDE MISHE:
+ *   - avval e har tick: «kodum provider ha ro alan poll konam?»
+ *     (index e `is_active, next_poll_at` baraye hamin ast)
+ *   - panel e admin (lista + salamat)
+ *
+ * CHERA `driver` JODA AZ `key` AST:
+ *   5 maghaze ba hamun format e site mitunan 5 PROVIDER bashan ru YEK
+ *   driver — provider e jadid ru driver e mojud = faghat yek radif e DB،
+ *   bedun e hich code.
  */
 return new class extends Migration
 {

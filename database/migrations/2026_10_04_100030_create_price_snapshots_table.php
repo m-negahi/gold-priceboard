@@ -7,13 +7,32 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * AKHARIN gheymat — yek radif be ezaye har (provider, symbol, side).
+ * ╔═══════════════════════════════════════════════════════════════════╗
+ * ║ price_snapshots — «AKHARIN gheymat e har chiz، faghat yeki»        ║
+ * ╚═══════════════════════════════════════════════════════════════════╝
  *
- * ⚠️ Inja TARIKHCHE NIST. Tarikhche tu Influx ast. Naghsh e in jadval
- * **backfill e Redis** ast: agar Redis khali/down bashe, tablo az inja khunde
- * mishe va site zende mimune.
+ * CHI HAST:   yek radif be ezaye har (provider، symbol، side) — UPSERT
+ *             mishe، hich vaght rushd nemikone. Alan ~25 radif؛ ba 6
+ *             provider ~300. ⚠️ TARIKHCHE NIST — tarikhche tu Influx ast.
  *
- * Tedad e radif: provider x symbol x side ≈ 50 alan, ~300 ba shesh provider.
+ * MESAL:      | provider | symbol        | side | raw_minor   | quoted_at |
+ *             | tgju     | xau-18k-g-irr | last | 266,400,000 | 14:03:15  |
+ *             | tgju     | xau-melted-…  | bid  | 263,175,000 | 14:03:15  |
+ *             | estjt    | xau-18k-g-irr | last | 266,818,000 | 14:03:15  |
+ *
+ * KEY NEVESHTE MISHE:  har tick (yek `INSERT … ON CONFLICT` e dasteji).
+ * KEY KHUNDE MISHE:
+ *   1. avval e har tick — gheymat e GHABLI baraye `PriceSanity` (check e
+ *      jahesh) va `QuoteEnricher` (direction، band e rooz)
+ *   2. 🔴 FALLBACK e tablo: Redis khali/kharab/yakh-zade -> tablo az inja
+ *      khunde mishe va site zende mimune. (In naghsh e asli ye jadval ast.)
+ *
+ * CHERA `side` TU UNIQUE AST:   `xau-melted-g-irr` e tgju VAGHE'AN do
+ *   gheymat e mostaghel dare (bid/ask e khod e bazaar) — do radif.
+ *
+ * CHERA `buy_minor`/`sell_minor` NADARE:   un do MOSHTAGH-and (raw +
+ *   spread) va ru READ hesab mishan. Zakhire-shun ya'ni ba'd az har taghir
+ *   e spread، meghdar e bayat tu DB ja munde.
  */
 return new class extends Migration
 {

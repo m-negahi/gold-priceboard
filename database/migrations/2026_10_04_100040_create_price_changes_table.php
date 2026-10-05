@@ -7,20 +7,31 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Daftarche ye append-only ye har gheymat-i ke VAGHE'AN avaz shode.
+ * ╔═══════════════════════════════════════════════════════════════════╗
+ * ║ price_changes — daftarche: «har gheymat-i ke VAGHE'AN avaz shod»   ║
+ * ╚═══════════════════════════════════════════════════════════════════╝
  *
- * ── Chera vojud dare ─────────────────────────────────────────────────
- * Influx 2 OSS replication nadare, tick haye kham ba'd az 30 rooz pak mishan,
- * va candle haghighat e tick-level ro az beyn mibare. Pas bedun e in jadval,
- * tanha sanad e «ma che gheymat-i neshun dadim» yek DB e bedun e replica ast.
+ * CHI HAST:   append-only. Har bar `raw_minor` e yek (provider، symbol،
+ *             side) taghir kard — NA har tick — yek radif. Tala shayad
+ *             200-2000 bar dar rooz harekat kone، na 5,760 bar. ≈ 5MB/mah.
  *
- * In jadval:
- *   - `pg_dump`-pazir ast (hamrah e baghi ye backup)
- *   - manba' e DOVOM baraye rebuild e Influx ba'd az kharabi
- *   - javab e «gheymat tu lahze T chand bud» baraye API, bedun e Influx
+ * FARGH ESH BA `price_snapshots`:   snapshot faghat AKHARIN ro dare
+ *   (upsert، ~25 radif)؛ in hame ye taghir ha ro dare (insert، rushd
+ *   mikone). Snapshot «alan chand e?» ro javab mide؛ in «sa'at e 14:03
+ *   chand BUD?» ro.
  *
- * ⚠️ FAGHAT vaghti `raw_minor` taghir karde insert mishe — na har tick.
- * Tala shayad 200-2000 bar tu rooz harekat kone, na 5,760 bar. ~5MB/mah.
+ * FARGH ESH BA INFLUX:   Influx HAR tick ro dare vali (a) replication
+ *   nadare، (b) tick e kham 30 rooz ba'd pak mishe va faghat candle mimune.
+ *   In jadval `pg_dump`-pazir ast (tu hamun backup e asli)، manba' e DOVOM
+ *   baraye rebuild e Influx ba'd az kharabi، va javab e API bedun e
+ *   vabastegi be Influx.
+ *
+ * KEY NEVESHTE MISHE:  tu tick، faghat baraye radif haye taghir-karde.
+ * KEY KHUNDE MISHE:    (hanuz hich ja — Phase 4: endpoint e «gheymat dar
+ *                      lahze T» + e'teraz e moshtari. Bime-name ast.)
+ *
+ * GHANUN:  APPEND-ONLY — hich update/delete. Agar hajm mas'ale shod،
+ *          partition e mahiyane، na hazf.
  */
 return new class extends Migration
 {
