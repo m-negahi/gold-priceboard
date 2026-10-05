@@ -31,13 +31,33 @@ final class PricingTickCommand extends Command
 {
     protected $signature = 'pricing:tick
         {--json : khoruji be sorat e JSON (baraye log/monitoring)}
-        {--quiet-ok : agar hame chiz salem bud chizi chap nakon}';
+        {--quiet-ok : agar hame chiz salem bud chizi chap nakon}
+        {--force : `next_poll_at` ro nadide begir va hame ye provider haye fa\'al ro poll kon}';
 
     protected $description = 'Gereftan e gheymat az provider ha va zakhire tu Redis/Postgres/Influx.';
 
     public function handle(IngestTickAction $action): int
     {
-        $report = $action->execute((int) config('pricing.tick_seconds', 15));
+        /*
+         * 🔴 Chera `--force` lazem bud
+         * Yek `pricing:tick` e DASTI ke bala-fasele ba'd az tick e worker
+         * ejra she، «hich provider e fa'ali baraye poll nist» mide — chun
+         * worker `next_poll_at` ro 15 saniye jolo gozashte. Un payam mesl e
+         * yek khata ye CONFIG be nazar mirese («provider fa'al nadarim»)،
+         * na mesl e «15 saniye sabr kon».
+         *
+         * Va daghighan hamun kari-e ke skill e `add-price-provider` mige:
+         * «avval `pricing:tick` ro dasti bezan، `TickMonitor` ro check kon».
+         * Ba `--force` un ravesh e kar vaghe'an kar mikone.
+         *
+         * Grid dast nemikhore: `TickTime` hanuz ru 15 saniye floor mishe،
+         * pas do ta force tu yek panjare HAMUN timestamp ro minevisan —
+         * ya'ni idempotent.
+         */
+        $report = $action->execute(
+            gridSeconds: (int) config('pricing.tick_seconds', 15),
+            force: (bool) $this->option('force'),
+        );
 
         if ($this->option('json')) {
             $this->line((string) json_encode($report->toArray(), JSON_UNESCAPED_UNICODE));

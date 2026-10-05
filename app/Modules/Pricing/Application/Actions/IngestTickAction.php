@@ -38,7 +38,7 @@ final readonly class IngestTickAction
         private ?LoggerInterface $logger = null,
     ) {}
 
-    public function execute(int $gridSeconds = 15): TickReportDto
+    public function execute(int $gridSeconds = 15, bool $force = false): TickReportDto
     {
         $at = $this->clock->tick($gridSeconds);
 
@@ -60,15 +60,15 @@ final readonly class IngestTickAction
         }
 
         try {
-            return $this->tick($at, $gridSeconds);
+            return $this->tick($at, $force);
         } finally {
             $this->release($lock);
         }
     }
 
-    private function tick(TickTime $at, int $gridSeconds): TickReportDto
+    private function tick(TickTime $at, bool $force): TickReportDto
     {
-        $configs = $this->loadProviders($at);
+        $configs = $this->loadProviders($at, $force);
 
         if ($configs === []) {
             return new TickReportDto(
@@ -103,12 +103,18 @@ final readonly class IngestTickAction
      * ghat'i ye DB tabdil mishe be yek ghat'i ye kamel e feed — dar hali ke
      * Redis va Influx salem-and va mitunestan kar konan.
      *
+     * `$force` -> `next_poll_at` nadide gerefte mishe (flag e `--force`).
+     * Faghat yek darvaze ye ZAMANBANDI ro rad mikone؛ hich mohafez e
+     * dige-i (tazegi، `PriceSanity`، grid) dast nemikhore.
+     *
      * @return array<string, ProviderConfigDto>
      */
-    private function loadProviders(TickTime $at): array
+    private function loadProviders(TickTime $at, bool $force = false): array
     {
         try {
-            $configs = $this->providers->dueForPoll($at->at);
+            $configs = $force
+                ? $this->providers->allActive()
+                : $this->providers->dueForPoll($at->at);
 
             // Faghat vaghti chizi hast cache mikonim — vagarna yek jadval e
             // khali ye movaghat، fallback ro baraye hamishe khali mikone.

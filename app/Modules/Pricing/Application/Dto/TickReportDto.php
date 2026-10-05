@@ -49,6 +49,7 @@ final readonly class TickReportDto
     }
 
     /** @return array<string, mixed> */
+    /** @return array<string, mixed> */
     public function toArray(): array
     {
         return [
@@ -58,19 +59,31 @@ final readonly class TickReportDto
             'duration_ms' => $this->durationMs,
             'skipped' => $this->skipped,
             'skip_reason' => $this->skipReason,
-            'providers' => array_map(
+            /*
+             * 🔴 `(object)` ru map haye KELID-DAR — ejbari، na zibasazi.
+             *
+             * `json_encode` yek array e PHP e khali ro `[]` mikone va yek
+             * array ba kelid e string ro `{}`. Pas `sinks` vaghti por bud
+             * object mishod va vaghti khali bud ARRAY — do shekl e
+             * motefavet baraye yek field. Har client e type-dar (va Phase 4
+             * in payload ro MIFROUSHE) ba un misheknae، va `sinks.influx`
+             * tu yek tick e rad-shode aslan ghabl e address dadan nabud.
+             *
+             * `rejections` amdan LIST mimune — un vaghe'an yek lista-st.
+             */
+            'providers' => (object) array_map(
                 static fn (ProviderHealthDto $h): array => $h->toArray(),
                 $this->health,
             ),
-            'sinks' => array_map(
+            'sinks' => (object) array_map(
                 static fn (SinkResultDto $s): array => $s->toArray(),
                 $this->sinks,
             ),
-            'rejections' => array_map(
+            'rejections' => array_values(array_map(
                 static fn (RejectionDto $r): array => $r->toArray(),
                 $this->rejections,
-            ),
-            'unmapped' => $this->unmapped,
+            )),
+            'unmapped' => (object) $this->unmapped,
         ];
     }
 }

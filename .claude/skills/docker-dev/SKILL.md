@@ -102,6 +102,32 @@ Channel e `pricing` JSON-per-line ast (Filebeat/Kibana-ready) va se event dare: 
 | Composer/npm timeout (Iran) | mirror | `USE_IRAN_MIRROR=true` tu `.env` ba'd rebuild |
 | `ext-curl` nist | image | `dc exec octane php -m \| grep -E 'curl\|mbstring\|json'` → nabud، be Dockerfile ezafe kon |
 
+## Check e taab-avari (`scripts/resilience-check.sh`)
+
+```bash
+bash scripts/resilience-check.sh          # az HOST، na az tu container
+PROVIDER=estjt SYMBOL=xau-18k-g-irr bash scripts/resilience-check.sh
+```
+
+Se senario ro ru mohit e **VAGHEI** mizane (na fake): `influxdb` ghat' → spool por → `start` + `drain` → **gap bayad por beshe**؛ `redis-prices` ghat' → tablo bayad be Postgres fallback kone va khodesh ro `degraded` e'lam kone؛ `postgresql` ghat' → tick amdan rad mishe vali tablo az Redis zende mimune.
+
+| Nokte | Chera |
+|---|---|
+| `price-worker` motevaghef mishe | tick ha bayad dast e script bashan، vagarna assert ha flaky mishan. Tu `trap` barmigarde — hatta agar script beterke. |
+| Hich volume-i pak nemishe | faghat `stop`/`start`. |
+| `--force` ejbari-e | bedun esh tick e dasti «hich provider e fa'ali baraye poll nist» mide (chun `next_poll_at` 15 saniye jolo-st). |
+| ~90 saniye tool mikeshe | do ta sabr e 16 saniye-i baraye rad shodan az grid e 15s + montazer e healthy shodan. |
+
+`scripts/resilience-probe.php` vaziat ro yek khat JSON mide (spool، tablo، store، dastresi ye Redis/Influx، candle haye `m1`). Har bakhsh try/catch e khodesh ro dare chun **kol e noghte ash in ast ke vaghti service ha ghat'-and ejra beshe**.
+
+## Tick e dasti
+
+```bash
+dc exec octane php artisan pricing:tick --force            # `next_poll_at` ro nadide begir
+dc exec octane php artisan pricing:tick --force --json      # baraye script/monitoring
+```
+🔴 **Bedun e `--force`**، yek tick e dasti ke bala-fasele ba'd az tick e worker ejra she «hich provider e fa'ali baraye poll nist» mide — chun worker `next_poll_at` ro 15 saniye jolo gozashte. Un payam mesl e yek khata ye **config** be nazar mirese، na mesl e «15 saniye sabr kon». `--force` grid ro dast nemizane (timestamp hanuz floor mishe، pas idempotent ast).
+
 ## Reset (faghat dev)
 
 ```bash
