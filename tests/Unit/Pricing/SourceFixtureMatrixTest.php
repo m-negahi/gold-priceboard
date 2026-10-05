@@ -1,0 +1,276 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Pricing;
+
+use App\Modules\Pricing\Application\Dto\RawQuoteDto;
+use App\Modules\Pricing\Domain\Enums\Instrument;
+use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
+use App\Modules\Pricing\Domain\Ports\QuoteSourcePort;
+use App\Modules\Pricing\Infrastructure\Sources\EstjtQuoteSource;
+use App\Modules\Pricing\Infrastructure\Sources\TgjuQuoteSource;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * 🔴 HAR instrument e HAR source، ba meghdar e DAGHIGH e minor، ru fixture e
+ * VAGHEI.
+ *
+ * ── Chera yek file e jodagane ────────────────────────────────────────
+ * Khata ye 10x (toman jaye rial، ya yek `×10` e farāmush-shode) ro **hich
+ * mohafez e runtime nemitune begire** baraye avvalin bar:
+ *   - `Instrument::sanityBand()` amdan onghadr pahn ast ke tavarrom e rial
+ *     ro tahammol kone (tozih e kamel tu khod e un method).
+ *   - Enheraf e tick-be-tick be `previous` niaz dare.
+ *   - `PriceSanity::crossProvider()` (`P1-24`) be yek provider e DIGAR niaz
+ *     dare ke hamun symbol ro bede.
+ *
+ * Tanha jayi ke mishe un khata ro ba YEK adad e daghigh gereft، hamin
+ * jadval ast. Pas yek ja mimune، kamel ast، va **mohafez e kamel budan**
+ * dare.
+ *
+ * ── Mohafez e kamel budan ───────────────────────────────────────────
+ * `test_*_matrix_is_exhaustive` majmu'e ye kelid haye jadval ro ba majmu'e
+ * ye kelid hayi ke Source VAGHE'AN az fixture misaze moghayese mikone. Pas:
+ *   - map e jadid ezafe she va jadval be-rooz nashe -> FAIL
+ *   - map hazf she va jadval be-rooz nashe -> FAIL
+ * Bedun e un mohafez، yek `foreach` ru jadval faghat chizi ro test mikone
+ * ke ghablan neveshte shode — ya'ni yek symbol e jadid SAKET bi-test mimune.
+ */
+final class SourceFixtureMatrixTest extends TestCase
+{
+    /** @var array<string, array<string, RawQuoteDto>> */
+    private static array $cache = [];
+
+    /**
+     * tgju: 16 quote. Gheymat ha RIAL-and (bar khalaf e estjt).
+     *
+     * `xau-melted-g-irr` tanha instrument-i ast ke in feed jofte bid/ask e
+     * VAGHEI baraye un mide.
+     *
+     * @return array<string, array{0: string, 1: int, 2: QuoteCurrency}>
+     */
+    public static function tgjuMatrix(): array
+    {
+        return self::rows([
+            'xau-18k-g-irr:last' => [266_400_000, QuoteCurrency::IRR],
+            'xau-24k-g-irr:last' => [355_196_000, QuoteCurrency::IRR],
+            'xau-melted-g-irr:ask' => [264_921_000, QuoteCurrency::IRR],
+            'xau-melted-g-irr:bid' => [263_175_000, QuoteCurrency::IRR],
+            'xau-mesghal-irr:last' => [1_154_030_000, QuoteCurrency::IRR],
+            'xau-coin-emami-irr:last' => [2_753_400_000, QuoteCurrency::IRR],
+            'xau-coin-bahar-irr:last' => [2_619_450_000, QuoteCurrency::IRR],
+            'xau-coin-half-irr:last' => [1_429_600_000, QuoteCurrency::IRR],
+            'xau-coin-quarter-irr:last' => [789_900_000, QuoteCurrency::IRR],
+            'xau-coin-gerami-irr:last' => [380_000_000, QuoteCurrency::IRR],
+            'xag-999-g-irr:last' => [5_534_900, QuoteCurrency::IRR],
+            'xag-925-g-irr:last' => [5_119_760, QuoteCurrency::IRR],
+            // USD — scale 4، pas minor = dollar × 10,000.
+            'xau-oz-usd:last' => [41_401_900, QuoteCurrency::USD],
+            'xag-oz-usd:last' => [603_700, QuoteCurrency::USD],
+            'xcu-lb-usd:last' => [64_920, QuoteCurrency::USD],
+            'usd-irr:last' => [2_711_600, QuoteCurrency::IRR],
+        ]);
+    }
+
+    /**
+     * estjt: 9 quote. Hame TOMAN-and **be joz «انس طلا» ke DOLLAR ast**.
+     *
+     * 🔴 Hamun estesna dalil e in ast ke `upstream_unit` bayad
+     * PER-INSTRUMENT bashe: yek `upstream_unit=toman` e sath e provider،
+     * ons ro ×10 mikone va `$41,420` ro mikone `$414,200` — onghadr
+     * bavar-pazir ke az zir e cheshm rad beshe.
+     *
+     * @return array<string, array{0: string, 1: int, 2: QuoteCurrency}>
+     */
+    public static function estjtMatrix(): array
+    {
+        return self::rows([
+            // Toman × 10 -> rial.
+            'xau-18k-g-irr:last' => [266_818_000, QuoteCurrency::IRR],
+            'xau-24k-g-irr:last' => [355_720_000, QuoteCurrency::IRR],
+            'xau-mesghal-irr:last' => [1_155_800_000, QuoteCurrency::IRR],
+            'xau-coin-emami-irr:last' => [2_752_000_000, QuoteCurrency::IRR],
+            'xau-coin-bahar-irr:last' => [2_628_000_000, QuoteCurrency::IRR],
+            'xau-coin-half-irr:last' => [1_445_000_000, QuoteCurrency::IRR],
+            'xau-coin-quarter-irr:last' => [800_000_000, QuoteCurrency::IRR],
+            'xau-coin-gerami-irr:last' => [380_000_000, QuoteCurrency::IRR],
+            // …va in yeki DOLLAR، bedun e ×10.
+            'xau-oz-usd:last' => [41_420_000, QuoteCurrency::USD],
+        ]);
+    }
+
+    /**
+     * @param  array<string, array{0: int, 1: QuoteCurrency}>  $matrix
+     * @return array<string, array{0: string, 1: int, 2: QuoteCurrency}>
+     */
+    private static function rows(array $matrix): array
+    {
+        $rows = [];
+
+        foreach ($matrix as $key => [$minor, $currency]) {
+            $rows[$key] = [$key, $minor, $currency];
+        }
+
+        return $rows;
+    }
+
+    // ── tgju ────────────────────────────────────────────────────
+
+    #[DataProvider('tgjuMatrix')]
+    public function test_tgju_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
+    {
+        self::assertQuote('tgju', $key, $minor, $currency);
+    }
+
+    public function test_the_tgju_matrix_is_exhaustive(): void
+    {
+        self::assertMatrixCoversTheSource('tgju', self::tgjuMatrix());
+    }
+
+    // ── estjt ───────────────────────────────────────────────────
+
+    #[DataProvider('estjtMatrix')]
+    public function test_estjt_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
+    {
+        self::assertQuote('estjt', $key, $minor, $currency);
+    }
+
+    public function test_the_estjt_matrix_is_exhaustive(): void
+    {
+        self::assertMatrixCoversTheSource('estjt', self::estjtMatrix());
+    }
+
+    // ── 🔴 Moghayese ye do manba' e MOSTAGHEL ───────────────────
+
+    /**
+     * Mohem tarin mohafez e in file: har symbol-i ke HAR DO source midan،
+     * bayad be ham nazdik bashe.
+     *
+     * Chera onghadr ghavi-e: do source kamelan mostaghel-and (yeki JSON e
+     * rial، yeki HTML e toman ba separator e `٫`). Agar yeki az un ha vahed
+     * ya martabe ash kharab beshe، ekhtelaf mishe 90% (toman/rial) ya 900%
+     * (10x) — kheyli balatar az har ekhtelaf e vaghei ye bazaar.
+     *
+     * Saghf 3%: andaze-giri ye vaghei ru hamin fixture ha bishtarin ekhtelaf
+     * 1.28% ast (rob' e sekke — sekke haye kuchik premium e maghaze-i
+     * daran). 3% ja mide bedun e inke khata ye martabe-i ro az dast bede.
+     *
+     * ⚠️ Lista ye symbol ha SAKHT-CODE nashode — az eshterak e do fixture
+     * hesab mishe، pas agar ruzi estjt yek symbol e jadid ezafe kone، un
+     * khod-be-khod inja miad.
+     */
+    public function test_both_sources_agree_on_every_shared_symbol(): void
+    {
+        $tgju = self::quotes('tgju');
+        $estjt = self::quotes('estjt');
+
+        $shared = array_intersect(array_keys($estjt), array_keys($tgju));
+
+        self::assertGreaterThanOrEqual(
+            9,
+            count($shared),
+            'eshterak kamtar az entezar ast — map e yeki az source ha kharab shode?',
+        );
+
+        foreach ($shared as $key) {
+            $a = $estjt[$key]->price->minor;
+            $b = $tgju[$key]->price->minor;
+
+            self::assertSame(
+                $estjt[$key]->price->quote,
+                $tgju[$key]->price->quote,
+                "{$key}: do source arz haye MOTEFAVET midan — flip e arz.",
+            );
+
+            self::assertEqualsWithDelta(
+                $b,
+                $a,
+                $b * 0.03,
+                "{$key}: estjt={$a} va tgju={$b} bishtar az 3% ekhtelaf daran — ".
+                'ehtemalan vahed ya martabe tu yeki az do source kharab ast.',
+            );
+        }
+    }
+
+    // ── Helper ──────────────────────────────────────────────────
+
+    private static function assertQuote(string $source, string $key, int $minor, QuoteCurrency $currency): void
+    {
+        $quotes = self::quotes($source);
+
+        self::assertArrayHasKey($key, $quotes, "«{$key}» az fixture e {$source} parse nashod.");
+
+        $quote = $quotes[$key];
+
+        // Meghdar e daghigh — inja jayi-e ke khata ye 10x khodesh ro mide.
+        self::assertSame($minor, $quote->price->minor, "{$source} / {$key}: minor e ghalat.");
+        self::assertSame($currency, $quote->price->quote, "{$source} / {$key}: arz e ghalat.");
+
+        // Scale bayad az khod e instrument biad، na az Source — vagarna yek
+        // adad e USD ba scale 0 zakhire mishe va 10,000 barabar kuchik mishe.
+        self::assertSame(
+            $quote->instrument->scale(),
+            $quote->price->scale(),
+            "{$source} / {$key}: scale ba instrument nemikhune.",
+        );
+    }
+
+    /** @param array<string, array{0: string, 1: int, 2: QuoteCurrency}> $matrix */
+    private static function assertMatrixCoversTheSource(string $source, array $matrix): void
+    {
+        $actual = array_keys(self::quotes($source));
+        $expected = array_keys($matrix);
+
+        sort($actual);
+        sort($expected);
+
+        self::assertSame(
+            $expected,
+            $actual,
+            "Jadval e {$source} ba chizi ke Source vaghe'an misaze yeki nist. ".
+            'Agar map e jadid ezafe kardi، radif esh ro ham be jadval ezafe kon — '.
+            'vagarna un symbol SAKET bi-test mimune.',
+        );
+    }
+
+    /** @return array<string, RawQuoteDto> */
+    private static function quotes(string $source): array
+    {
+        if (isset(self::$cache[$source])) {
+            return self::$cache[$source];
+        }
+
+        [$adapter, $fixture] = match ($source) {
+            'tgju' => [new TgjuQuoteSource, 'tgju-ajax.json'],
+            'estjt' => [new EstjtQuoteSource, 'estjt-new-price.json'],
+            default => self::fail("source e nashenas: {$source}"),
+        };
+
+        /** @var QuoteSourcePort $adapter */
+        $json = (string) file_get_contents(__DIR__.'/../../Fixtures/'.$fixture);
+        $result = $adapter->parse(json_decode($json, true, 512, JSON_THROW_ON_ERROR));
+
+        $quotes = [];
+
+        foreach ($result->quotes as $quote) {
+            $quotes[$quote->instrument->value.':'.$quote->side->value] = $quote;
+        }
+
+        return self::$cache[$source] = $quotes;
+    }
+
+    /** Har kelid e jadval bayad be yek `Instrument` e vaghei eshare kone. */
+    public function test_every_matrix_key_names_a_real_instrument(): void
+    {
+        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix())] as $key) {
+            $symbol = explode(':', $key)[0];
+
+            self::assertNotNull(
+                Instrument::tryFrom($symbol),
+                "«{$symbol}» tu enum e Instrument nist.",
+            );
+        }
+    }
+}

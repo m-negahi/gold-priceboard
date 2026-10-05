@@ -62,28 +62,23 @@ final class TgjuQuoteSourceTest extends TestCase
     }
 
     /**
-     * 🔴 Meghdar e DAGHIGH e minor baraye har instrument.
-     * Inja daghighan jayi-e ke yek khata ye 10x khodesh ro neshun mide.
+     * Yek namune ye meghdar e daghigh — baraye inke in file khodesh ham yek
+     * langar dashte bashe.
+     *
+     * ⚠️ Jadval e KAMEL (har 16 instrument، ba mohafez e kamel budan) tu
+     * `SourceFixtureMatrixTest` ast. Amdan unja yek ja jam' shode: adad ha
+     * tu do file، do ja baraye be-rooz kardan mishan va yeki az un do
+     * aghab mimune.
      */
     public function test_parses_exact_minor_values(): void
     {
         $quotes = $this->quotes();
 
-        // IRR — scale 0, pas minor hamun rial ast.
+        // IRR — scale 0، pas minor hamun rial ast.
         self::assertSame(266_400_000, $quotes['xau-18k-g-irr:last']->price->minor);
-        self::assertSame(355_196_000, $quotes['xau-24k-g-irr:last']->price->minor);
-        self::assertSame(1_154_030_000, $quotes['xau-mesghal-irr:last']->price->minor);
-        self::assertSame(2_753_400_000, $quotes['xau-coin-emami-irr:last']->price->minor);
-        self::assertSame(2_619_450_000, $quotes['xau-coin-bahar-irr:last']->price->minor);
-        self::assertSame(1_429_600_000, $quotes['xau-coin-half-irr:last']->price->minor);
-        self::assertSame(789_900_000, $quotes['xau-coin-quarter-irr:last']->price->minor);
-        self::assertSame(5_534_900, $quotes['xag-999-g-irr:last']->price->minor);
-        self::assertSame(2_711_600, $quotes['usd-irr:last']->price->minor);
 
-        // USD — scale 4, pas minor = dollar x 10,000.
+        // USD — scale 4، pas minor = dollar × 10,000.
         self::assertSame(41_401_900, $quotes['xau-oz-usd:last']->price->minor);
-        self::assertSame(603_700, $quotes['xag-oz-usd:last']->price->minor);
-        self::assertSame(64_920, $quotes['xcu-lb-usd:last']->price->minor);
     }
 
     public function test_assigns_the_right_quote_currency(): void

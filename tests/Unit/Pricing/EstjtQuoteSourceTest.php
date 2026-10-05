@@ -65,14 +65,12 @@ final class EstjtQuoteSourceTest extends TestCase
     {
         $quotes = $this->quotes();
 
+        // `۲۶٫۶۸۱٫۸۰۰` toman -> 266,818,000 rial. Nesbat DAGHIGHAN ×10 ast.
         self::assertSame(266_818_000, $quotes['xau-18k-g-irr']->price->minor);
-        self::assertSame(355_720_000, $quotes['xau-24k-g-irr']->price->minor);
-        self::assertSame(1_155_800_000, $quotes['xau-mesghal-irr']->price->minor);
-        self::assertSame(2_752_000_000, $quotes['xau-coin-emami-irr']->price->minor);
-        self::assertSame(2_628_000_000, $quotes['xau-coin-bahar-irr']->price->minor);
-        self::assertSame(1_445_000_000, $quotes['xau-coin-half-irr']->price->minor);
-        self::assertSame(800_000_000, $quotes['xau-coin-quarter-irr']->price->minor);
-        self::assertSame(380_000_000, $quotes['xau-coin-gerami-irr']->price->minor);
+        self::assertSame(26_681_800 * 10, $quotes['xau-18k-g-irr']->price->minor);
+
+        // ⚠️ Jadval e KAMEL (har 9 instrument، ba mohafez e kamel budan) tu
+        // `SourceFixtureMatrixTest` ast.
     }
 
     /**

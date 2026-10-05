@@ -15,11 +15,12 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-11` (test e har instrument e har source ru fixture)
-**Akharin kar**: `P1-26` + `P1-27` tamum shodan. **538 test (2339 assertion)، hame sabz**، Pint tamiz. `scripts/resilience-check.sh` ru mohit e vaghei **29/29 sabz**.
+**Task e fe'li**: **Phase 2** (auth: mobile + OTP) — `P2-01`
+**Akharin kar**: `P1-11` tamum shod. **567 test (2470 assertion)، hame sabz**، Pint tamiz.
+**Phase 1 amalan tamum ast** — faghat `P1-28` (marja' e e'temad) baz munde، ke AMDAN be ba'd az Phase 3 moghul shode: hall esh yek toggle ya «ta'eed e dasti» tu panel ast، pas sakhtan esh ghabl az vojud e panel ya'ni hads zadan e UI. `scripts/resilience-check.sh` ru mohit e vaghei **29/29 sabz**.
 **ENGINE ZENDE-ST**: `price-worker` tick mizane، `BoardQuery` tablo ye vaghei ro ba moghayese ye do provider bar migardune.
 **Nime-kare**: hich.
-**Gam e ba'di**: `P1-11` (test e har instrument e har source ru fixture) va `P1-28` (marja' e e'temad). Ba'd **Phase 2** (auth: mobile + OTP).
+**Gam e ba'di**: **Phase 2** — `P2-01` (middleware ha: `TrustProxies` e Octane-safe، normalize e adad/phone، `LatinizeDigits`). Tartib e sabt tu `bootstrap/app.php` mohem ast: `TrustProxies` bayad `prepend` beshe، vagarna `$request->ip()` hamishe IP e proxy ast va **rate limit e IP e OTP bi-ma'ni mishe** (hame ye karbar ha ru yek bucket).
 **Ba'd az un Phase 2** (auth: mobile + OTP).
 **⚠️ `P1-22` (Seeder) ghablan tu `P1-19` anjam shod** — seeder az Action ha rad mishe va re-seed gheyr-mokhareb ast.
 
@@ -174,7 +175,13 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → **Bedun e halat**: gheymat yek TABE ye MAHZ az zaman ast (do mowj e sinusi + jitter e hash-based)، na «akharin meghdar tu Redis + delta ye random». Pas Source ghabl e test bedun e Redis ast va `final readonly` esh vaghe'an bi-halat mimune.
   → Har symbol faz e khodesh ro dare (ba `crc32`) ta kol e tablo ham-faz harekat nakone.
   → Jofte bid/ask e abshode ro ham taghlid mikone، vagarna mantegh e `is_derived` tu dev hichvaght test nemishe.
-- [ ] **P1-11** — Test e **har instrument e har source** ru fixture e vaghei (meghdar e daghigh e minor)
+- [x] **P1-11** — `SourceFixtureMatrixTest` — **har instrument e har source، meghdar e DAGHIGH e minor** (29 test)
+  → Jadval e kamel: tgju **16** quote (shamel e jofte bid/ask e `xau-melted-g-irr` va `xag-925-g-irr` ke ghablan HICH assert e meghdari nadashtan)، estjt **9** quote.
+  → 🔴 **Mohafez e kamel budan** (`test_*_matrix_is_exhaustive`): majmu'e ye kelid haye jadval ba majmu'e ye kelid hayi ke Source VAGHE'AN az fixture misaze moghayese mishe. Pas map e jadid bedun e radif e jadval -> FAIL. Bedun e un، yek `foreach` ru jadval faghat chizi ro test mikone ke ghablan neveshte shode — ya'ni symbol e jadid SAKET bi-test mimune (hamun class e «test e sabz ke hichi check nemikone»).
+  → 🔴 **Moghayese ye do manba' e MOSTAGHEL**: har symbol e moshtarak (9 ta) bayad zir e 3% ekhtelaf bashe. Ghavi-tarin mohafez e in file chun do source kamelan mostaghel-and (JSON e rial vs HTML e toman ba separator e `٫`). Lista SAKHT-CODE nashode — az eshterak e do fixture hesab mishe. Andaze-giri: bishtarin ekhtelaf 1.28% (rob' e sekke — premium e maghaze-i). Test e ghabli faghat **3 az 9** symbol ro pushesh midad.
+  → `scale` e har quote ba `instrument->scale()` moghayese mishe — vagarna yek adad e USD ba scale 0 zakhire mishe va 10,000 barabar kuchik mishe.
+  → Adad ha az do file e test hazf shodan va yek ja jam' shodan (do ja baraye be-rooz kardan ya'ni yeki aghab mimune).
+  → **Mutation check**: hazf e yek radif e jadval -> 1 fail؛ bardashtan e `×10` e estjt (hamun khata ye 10x) -> **10 fail**؛ `scale` e USD -> 0 -> **29 fail**.
 
 ### Influx
 - [x] **P1-12** — `InfluxTimeSeries` + `Flux` + `FluxCsv` + `InfluxSpool` (57 test)
