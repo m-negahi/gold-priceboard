@@ -15,12 +15,12 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P2-03` (migration e `users`)
-**Akharin kar**: `P2-02` tamum shod. **654 test (2627 assertion)، hame sabz**، Pint tamiz.
+**Task e fe'li**: `P2-04` (`OtpStorePort` + `RedisOtpStore`)
+**Akharin kar**: `P2-03` tamum shod. **663 test (2647 assertion)، hame sabz**، Pint tamiz.
 **Phase 1 amalan tamum ast** — faghat `P1-28` (marja' e e'temad) baz munde، ke AMDAN be ba'd az Phase 3 moghul shode: hall esh yek toggle ya «ta'eed e dasti» tu panel ast، pas sakhtan esh ghabl az vojud e panel ya'ni hads zadan e UI. `scripts/resilience-check.sh` ru mohit e vaghei **29/29 sabz**.
 **ENGINE ZENDE-ST**: `price-worker` tick mizane، `BoardQuery` tablo ye vaghei ro ba moghayese ye do provider bar migardune.
 **Nime-kare**: hich.
-**Gam e ba'di**: `P2-03` — migration e `users`: `phone` e **unique** (format e E.164 — `PhoneHelper` un ro ta'min mikone)، `phone_verified_at`، `is_admin`. Jadval e `users` e default e Laravel `email` e ejbari dare؛ bayad `email` nullable beshe chun login ba MOBILE ast.
+**Gam e ba'di**: `P2-04` — `OtpStorePort` (Domain e Auth) + `RedisOtpStore`. 🔴 Code **HASH** zakhire mishe na plaintext (Redis dump nabayad code haye zende ro lo bede)، TTL e 120s، `max_attempts = 3` va ba'd az 3 ghalat code **BATEL** mishe (na faghat shomaresh). Ru Redis e OMUMI (na `redis-prices` — OTP cache e vaghei-e va evict shodanesh faghat ya'ni dobare ferestadan).
 **Ba'd az un Phase 2** (auth: mobile + OTP).
 **⚠️ `P1-22` (Seeder) ghablan tu `P1-19` anjam shod** — seeder az Action ha rad mishe va re-seed gheyr-mokhareb ast.
 
@@ -302,7 +302,13 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → **Mutation check har 4 tartib ro gereft**: LatinizeDigits -> append (1 fail)، RouteParams -> append (2 fail)، TrustProxies -> prepend (1 fail)، NormalizeString ba'd az Phone (1 fail).
   → ⚠️ Yek test e khodam OVER-CLAIM mikard: «middleware e daxeli» e man sath e ROUTE bud، pas hamishe dakhel e group ejra mishe va ba `append` ham sabz mimund. Docblock esh eslah shod ta begire chi ro vaghe'an sabt mikone.
   → Ru mohit e zende ta'eed shod (ba'd az `octane:reload`): 5 header e amniati ru `/up`، va **HSTS ru HTTP NIST**.
-- [ ] **P2-03** — Migration e `users` (phone e unique، `phone_verified_at`، `is_admin`)
+- [x] **P2-03** — Migration e `users` + model e `User` tu module e Auth (9 test)
+  → Migration e EZAFE-shi: `phone` e **unique NOT NULL** (E.164، 16 char)، `phone_verified_at`، `is_admin` (default false)، `last_login_at`؛ va `name`/`email`/`password` **nullable** shodan — karbar ba phone+OTP sabt-e-nam mikone va tu un lahze hich kodum ro nadare. Migration ru jadval e POR amdan fail mishe (karbar e bi-hoviat nabayad saket sakhte beshe).
+  → `User` az `app/Models` be `app/Modules/Auth/Infrastructure/Persistence/Models` montaghel shod (ghanun e me'mari: model faghat tu `Infrastructure/Persistence`). `config/auth.php`، `DatabaseSeeder` va `UserFactory` be-rooz shodan.
+  → 🔴 **`is_admin` FILLABLE NIST** + test e sarih: yek `$user->update($request->all())` e bi-deghat tu HAR controller e ayande kafi-e ta privilege escalation beshe. Set kardanesh faghat ba `forceFill()`.
+  → 🔴 `is_admin` **default e sath e MODEL** ham dare (`$attributes`)، na faghat DB: bedun e un، `User::create()->is_admin` ta `refresh()` `null` ast va check e authorization ru instance ye taze javab e ghalat mide. (Test khodesh in ro gereft.)
+  → Factory default esh karbar e VAGHEI ye OTP ast (phone e verify-shode، bedun e password/email) — ta test haye ayande na-khaste karbar e email-dar nasazan. `admin()` ba `forceFill`.
+  → `password`/`remember_token` tu `$hidden` + test (model mostaghim tu payload e Livewire miad).
 - [ ] **P2-04** — `OtpStorePort` + `RedisOtpStore` (code **hash shode**)
 - [ ] **P2-05** — `SmsPort` + se driver: `KavenegarSms` (vaghei)، `LogSms` (dev)، `FakeSms` (in-memory، `assertSentTo()` baraye test) + `SmsManager` e switcher ru `SMS_DRIVER`
 - [ ] **P2-06** — `SendOtpAction` / `VerifyOtpAction` + `OtpThrottle` (**phone + IP**)
