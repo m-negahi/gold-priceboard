@@ -57,7 +57,7 @@ final class FetchStageTest extends TestCase
     }
 
     /** @param array<int, QuoteSourcePort> $sources */
-    private function fetch(array $sources): TickContext
+    private function fetch(array $sources, ?FetchStage $stage = null): TickContext
     {
         $providers = [];
 
@@ -71,7 +71,9 @@ final class FetchStageTest extends TestCase
             providers: $providers,
         );
 
-        (new FetchStage)->handle($context);
+        // `retryDelayMs: 0` — vagarna har test e retry 300ms be suite ezafe
+        // mikone. Khod e delay jodagane test mishe.
+        ($stage ?? new FetchStage(maxAttempts: 2, retryDelayMs: 0))->handle($context);
 
         return $context;
     }
@@ -251,31 +253,203 @@ final class FetchStageTest extends TestCase
         $this->assertTrue($context->health['tgju']->succeeded);
     }
 
+    // ── 🔴 Retry e shekast haye GOZARA (P1-25) ──────────────────────
+
     /**
-     * Shekast e MOVAGHAT: `FetchStage` hich halat e provider negah nemidare،
-     * pas tick e ba'di yek shoru' e taze ast.
+     * 🔴 Yek `cURL 35` e tanha bayad TU HAMUN tick jobran beshe.
      *
-     * In mohem ast chun `cURL error 35` (TLS handshake) ru endpoint haye
-     * Irani etefagh mioftad va MOVAGHAT ast — nabayad be ghat'i ye
-     * chand-tick-e tabdil beshe. (`P1-25` retry ro TU hamun tick ezafe
-     * mikone؛ in test khasiat e bi-halat budan ro mikhkub mikone.)
+     * Andaze-giri shode: `tgju` gah-gah ba `cURL error 35: TLS connect
+     * error` miofte. Un khata handshake ast va tu ~100-500ms miofte، pas
+     * talash e dobare amalan majani-e. Bedun e retry، un provider baraye un
+     * tick kamelan gom mishe — ya'ni yek surakh e 15 saniye-i tu series ash.
      */
-    public function test_a_provider_that_failed_last_tick_recovers_on_the_next(): void
+    public function test_a_transient_tls_failure_is_absorbed_within_the_same_tick(): void
     {
         Http::fake(['example.test/*' => Http::response(['ok' => true])]);
 
         $source = (new FakeQuoteSource('tgju'))
             ->returns([$this->quote()])
-            ->failsOnce(message: 'cURL error 35: TLS connect error')
+            ->failsOnce(message: 'cURL error 35: SSL connect error')
             ->pooled('https://example.test/p');
 
-        $first = $this->fetch([$source]);
-        $this->assertFalse($first->health['tgju']->succeeded);
-        $this->assertStringContainsString('cURL error 35', (string) $first->health['tgju']->error);
+        $context = $this->fetch([$source]);
 
-        $second = $this->fetch([$source]);
-        $this->assertTrue($second->health['tgju']->succeeded);
-        $this->assertCount(1, $second->raw);
+        $this->assertTrue($context->health['tgju']->succeeded);
+        $this->assertCount(1, $context->raw);
+
+        // 🔴 `attempts` bayad sabt beshe: provider-i ke HAR tick retry
+        // mikhahe dar hale kharab shodan ast، va «salem» e sade un
+        // degradation ro penhan mikone.
+        $this->assertSame(2, $context->health['tgju']->attempts);
+        $this->assertTrue($context->health['tgju']->toArray()['retried']);
+    }
+
+    public function test_a_single_attempt_configuration_disables_retry(): void
+    {
+        Http::fake(['example.test/*' => Http::response(['ok' => true])]);
+
+        $context = $this->fetch(
+            [(new FakeQuoteSource('tgju'))
+                ->returns([$this->quote()])
+                ->failsOnce(message: 'cURL error 35: SSL connect error')
+                ->pooled('https://example.test/p')],
+            new FetchStage(maxAttempts: 1),
+        );
+
+        $this->assertFalse($context->health['tgju']->succeeded);
+        $this->assertSame(1, $context->health['tgju']->attempts);
+    }
+
+    /**
+     * 🔴 Timeout (`cURL 28`) retry NEMISHE — mohem tarin tasmim e in task.
+     *
+     * Timeout ya'ni ma budget e KAMEL e un provider ro ghablan kharj kardim
+     * (`estjt` 20 saniye). Retry kardanesh un ro DO barabar mikone، va chun
+     * `Http::pool` montazer e HAME mimune، baraye jobran e yek surakh tu YEK
+     * series yek surakh tu HAME ye series misazim.
+     */
+    public function test_a_timeout_is_never_retried(): void
+    {
+        $calls = 0;
+        Http::fake(['example.test/*' => function () use (&$calls): never {
+            $calls++;
+            throw new ConnectionException('cURL error 28: Operation timed out');
+        }]);
+
+        $context = $this->fetch([
+            (new FakeQuoteSource('tgju'))->returns([$this->quote()])->pooled('https://example.test/p'),
+        ]);
+
+        $this->assertSame(1, $calls, 'timeout nabayad takrar beshe.');
+        $this->assertFalse($context->health['tgju']->succeeded);
+        $this->assertSame(1, $context->health['tgju']->attempts);
+    }
+
+    /**
+     * Khata ye parse / markup e avaz-shode retry NEMISHE: talash e dobare
+     * DAGHIGHAN hamun javab ro mide. In bayad DIDE she، na takrar.
+     */
+    public function test_a_parse_failure_is_never_retried(): void
+    {
+        Http::fake(['example.test/*' => Http::response(['current' => []])]);
+
+        $source = (new FakeQuoteSource('tgju'))
+            ->fails('markup avaz shode')
+            ->pooled('https://example.test/p');
+
+        $context = $this->fetch([$source]);
+
+        $this->assertSame(1, $source->parseCount(), 'parse nabayad do bar seda beshe.');
+        $this->assertSame(1, $context->health['tgju']->attempts);
+    }
+
+    public function test_an_http_error_status_is_never_retried(): void
+    {
+        $calls = 0;
+        Http::fake(['example.test/*' => function () use (&$calls) {
+            $calls++;
+
+            // 500 gozara-st vali 300ms ba'd hamun javab ro mide، va hazine
+            // ash yek round-trip e kamel ast (6-9s baraye estjt).
+            return Http::response('', 500);
+        }]);
+
+        $context = $this->fetch([
+            (new FakeQuoteSource('tgju'))->returns([$this->quote()])->pooled('https://example.test/p'),
+        ]);
+
+        $this->assertSame(1, $calls);
+        $this->assertSame(1, $context->health['tgju']->attempts);
+    }
+
+    /**
+     * Retry ham HAMZAMAN ast: do provider e shekast-khorde tu YEK pool e
+     * dovom takrar mishan، na poshte sar e ham. Vagarna retry khodesh
+     * tabdil mishe be hamun fetch e seri ke `Http::pool` baraye hazf esh
+     * sakhte shode.
+     */
+    public function test_several_transient_failures_are_retried_together(): void
+    {
+        Http::fake([
+            'a.test/*' => Http::response(['ok' => true]),
+            'b.test/*' => Http::response(['ok' => true]),
+        ]);
+
+        $context = $this->fetch([
+            (new FakeQuoteSource('tgju'))->returns([$this->quote()])
+                ->failsOnce(message: 'cURL error 35: SSL connect error')->pooled('https://a.test/p'),
+            (new FakeQuoteSource('estjt'))->returns([$this->quote(provider: 'estjt')])
+                ->failsOnce(message: 'cURL error 56: recv failure')->pooled('https://b.test/p'),
+        ]);
+
+        $this->assertCount(2, $context->raw);
+        $this->assertSame(2, $context->health['tgju']->attempts);
+        $this->assertSame(2, $context->health['estjt']->attempts);
+    }
+
+    public function test_only_the_failing_provider_is_retried(): void
+    {
+        $healthyCalls = 0;
+        Http::fake([
+            'broken.test/*' => Http::response(['ok' => true]),
+            'healthy.test/*' => function () use (&$healthyCalls) {
+                $healthyCalls++;
+
+                return Http::response(['ok' => true]);
+            },
+        ]);
+
+        $context = $this->fetch([
+            (new FakeQuoteSource('broken'))->returns([$this->quote(provider: 'broken')])
+                ->failsOnce(message: 'cURL error 7: Failed to connect')->pooled('https://broken.test/p'),
+            (new FakeQuoteSource('tgju'))->returns([$this->quote()])->pooled('https://healthy.test/p'),
+        ]);
+
+        // Provider e salem nabayad dobare seda beshe — un yek round-trip e
+        // bi-dalil e ezafi-e.
+        $this->assertSame(1, $healthyCalls);
+        $this->assertSame(1, $context->health['tgju']->attempts);
+        $this->assertSame(2, $context->health['broken']->attempts);
+        $this->assertCount(2, $context->raw);
+    }
+
+    public function test_a_still_failing_provider_reports_the_last_error(): void
+    {
+        Http::fake(['example.test/*' => static fn (): never => throw new ConnectionException('cURL error 35: SSL connect error')]);
+
+        $context = $this->fetch([
+            (new FakeQuoteSource('tgju'))->returns([$this->quote()])->pooled('https://example.test/p'),
+        ]);
+
+        $this->assertFalse($context->health['tgju']->succeeded);
+        $this->assertSame(2, $context->health['tgju']->attempts, 'bayad do bar talash shode bashe.');
+        $this->assertStringContainsString('cURL error 35', (string) $context->health['tgju']->error);
+    }
+
+    /**
+     * 🔴 Retry nabayad tick ro az grid rad kone.
+     *
+     * Ba budget e kuchik، hich retry-i nabayad ettefagh bioftad: baraye
+     * jobran e yek surakh tu YEK series، yek surakh tu HAME ye series
+     * sakhtan ghalat ast (`Http::pool` montazer e hame mimune va halghe ye
+     * worker slot e ba'di ro ja mindaze).
+     */
+    public function test_retry_is_skipped_when_the_tick_budget_is_exhausted(): void
+    {
+        $calls = 0;
+        Http::fake(['example.test/*' => function () use (&$calls): never {
+            $calls++;
+            throw new ConnectionException('cURL error 35: SSL connect error');
+        }]);
+
+        $context = $this->fetch(
+            [(new FakeQuoteSource('tgju'))->returns([$this->quote()])->pooled('https://example.test/p')],
+            // Budget e 500ms: ja-i baraye talash e dovom nist.
+            new FetchStage(maxAttempts: 2, retryDelayMs: 0, budgetMs: 500),
+        );
+
+        $this->assertSame(1, $calls, 'ba budget e tamum-shode nabayad retry beshe.');
+        $this->assertFalse($context->health['tgju']->succeeded);
     }
 
     // ── Masir e mostaghim (bedun e HTTP) ────────────────────────────

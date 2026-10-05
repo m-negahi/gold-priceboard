@@ -22,6 +22,21 @@ return [
     'timeout' => (int) env('PRICING_TIMEOUT', 10),
 
     /*
+     * Fetch — retry baraye shekast haye GOZARA ye sath e ettesal.
+     *
+     * `max_attempts = 1` ya'ni kamelan khamoosh.
+     *
+     * 🔴 Faghat khata haye ettesal ke SARI' miterkan retry mishan
+     * (`cURL 35` e TLS va hamsayeh hash) — timeout (`28`) amdan birun ast
+     * chun budget e kamel ro ghablan kharj karde. Lista va dalil e har
+     * mored tu `Domain/Services/TransientFailure.php`.
+     */
+    'fetch' => [
+        'max_attempts' => (int) env('PRICING_FETCH_MAX_ATTEMPTS', 2),
+        'retry_delay_ms' => (int) env('PRICING_FETCH_RETRY_DELAY_MS', 300),
+    ],
+
+    /*
      * Offset e Tehran baraye window e candle.
      *
      * 🔴 Bedun e in, `window(every: 1d)` be nime-shab e UTC align mishe ke

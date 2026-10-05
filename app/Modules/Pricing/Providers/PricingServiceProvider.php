@@ -117,7 +117,14 @@ final class PricingServiceProvider extends ServiceProvider
         $this->app->singleton(TickPipeline::class, static fn ($app): TickPipeline => new TickPipeline(
             store: $app->make(SnapshotStorePort::class),
             stages: [
-                new FetchStage,
+                // Retry faghat baraye shekast haye GOZARA ye ettesal، va
+                // timeout esh be budget e baghi-munde clamp mishe (dalil e
+                // kamel tu `FetchStage` va `TransientFailure`).
+                new FetchStage(
+                    maxAttempts: (int) config('pricing.fetch.max_attempts', 2),
+                    retryDelayMs: (int) config('pricing.fetch.retry_delay_ms', 300),
+                    budgetMs: (int) config('pricing.tick_seconds', 15) * 1_000,
+                ),
                 new ValidateStage((array) config('pricing.max_deviation', [])),
                 new EnrichStage,
                 new PersistStage(
