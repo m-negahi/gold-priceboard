@@ -40,6 +40,21 @@ interface HotCachePort
      */
     public function boardVersion(): int;
 
+    /**
+     * Akharin lista ye salem e provider ha — **BEDUN e TTL**.
+     *
+     * 🔴 Chera tu store e dagh va na cache e ma'muli: agar Postgres ghat'
+     * bashe، tick bayad EDAME bede. Bedun e in lista، pipeline nemidune
+     * kodum provider ro poll kone va kol e feed motevaghef mishe — ya'ni
+     * yek ghat'i ye DB tabdil mishe be yek ghat'i ye kamel e gheymat.
+     *
+     * @param  array<string, array<string, mixed>>  $providers
+     */
+    public function putProviders(array $providers): void;
+
+    /** @return array<string, array<string, mixed>>|null */
+    public function providers(): ?array;
+
     public function putHealth(ProviderHealthDto $health): void;
 
     /** @return array<string, ProviderHealthDto> */

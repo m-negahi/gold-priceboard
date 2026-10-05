@@ -15,10 +15,24 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P1-16` (`IngestTickAction`) → ba'd `P1-17` (`pricing:tick`)
-**Akharin kar**: `P1-15` tamum shod. **318 test، 1816 assertion، hame sabz**، Pint tamiz.
+**Task e fe'li**: `P1-18` (baghi ye Query ha: `BoardQuery`/`CandleQuery`/`SpreadQuery`)
+**Akharin kar**: `P1-16` va `P1-17` tamum shodan. **338 test، 1852 assertion، hame sabz**، Pint tamiz.
+**ENGINE ZENDE-ST**: `price-worker` ru mohit e vaghei tick mizane va Redis/Postgres/Influx har se minevisan.
 **Nime-kare**: hich.
-**Gam e ba'di**: `P1-16`/`P1-17` — `IngestTickAction` (sakhtan e context + ejra ye pipeline) va command e nazok e `pricing:tick` ba lock. Ba'd `P1-18` (`ProviderQuery` ke `ProviderConfigDto` ro az DB misaze).
+**Gam e ba'di**: `P1-18` — `BoardQuery` (Redis → Postgres fallback)، `CandleQuery` (cache e do tabaghe)، `SpreadQuery`. Ba'd `P1-19` (`ProviderSpreadAction` ba `spread_version`).
+
+### 🔴🔴 MOHEM TARIN DARS: `force="true"` e phpunit KAFI NABUD
+Container e `octane` `DB_CONNECTION=pgsql` va `DB_DATABASE=priceboard` ro be onvan e env e **vaghei ye OS** export mikone، va un bar `phpunit.xml` **BARANDE shod**.
+Natije: `RefreshDatabase` ru database e **DEV** ejra shod va jadval e `providers` ro khali kard؛ `RedisHotCacheTest::flushdb()` ham ru db e 0 tablo ye dev ro pak kard. (Khodam vasat e kar motevajeh shodam ke `providers` khali-e.)
+
+**Hall**: `tests/TestCase.php` config ro **BA'D az bootstrap** be zoor set mikone — unja hich env e OS-i nemitune barande beshe.
+**Negahban**: `tests/Feature/GuardsTest.php` — agar ruzi kasi in ro bardare، un test fail mishe، na inke data bere.
+
+### Raftar e vaghei ye feed (andaze-giri shode، na hads)
+- **Bazaar e Iran baste = feed yakh mizane.** 10:13 e doshanbe (ghabl az baz shodan e bazaar): tgju baraye tala/sekke/dollar `ts` e **nime-shab e rooz e ghabl** mide. 14 ta az 16 symbol be dorosti `stale` rad shodan. Tablo khali nemimune — akharin gheymat e paziresh-shode ba badge e sen mimune.
+- **Symbol haye jahani ye tgju ~SA'ATI be-rooz mishan**، na modam (09:19 vs 10:13). Pas override e `freshness_seconds` tu seeder **load-bearing** ast، na tazyini.
+- **Dore ye vaghei ~30 saniye ast، na 15.** Tick ~11s tool mikeshe (estjt) va `next_poll_at` +15s ast، pas amalan yeki dar miyan slot tick mikhore. Lock ham dorost kar mikone («tick e ghabli hanuz dar hale ejra-st»).
+- Check e arz beyn e do manba' e mostaghel: estjt ons = $4151.00، tgju ons = $4139.82 → 0.27% ekhtelaf. Vahed ha salem-and.
 
 ### 🔴 Yek rakhne ye vaghei ke peyda shod va baste shod
 **Replay e spool tick e kham ro bar migardund vali candle ro NA.**
@@ -174,8 +188,15 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → `QuoteEnricher` (az `P1-05` aghab oftade bud) neveshte shod: band e rooz ba rooz e **Tehran** reset mishe (na UTC — vagarna «بیشترین امروز» har rooz 3:30 e sobh reset mishe)، va gheymat e bi-taghir jahat ro be `flat` bar nemigardune.
   → **Fetch e HAMZAMAN** ba `Http::pool` — port `request()` gereft ta «chetor beporsim» az «chetor bekhunim» joda beshe.
   → Kol e pipeline **bedun e Docker/DB/Redis/Influx** test mishe (22 test ba fake ha).
-- [ ] **P1-16** — `IngestTickAction` + `TickReportDto`
-- [ ] **P1-17** — `pricing:tick` (command e nazok) + khoruji e Finglish
+- [x] **P1-16** — `IngestTickAction` + `TickReportDto` (11 test)
+  → Lock (ba fallback: Redis ghat' → **bedun e lock edame**، chun hame ye sink ha idempotent-and)، load e provider ha ba fallback e Redis vaghti Postgres ghat' ast، sakht e Source ha، ejra ye pipeline، sabt e salamat.
+  → `ProviderQuery` + `SourceManager` + `RecordProviderHealthAction` + `SystemClock` ham inja neveshte shodan (ghesmati az `P1-18`/`P1-19`).
+  → `kind` be `providers` ezafe shod (migration e ezafe-shi): `reference` vs `platform` — platform ha kharid/foroosh e VAGHEI daran va nabayad marker e «محاسبه‌شده» begiran.
+- [x] **P1-17** — `pricing:tick` (5 test) + `ProviderSeeder`
+  → Command **nazok**: faghat yek Action seda mizane. `--json` va `--quiet-ok` dare.
+  → ⚠️ Shekast e yek provider ya sink `FAILURE` **nist** — halghe ye worker nabayad be khatere yek ghat'i ye gozara motevaghef beshe.
+  → Seeder ba override haye `freshness_seconds` baraye `ons`/`silver`/`copper`/`gerami` e tgju.
+  → **Ru mohit e zende kar mikone**: `price-worker` har dore tick mizane va har se sink minevisan.
 - [ ] **P1-18** — `ProviderQuery` / `SpreadQuery` / `BoardQuery` / `CandleQuery`
 - [ ] **P1-19** — `ProviderAction` / `ProviderSpreadAction` (ba `spread_version` bump + revision)
 - [ ] **P1-20** — `PricingServiceProvider` + `Config/pricing.php` + **test e bind**

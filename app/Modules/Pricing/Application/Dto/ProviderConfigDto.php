@@ -16,12 +16,56 @@ final readonly class ProviderConfigDto
 {
     /**
      * @param  array<string, int>  $symbolFreshness  symbol => saniye (override)
+     * @param  array<string, mixed>  $options  UA / base url / har chiz e makhsus e Source
      */
     public function __construct(
         public string $key,
         public int $freshnessSeconds = 900,
         public array $symbolFreshness = [],
+        /**
+         * Kelas e code-i ke in provider azash mikhune.
+         *
+         * AMDAN az `key` jodast: ba'dan panj maghaze ba hamun shape e
+         * `admin-ajax.php` mishan PANJ provider ru YEK driver.
+         */
+        public string $driver = '',
+        public int $timeout = 10,
+        public array $options = [],
+        public int $pollIntervalSeconds = 15,
     ) {}
+
+    public function driverKey(): string
+    {
+        return $this->driver !== '' ? $this->driver : $this->key;
+    }
+
+    /** @param array<string, mixed> $row */
+    public static function fromRow(array $row): self
+    {
+        return new self(
+            key: (string) $row['key'],
+            freshnessSeconds: (int) ($row['freshness_seconds'] ?? 900),
+            symbolFreshness: (array) ($row['symbol_freshness'] ?? []),
+            driver: (string) ($row['driver'] ?? ''),
+            timeout: (int) ($row['timeout'] ?? 10),
+            options: (array) ($row['options'] ?? []),
+            pollIntervalSeconds: (int) ($row['poll_interval_seconds'] ?? 15),
+        );
+    }
+
+    /** @return array<string, mixed> */
+    public function toArray(): array
+    {
+        return [
+            'key' => $this->key,
+            'driver' => $this->driver,
+            'timeout' => $this->timeout,
+            'options' => $this->options,
+            'freshness_seconds' => $this->freshnessSeconds,
+            'symbol_freshness' => $this->symbolFreshness,
+            'poll_interval_seconds' => $this->pollIntervalSeconds,
+        ];
+    }
 
     /**
      * Chand saniye ba'd az `upstreamAt`, gheymat e in instrument bayat ast.

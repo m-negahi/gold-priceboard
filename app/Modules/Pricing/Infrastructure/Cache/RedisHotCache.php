@@ -44,6 +44,8 @@ final readonly class RedisHotCache implements HotCachePort
 
     private const HEALTH_KEY = 'pb:health';
 
+    private const PROVIDERS_KEY = 'pb:providers';
+
     public function board(): array
     {
         $raw = $this->connection()->get(self::BOARD_KEY);
@@ -96,6 +98,28 @@ final readonly class RedisHotCache implements HotCachePort
     public function boardVersion(): int
     {
         return (int) ($this->connection()->get(self::VERSION_KEY) ?? 0);
+    }
+
+    public function putProviders(array $providers): void
+    {
+        // Bedun e TTL — in fallback e ghat'i ye Postgres ast.
+        $this->connection()->set(
+            self::PROVIDERS_KEY,
+            (string) json_encode($providers, JSON_UNESCAPED_UNICODE),
+        );
+    }
+
+    public function providers(): ?array
+    {
+        $raw = $this->connection()->get(self::PROVIDERS_KEY);
+
+        if (! is_string($raw) || $raw === '') {
+            return null;
+        }
+
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     public function putHealth(ProviderHealthDto $health): void

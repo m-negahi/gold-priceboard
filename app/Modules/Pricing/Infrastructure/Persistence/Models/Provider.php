@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $id
  * @property string $key
  * @property string $driver
+ * @property string $kind
  * @property string $name
  * @property string $name_fa
  * @property string|null $website
@@ -53,7 +54,7 @@ class Provider extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'key', 'driver', 'name', 'name_fa', 'website', 'logo_path',
+        'key', 'driver', 'kind', 'name', 'name_fa', 'website', 'logo_path',
         'is_active', 'in_comparison', 'on_board', 'in_chart',
         'timeout', 'poll_interval_seconds', 'next_poll_at',
         'freshness_seconds', 'hide_after_seconds', 'upstream_unit', 'sort', 'options',
