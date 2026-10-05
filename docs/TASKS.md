@@ -15,12 +15,12 @@
 ## Hala koja hastim
 
 **Phase**: 1 — Pricing engine
-**Task e fe'li**: `P2-04` (`OtpStorePort` + `RedisOtpStore`)
-**Akharin kar**: `P2-03` tamum shod. **663 test (2647 assertion)، hame sabz**، Pint tamiz.
+**Task e fe'li**: `P2-05` (`SmsPort` + se driver)
+**Akharin kar**: `P2-04` tamum shod. **696 test (2906 assertion)، hame sabz**، Pint tamiz.
 **Phase 1 amalan tamum ast** — faghat `P1-28` (marja' e e'temad) baz munde، ke AMDAN be ba'd az Phase 3 moghul shode: hall esh yek toggle ya «ta'eed e dasti» tu panel ast، pas sakhtan esh ghabl az vojud e panel ya'ni hads zadan e UI. `scripts/resilience-check.sh` ru mohit e vaghei **29/29 sabz**.
 **ENGINE ZENDE-ST**: `price-worker` tick mizane، `BoardQuery` tablo ye vaghei ro ba moghayese ye do provider bar migardune.
 **Nime-kare**: hich.
-**Gam e ba'di**: `P2-04` — `OtpStorePort` (Domain e Auth) + `RedisOtpStore`. 🔴 Code **HASH** zakhire mishe na plaintext (Redis dump nabayad code haye zende ro lo bede)، TTL e 120s، `max_attempts = 3` va ba'd az 3 ghalat code **BATEL** mishe (na faghat shomaresh). Ru Redis e OMUMI (na `redis-prices` — OTP cache e vaghei-e va evict shodanesh faghat ya'ni dobare ferestadan).
+**Gam e ba'di**: `P2-05` — `SmsPort` + `KavenegarSms` (vaghei) / `LogSms` (dev) / `FakeSms` (test، ba `assertSentTo()`) + `SmsManager` e switcher ru `SMS_DRIVER`. 🔴 Payam e SMS hich vaght code ro LOG nemikone (`PhoneHelper::mask` baraye shomare). Kavenegar faghat contract — API key tu env، retry/timeout e sarih.
 **Ba'd az un Phase 2** (auth: mobile + OTP).
 **⚠️ `P1-22` (Seeder) ghablan tu `P1-19` anjam shod** — seeder az Action ha rad mishe va re-seed gheyr-mokhareb ast.
 
@@ -309,11 +309,18 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → 🔴 `is_admin` **default e sath e MODEL** ham dare (`$attributes`)، na faghat DB: bedun e un، `User::create()->is_admin` ta `refresh()` `null` ast va check e authorization ru instance ye taze javab e ghalat mide. (Test khodesh in ro gereft.)
   → Factory default esh karbar e VAGHEI ye OTP ast (phone e verify-shode، bedun e password/email) — ta test haye ayande na-khaste karbar e email-dar nasazan. `admin()` ba `forceFill`.
   → `password`/`remember_token` tu `$hidden` + test (model mostaghim tu payload e Livewire miad).
-- [ ] **P2-04** — `OtpStorePort` + `RedisOtpStore` (code **hash shode**)
+- [x] **P2-04** — `OtpStorePort` + `RedisOtpStore` + `OtpCode` (33 test)
+  → `OtpCode` (Domain، pure): tolid ba `random_int(0, 10^d - 1)` + pad — **sefr e avval mojaz** (`random_int(100000, 999999)` 10% e fazaye kelid ro hazf mikone؛ test e amari esh hast). Hash = **HMAC ba APP_KEY** (na sha256 e khali — code e 6 raghami faghat 10^6 halat dare va sha256 e khali offline tu millisecond brute mishe؛ HMAC ya'ni dump e Redis bedun e APP_KEY bi-estefade-ast). Phone tu HMAC hast (hash e yek shomare baraye shomare ye digar replay nemishe). Verify ba `hash_equals`. Kelid e khali throw mikone.
+  → `RedisOtpStore` ru Redis e **omumi** (OTP cache e vaghei-e — evict ya'ni «dobare befrest»). Code-hash + shomaresh e talash tu **YEK kelid** (ba ham expire/evict mishan — hich «shomaresh e bi-code» ya «code e bi-shomaresh»). `recordFailedAttempt` ba **Lua ye sharti**: `HINCRBY` ru kelid e nabude kelid e YATIM e bi-TTL misaze.
+  → 🔴 **`OtpStoreContractTest`: har raftar ru HAR DO implementation** (Redis e vaghei + fake) — e'mal e mostaghim e dars e P1-26 («fake bayad gharardad ro emza kone»). Va hamun avvalin ejra yek bug e VAGHEI gereft: prefix e dasti tu EVAL — **phpredis khodesh KEYS haye EVAL ro ham prefix mizane**، pas kelid do bar prefix mikhord va `EXISTS` hichvaght peyda nemikard. (Hamun dars e Redis e P1، variant e EVAL. Empiri ta'eed shod.)
+  → `put` e jadid shomaresh ro ham **sefr** mikone (resend = shoru' e kamel)؛ cooldown **mostaghel** az entry (batel shodan e code ghofl e resend ro baz nemikone).
+  → ⚠️ `.env` e dev `BYPASS_OTP=true` dare va container un ro OS-env mikone — `TestCase` hala config e OTP ro ham mikhkube (hamun masir e ma'ruf e DB). Esm e env ha ba `.env` e mojud e P0 yeki shodan (`OTP_EXPIRES_IN`، `OTP_LENGTH`).
+  → `AuthServiceProvider` + sabt + `AuthBindingTest` (hamun ghanun e bind-test).
 - [ ] **P2-05** — `SmsPort` + se driver: `KavenegarSms` (vaghei)، `LogSms` (dev)، `FakeSms` (in-memory، `assertSentTo()` baraye test) + `SmsManager` e switcher ru `SMS_DRIVER`
 - [ ] **P2-06** — `SendOtpAction` / `VerifyOtpAction` + `OtpThrottle` (**phone + IP**)
 - [ ] **P2-07** — `Livewire/SignIn` (do marhale) + `EnsureAdmin`
   Agar `BYPASS_OTP=true`: (a) code e tolid-shode zir e form neshun dade she، (b) dokme ye «پر کردن خودکار» kenar e input ke code ro mizare tu input. `false` bashe hich kodum nabashe (eyn e production) — **test baraye har do hālat**.
+- [ ] **P2-09** — 🔴 **CODE REVIEW e KOL e projeh** (khaste ye sahebe projeh، 2026-10-05) — ba'd az tamam shodan e Phase 2. Kol e code ta inja: Pricing + Common + Auth. Ba `/code-review` + barresi ye dasti ye memari.
 - [ ] **P2-08** — Test: rate limit e phone **va** IP jodagane، enumeration safety، `max_attempts` code ro batel kone
 
 ---

@@ -65,6 +65,12 @@ abstract class TestCase extends BaseTestCase
         $config->set('mail.default', 'array');
         $config->set('broadcasting.default', 'null');
 
+        // ── Redis e default tu test: database e 13 ─────────────
+        // `RedisOtpStore` ru connection e `default` mineviseh؛ bedun e in،
+        // test haye OTP kelid haye DEV (db 0 — Horizon، cache) ro dast
+        // mizanan.
+        $config->set('database.redis.default.database', '13');
+
         // ── Redis e gheymat: database e 15، na 0 ────────────────
         // `RedisHotCacheTest` `flushdb()` mizane — ru db e 0 un tablo ye
         // dev ro pak mikone.
@@ -76,6 +82,17 @@ abstract class TestCase extends BaseTestCase
 
         // ── SMS: driver e fake — hich IO ───────────────────────
         $config->set('sms.driver', 'fake');
+
+        // ── OTP: meghdar haye SABET e test ─────────────────────
+        // `.env` e dev `BYPASS_OTP=true` va `OTP_LENGTH=5` dare va container
+        // un ha ro be onvan e env e VAGHEI ye OS export mikone — hamun
+        // masiri ke yek bar DB e dev ro pak kard. Test ha nabayad be tanzim
+        // e dev vabaste bashan، makhsusan bypass e OTP.
+        $config->set('otp.bypass', false);
+        $config->set('otp.ttl_seconds', 120);
+        $config->set('otp.resend_cooldown_seconds', 60);
+        $config->set('otp.max_attempts', 3);
+        $config->set('otp.digits', 6);
 
         // ── Influx: test ha az fake estefade mikonan؛ test haye
         // integration khodeshun config e sarih pass midan.
