@@ -7,7 +7,6 @@ namespace App\Modules\Auth\Infrastructure\Sms;
 use App\Modules\Auth\Domain\Exceptions\SmsException;
 use App\Modules\Auth\Domain\Ports\SmsPort;
 use Illuminate\Contracts\Foundation\Application;
-use Psr\Log\LoggerInterface;
 
 /**
  * Switcher e driver — hamun olgu ye `SourceManager` e Pricing.
@@ -20,7 +19,9 @@ final readonly class SmsManager
     /** @return array<int, string> */
     public static function drivers(): array
     {
-        return ['kavenegar', 'log', 'fake'];
+        // `log` e joda HAZF shod: `fake` khodesh log mizane، pas do driver
+        // baraye yek kar budan. (2026-10-05)
+        return ['kavenegar', 'fake'];
     }
 
     public static function make(string $driver, Application $app): SmsPort
@@ -30,7 +31,6 @@ final readonly class SmsManager
                 (array) config('sms.kavenegar', []),
                 (int) config('sms.timeout', 10),
             ),
-            'log' => new LogSms($app->make(LoggerInterface::class)),
             // ⚠️ Az container — bayad haman singleton-i bashe ke test ha
             // resolve mikonan.
             'fake' => $app->make(FakeSms::class),

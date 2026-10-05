@@ -7,7 +7,6 @@ namespace Tests\Feature\Auth;
 use App\Modules\Auth\Domain\Exceptions\SmsException;
 use App\Modules\Auth\Domain\Ports\SmsPort;
 use App\Modules\Auth\Infrastructure\Sms\FakeSms;
-use App\Modules\Auth\Infrastructure\Sms\LogSms;
 use App\Modules\Auth\Infrastructure\Sms\SmsManager;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
@@ -45,16 +44,40 @@ final class SmsDriversTest extends TestCase
         $fake->assertSentTo('+989121234567');
     }
 
-    // ── LogSms ──────────────────────────────────────────────────────
+    // ── Log az tarigh e khod e fake ─────────────────────────────────
 
-    public function test_log_driver_writes_the_code_to_the_log(): void
+    /** Dev az hamin log login mikone — karkard e `LogSms` e hazf-shode. */
+    public function test_fake_also_writes_the_code_to_the_log(): void
     {
         Log::shouldReceive('info')->once()->withArgs(
             static fn (string $message, array $context): bool => $context['code'] === '042531'
                 && $context['phone'] === '+989121234567',
         );
 
-        (new LogSms(Log::getFacadeRoot()))->sendOtp('+989121234567', '042531');
+        (new FakeSms(Log::getFacadeRoot()))->sendOtp('+989121234567', '042531');
+    }
+
+    public function test_fake_without_a_logger_still_works(): void
+    {
+        // Test haye vahed logger nemidan — nabayad beterke.
+        $fake = new FakeSms;
+        $fake->sendOtp('+989121234567', '042531');
+
+        $fake->assertSentTo('+989121234567');
+    }
+
+    /** Zire Octane e dev singleton RUZHA zende-st — hafeze cap dare. */
+    public function test_fake_memory_is_capped(): void
+    {
+        $fake = new FakeSms;
+
+        for ($i = 0; $i < 150; $i++) {
+            $fake->sendOtp('+989121234567', str_pad((string) $i, 6, '0', STR_PAD_LEFT));
+        }
+
+        self::assertSame(100, $fake->sentCount());
+        // Jadid tarin ha mimunan، na ghadimi tarin ha.
+        self::assertSame('000149', $fake->lastCodeFor('+989121234567'));
     }
 
     // ── SmsManager + bind ───────────────────────────────────────────

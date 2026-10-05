@@ -11,6 +11,7 @@ use App\Modules\Auth\Infrastructure\Otp\RedisOtpStore;
 use App\Modules\Auth\Infrastructure\Sms\FakeSms;
 use App\Modules\Auth\Infrastructure\Sms\SmsManager;
 use Illuminate\Support\ServiceProvider;
+use Psr\Log\LoggerInterface;
 
 /**
  * Hamun ghanun e `PricingServiceProvider`: har bind yek test e assert dare
@@ -29,7 +30,9 @@ final class AuthServiceProvider extends ServiceProvider
 
         // 🔴 `FakeSms` bayad singleton bashe: instance-i ke action behesh
         // mifereste va instance-i ke test assert mikone bayad YEKI bashan.
-        $this->app->singleton(FakeSms::class);
+        $this->app->singleton(FakeSms::class, static fn ($app): FakeSms => new FakeSms(
+            $app->make(LoggerInterface::class),
+        ));
 
         $this->app->singleton(SmsPort::class, static fn ($app): SmsPort => SmsManager::make(
             (string) config('sms.driver', 'log'),
