@@ -31,11 +31,19 @@ final readonly class MonitorController
         ]);
     }
 
-    /** P3-09/P4-12 — «chi rad shod va chera» — safhe ye asli ye debug. */
+    /** P3-09/P4-12/P4-18 — «chi rad shod va chera» — safhe ye asli ye debug. */
     public function ticks(): View
     {
+        // Hame ye daftarche (50) — kholase ba 20 tick nemayande nabud.
+        $reports = $this->ticks->recent(50);
+        $rejections = $this->ticks->rejectionRows($reports);
+
         return view('panel::monitor.ticks', [
-            'reports' => $this->ticks->recent(20),
+            'reports' => $reports,
+            'metas' => array_map(fn (array $r): array => $this->ticks->filterMeta($r), $reports),
+            'summary' => $this->ticks->summarize($reports),
+            'rejections' => $rejections,
+            'options' => $this->ticks->filterOptions($rejections),
             'providerMeta' => $this->providerMeta(),
         ]);
     }

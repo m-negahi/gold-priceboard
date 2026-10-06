@@ -62,6 +62,32 @@ final class MonitorPagesTest extends TestCase
             ->assertSee('هنوز گزارشی ثبت نشده');
     }
 
+    public function test_the_tick_monitor_offers_summary_filters_and_a_rejection_table(): void
+    {
+        $cache = $this->app->make(HotCachePort::class);
+        $cache->putTickReport([
+            'at' => '2026-10-06T10:00:00Z', 'skipped' => true, 'skip_reason' => "hich provider e fa'ali nobat nadasht",
+            'accepted' => 0, 'rejected' => 0, 'duration_ms' => 0, 'providers' => [], 'sinks' => [], 'rejections' => [], 'unmapped' => [],
+        ]);
+        $cache->putTickReport([
+            'at' => '2026-10-06T10:00:15Z', 'skipped' => false, 'skip_reason' => null,
+            'accepted' => 15, 'rejected' => 1, 'duration_ms' => 9_000,
+            'providers' => ['tgju' => ['succeeded' => true, 'latency_ms' => 1_200, 'symbol_count' => 16, 'retried' => false, 'error' => null]],
+            'sinks' => [],
+            'rejections' => [['provider' => 'tgju', 'symbol' => 'ons', 'side' => 'last', 'reason' => 'stale:90000s', 'category' => 'stale', 'minor' => 41_000_000]],
+            'unmapped' => [],
+        ]);
+
+        $this->actingAs($this->admin())->get(route('panel.monitor.ticks'))
+            ->assertOk()
+            ->assertViewHas('summary', fn (array $s): bool => $s['tgju']['rejections'] === 1)
+            ->assertViewHas('options', fn (array $o): bool => $o['symbols'] === ['ons'])
+            ->assertSee('جدول ردها')
+            ->assertSee('خط زمانی')
+            // Tick e «بدون اجرا» be soorat e default penhan + shomaresh.
+            ->assertSee('بدون اجرا');
+    }
+
     public function test_a_real_tick_lands_on_the_monitor_and_matrix_pages(): void
     {
         $this->seedMockProvider();

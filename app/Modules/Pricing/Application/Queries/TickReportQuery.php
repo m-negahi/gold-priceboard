@@ -142,6 +142,28 @@ final readonly class TickReportQuery
     }
 
     /**
+     * Gozine haye select e filter (symbol/category) — faghat chizi ke vaghe'an
+     * tu in panjere rad shode، yekta va moratab.
+     *
+     * @param  list<array<string, mixed>>  $rows  khoruji ye `rejectionRows`
+     * @return array{symbols: list<string>, categories: list<string>}
+     */
+    public function filterOptions(array $rows): array
+    {
+        $pick = static function (string $key) use ($rows): array {
+            $values = array_values(array_unique(array_filter(
+                array_map(static fn (array $r): string => (string) ($r[$key] ?? ''), $rows),
+                static fn (string $v): bool => $v !== '',
+            )));
+            sort($values);
+
+            return $values;
+        };
+
+        return ['symbols' => $pick('symbol'), 'categories' => $pick('category')];
+    }
+
+    /**
      * Kelid haye filter e YEK tick — Alpine faghat ba in ha show/hide mikone.
      *
      * `problem` = har chizi ke admin bayad bebine: provider e nakam، rad، ya
