@@ -6,6 +6,9 @@
     'chrome' => true,
     // Zamine ye body — TV (P5-03) tire ast (`bg-surface-dark`)؛ baghi canvas.
     'bodyClass' => 'bg-canvas text-ink',
+    // SEO e kamel (P5-05): `App\Modules\Seo\Application\Dto\SeoMetaDto` —
+    // title/description/canonical/robots/OG/JSON-LD. Bedun esh faghat title/description.
+    'seo' => null,
 ])
 
 <!DOCTYPE html>
@@ -15,9 +18,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
 
-    <title>{{ $title ? $title.' — '.config('app.name') : config('app.name') }}</title>
-    @if ($description)
-        <meta name="description" content="{{ $description }}">
+    @if ($seo)
+        <title>{{ $seo->title }}</title>
+        <meta name="description" content="{{ $seo->description }}">
+        <meta name="robots" content="{{ $seo->robots }}">
+        <link rel="canonical" href="{{ $seo->canonical }}">
+        <meta property="og:type" content="website">
+        <meta property="og:locale" content="fa_IR">
+        <meta property="og:site_name" content="{{ $seo->siteName }}">
+        <meta property="og:title" content="{{ $seo->title }}">
+        <meta property="og:description" content="{{ $seo->description }}">
+        <meta property="og:url" content="{{ $seo->canonical }}">
+        @if ($seo->ogImage)
+            <meta property="og:image" content="{{ $seo->ogImage }}">
+        @endif
+        <meta name="twitter:card" content="{{ $seo->ogImage ? 'summary_large_image' : 'summary' }}">
+        @if ($seo->jsonLd !== [])
+            {{-- JSON-LD: `JsonLd::encode` (JSON_HEX_TAG) — `</script>` tu matn e override farar nemikone. --}}
+            <script type="application/ld+json">{!! $seo->jsonLdScript() !!}</script>
+        @endif
+    @else
+        <title>{{ $title ? $title.' — '.config('app.name') : config('app.name') }}</title>
+        @if ($description)
+            <meta name="description" content="{{ $description }}">
+        @endif
     @endif
 
     {{-- Vazirmatn-e self-hosted dakhel-e app.css miad (ADR-0023): hich origin-e shakhs-e sales nist. --}}

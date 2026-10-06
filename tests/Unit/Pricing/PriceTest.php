@@ -43,6 +43,20 @@ final class PriceTest extends TestCase
     }
 
     /**
+     * `decimal()` (P5-05، JSON-LD) — meghdar e MAJOR e DAGHIGH be sorat e
+     * reshte (bedun e gerd، bedun e jodakonande ye hezargan، bedun e float).
+     */
+    public function test_decimal_is_the_exact_major_value_as_a_string(): void
+    {
+        self::assertSame('266400000', Price::irr(266_400_000)->decimal());
+        self::assertSame('4140.1950', Price::usd(41_401_950)->decimal());
+        self::assertSame('0.0500', Price::usd(500)->decimal());
+        self::assertSame('0.0000', Price::usd(0)->decimal());
+        self::assertSame('-6.4920', Price::usd(-64_920)->decimal());
+        self::assertSame('9007199254740993210', Price::irr(9_007_199_254_740_993_210)->decimal());
+    }
+
+    /**
      * Adad e bozorg tar az 2^53: ba `float` raghame akhar gom mishe —
      * daghighan chizi ke in method baraye jologirish ast.
      */

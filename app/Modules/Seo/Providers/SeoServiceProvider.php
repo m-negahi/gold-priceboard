@@ -1,0 +1,42 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Seo\Providers;
+
+use App\Modules\Pricing\Application\Queries\BoardOfferQuery;
+use App\Modules\Pricing\Application\Queries\PublicBoardQuery;
+use App\Modules\Seo\Application\Queries\HomeSeoQuery;
+use App\Modules\Seo\Application\Queries\SeoResolver;
+use App\Modules\Seo\Application\Queries\SitemapQuery;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\ServiceProvider;
+
+/**
+ * Module e SEO (P5-05). Query ha config e IMMUTABLE ro be onvan e argument
+ * migiran (na `config()` dakhel e method) — `bind` (na singleton) ta har
+ * request config e lahze ro bebine (test ha `config([...])` mikonan).
+ * Har bind tu `SeoBindingTest` assert mishe.
+ */
+final class SeoServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->mergeConfigFrom(__DIR__.'/../Config/seo.php', 'seo');
+
+        $this->app->bind(HomeSeoQuery::class, static fn (Application $app): HomeSeoQuery => new HomeSeoQuery(
+            resolver: $app->make(SeoResolver::class),
+            offers: $app->make(BoardOfferQuery::class),
+            siteName: (string) config('seo.site_name'),
+            title: (string) config('seo.home.title'),
+            description: (string) config('seo.home.description'),
+            faq: array_values((array) config('seo.faq', [])),
+        ));
+
+        $this->app->bind(SitemapQuery::class, static fn (Application $app): SitemapQuery => new SitemapQuery(
+            resolver: $app->make(SeoResolver::class),
+            board: $app->make(PublicBoardQuery::class),
+            pages: array_values((array) config('seo.pages', [])),
+        ));
+    }
+}

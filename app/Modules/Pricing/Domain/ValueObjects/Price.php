@@ -93,6 +93,26 @@ final readonly class Price
         return ($negative && $rounded !== str_repeat('0', strlen($rounded)) ? '-' : '').$grouped.$fraction;
     }
 
+    /**
+     * Meghdar e MAJOR e DAGHIGH be sorat e reshte (`4140.1950`، `266400000`)
+     * — baraye JSON-LD/schema.org (P5-05). Bedun e gerd kardan، bedun e
+     * jodakonande، bedun e float: faghat jabeja kardan e momayez.
+     */
+    public function decimal(): string
+    {
+        $scale = $this->quote->scale();
+        $sign = $this->minor < 0 ? '-' : '';
+        $abs = ltrim((string) $this->minor, '-');
+
+        if ($scale === 0) {
+            return $sign.$abs;
+        }
+
+        $abs = str_pad($abs, $scale + 1, '0', STR_PAD_LEFT);
+
+        return $sign.substr($abs, 0, -$scale).'.'.substr($abs, -$scale);
+    }
+
     public function isPositive(): bool
     {
         return $this->minor > 0;

@@ -14,6 +14,7 @@ use App\Modules\Panel\Http\Controllers\PriorityController;
 use App\Modules\Panel\Http\Controllers\ProviderController;
 use App\Modules\Panel\Http\Controllers\ProviderSpreadController;
 use App\Modules\Pricing\Http\Controllers\PublicBoardController;
+use App\Modules\Seo\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,6 +28,12 @@ Route::get('/candles.json', [PublicBoardController::class, 'candlesJson'])->name
 // Board e TV (P5-03) — full-screen baraye namayeshgar e maghaze؛ OMUMI.
 Route::get('/tv', [PublicBoardController::class, 'tv'])->name('tv');
 Route::get('/tv.json', [PublicBoardController::class, 'tvJson'])->name('tv.json');
+
+// SEO (P5-05) — `robots.txt` DYNAMIC (file e static e `public/` hazf shod:
+// ghabl az route serve mishod) + sitemap index.
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemapIndex'])->name('sitemap.index');
+Route::get('/sitemaps/pages.xml', [SeoController::class, 'sitemapPages'])->name('sitemap.pages');
 
 /*
  * ── Login ba OTP ─────────────────────────────────────────────────────

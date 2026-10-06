@@ -13,6 +13,7 @@ use App\Modules\Pricing\Application\Queries\TvBoardQuery;
 use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Pricing\Domain\Enums\Interval;
 use App\Modules\Pricing\Domain\Enums\Side;
+use App\Modules\Seo\Application\Queries\HomeSeoQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -34,11 +35,13 @@ final readonly class PublicBoardController
         private CandleQuery $candles,
         private ProviderQuery $providers,
         private TvBoardQuery $tvBoard,
+        private HomeSeoQuery $homeSeo,
     ) {}
 
     public function home(): View
     {
-        return view('public.board', ['board' => $this->board->present()]);
+        // SEO (P5-05): meta/canonical/OG + JSON-LD + FAQ e ru safhe.
+        return view('public.board', ['board' => $this->board->present()] + $this->homeSeo->present());
     }
 
     /**

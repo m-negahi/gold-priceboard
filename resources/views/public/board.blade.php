@@ -5,12 +5,12 @@
     // `metal` meghdar e enum ast (`xau`/`xag`/`xcu`)، na 'gold'.
 @endphp
 
-<x-layouts.site title="قیمت لحظه‌ای طلا، سکه و نقره"
-                description="مقایسه‌ی لحظه‌ای قیمت طلا، سکه، نقره و دلار بین چند منبع معتبر — با کمترین، بیشترین و میانگین هر نماد.">
+{{-- Title/description/JSON-LD az `HomeSeoQuery` (P5-05) — config e `seo.home` + override e `seo_meta`. --}}
+<x-layouts.site :seo="$seo">
 
     <section class="border-b border-line bg-surface">
         <div class="container-wide py-10 sm:py-14">
-            <h1 class="max-w-2xl text-2xl font-extrabold leading-tight text-heading sm:text-4xl">
+            <h1 class="max-w-2xl text-2xl font-extrabold leading-tight text-ink sm:text-4xl">
                 قیمت لحظه‌ای طلا، سکه و نقره — از چند منبع، کنار هم
             </h1>
             <p class="mt-3 max-w-xl text-muted">
@@ -42,7 +42,7 @@
         @forelse ($b['rows'] as $i => $row)
             @php $metal = $row['metal']; @endphp
             @if ($loop->first || $b['rows'][$i - 1]['metal'] !== $metal)
-                <h2 class="mb-2 mt-6 flex items-center gap-2 text-sm font-bold text-heading first:mt-0">
+                <h2 class="mb-2 mt-6 flex items-center gap-2 text-sm font-bold text-ink first:mt-0">
                     <span @class([
                         'size-2 rounded-full',
                         'bg-metal-gold' => $metal === 'xau',
@@ -133,6 +133,22 @@
             قیمت‌ها به تومان (نمادهای جهانی به دلار) است. * = نرخ خرید/فروش محاسبه‌شده از اسپرد، نه نرخ اعلامی منبع.
         </p>
     </div>
+
+    {{-- ── FAQ (P5-05) — HAMUN `seo.faq` e JSON-LD e `FAQPage` (Google: bayad ru safhe dide beshe). --}}
+    <section class="container-wide pb-12" aria-labelledby="faq-heading">
+        <h2 id="faq-heading" class="mb-4 text-lg font-bold text-ink">سوالات متداول</h2>
+        <div class="divide-y divide-line-2 overflow-hidden rounded-2xl bg-surface shadow-xs" data-faq>
+            @foreach ($faq as $item)
+                <details class="group px-5 py-4">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-ink">
+                        {{ $item['question'] }}
+                        <x-icon name="chevron-down" class="size-4 shrink-0 text-muted-3 transition-transform group-open:rotate-180" />
+                    </summary>
+                    <p class="mt-2 text-sm leading-7 text-muted">{{ $item['answer'] }}</p>
+                </details>
+            @endforeach
+        </div>
+    </section>
 
     {{-- ── Modal e chart (P5-04) — KLineCharts، lazy-load ─────────────── --}}
     <div x-data="priceChart({ url: @js(route('candles.json')) })"
