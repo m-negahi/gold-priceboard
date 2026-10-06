@@ -89,26 +89,20 @@
             provider: '',
             onlyProblems: false,
             showSkipped: false,
-            symbol: '',
-            category: '',
             metas: @js($metas),
             rows: @js($rejections),
             reportVisible(m) {
                 if (m.skipped && ! this.showSkipped) return false;
                 if (this.provider !== '' && ! m.providers.includes(this.provider)) return false;
                 if (this.onlyProblems && ! m.problem) return false;
-                if (this.symbol !== '' && ! m.symbols.includes(this.symbol)) return false;
-                if (this.category !== '' && ! m.categories.includes(this.category)) return false;
                 return true;
             },
-            rowVisible(p, s, c) {
-                return (this.provider === '' || p === this.provider)
-                    && (this.symbol === '' || s === this.symbol)
-                    && (this.category === '' || c === this.category);
+            rowVisible(p) {
+                return this.provider === '' || p === this.provider;
             },
             get shownReports() { return this.metas.filter((m) => this.reportVisible(m)).length; },
             get shownRows() { return this.rows.filter((r) => this.rowVisible(r.provider, r.symbol, r.category)).length; },
-            reset() { this.provider = ''; this.onlyProblems = false; this.symbol = ''; this.category = ''; },
+            reset() { this.provider = ''; this.onlyProblems = false; },
         }">
 
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -218,26 +212,6 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3">
-                    <label class="flex items-center gap-2 text-sm text-ink">
-                        نماد:
-                        <select x-model="symbol" class="ltr h-10 min-w-36 rounded-xl border border-line-3 bg-surface px-3 text-sm focus:border-brand focus:outline-none">
-                            <option value="">همه</option>
-                            @foreach ($options['symbols'] as $symbol)
-                                <option value="{{ $symbol }}">{{ $symbol }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-
-                    <label class="flex items-center gap-2 text-sm text-ink">
-                        دلیل رد:
-                        <select x-model="category" class="h-10 min-w-36 rounded-xl border border-line-3 bg-surface px-3 text-sm focus:border-brand focus:outline-none">
-                            <option value="">همه</option>
-                            @foreach ($options['categories'] as $category)
-                                <option value="{{ $category }}">{{ $categories[$category] ?? $category }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-
                     <label x-show="view === 'timeline'" class="flex min-h-11 cursor-pointer select-none items-center gap-2 text-sm text-ink">
                         <input type="checkbox" x-model="onlyProblems" class="size-4 rounded border-line-3">
                         فقط tick های مشکل‌دار
@@ -312,7 +286,7 @@
                         @php $reportRejections = (array) ($report['rejections'] ?? []); @endphp
 
                         @if ($reportRejections !== [])
-                            <details class="mt-3 border-t border-line-2 pt-3" :open="symbol !== '' || category !== ''">
+                            <details class="mt-3 border-t border-line-2 pt-3">
                                 <summary class="cursor-pointer select-none text-xs font-medium text-muted hover:text-ink">
                                     جزئیات {{ count($reportRejections) }} رد — منبع، نماد، مقدار، دلیل
                                 </summary>

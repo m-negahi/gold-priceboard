@@ -51,7 +51,7 @@ test.describe('tick monitor', () => {
         await expect(skipped.filter({ visible: true }).first()).toBeVisible();
     });
 
-    test('nama ye «جدول ردها» + filter e symbol', async () => {
+    test('nama ye «جدول ردها» bedoone filter haye hazf shode', async () => {
         await page.goto('/dashboard/monitor');
 
         await page.getByRole('radio', { name: /جدول ردها/ }).click();
@@ -59,9 +59,9 @@ test.describe('tick monitor', () => {
         const rows = page.locator('table tbody tr').filter({ visible: true });
         await expect(rows.filter({ hasText: 'e2e-ons' }).first()).toBeVisible();
 
-        await page.getByLabel('نماد:').selectOption('e2e-ons');
-        // Khod-retry: hich radif e dide-shode-i ba symbol e digar nist.
-        await expect(rows.filter({ hasNotText: 'e2e-ons' })).toHaveCount(0);
+        await expect(page.getByLabel('نماد:')).toHaveCount(0);
+        await expect(page.getByLabel('دلیل رد:')).toHaveCount(0);
+        await page.screenshot({ path: 'test-results/monitor-review.png', fullPage: true });
     });
 
     test('filter e provider timeline ro mahdud mikone', async () => {

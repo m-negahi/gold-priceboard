@@ -97,7 +97,7 @@ test.describe('lista ye karbaran (P6-02)', () => {
 test.describe('safhe ye karbar (P6-03)', () => {
     test('az lista be safhe ye admin + bakhsh ha', async () => {
         await page.goto('/dashboard/users?q=0' + ADMIN);
-        await rows().first().getByRole('link', { name: /^جزئیات/ }).click();
+        await rows().first().locator('[data-user-detail-link]').click();
 
         await expect(page).toHaveURL(/\/dashboard\/users\/\d+$/);
         await expect(page.getByRole('heading', { level: 2, name: 'مشخصات' })).toBeVisible();

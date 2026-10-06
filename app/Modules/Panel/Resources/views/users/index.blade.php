@@ -65,7 +65,7 @@
                     @forelse ($users as $user)
                         <tr data-user-row data-user-id="{{ $user['id'] }}">
                             <td class="px-5 py-3">
-                                <p class="font-medium text-ink">{{ $user['name'] ?? '—' }}</p>
+                                <a href="{{ route('panel.users.show', $user['id']) }}" data-user-detail-link wire:navigate class="inline-flex min-h-11 items-center font-medium text-ink hover:text-brand">{{ $user['name'] ?? $user['phone'] }}</a>
                                 <p class="ltr num mt-0.5 text-xs text-muted-3">{{ $user['phone'] }}</p>
                             </td>
                             <td class="px-5 py-3">

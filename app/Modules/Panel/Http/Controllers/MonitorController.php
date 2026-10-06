@@ -43,7 +43,6 @@ final readonly class MonitorController
             'metas' => array_map(fn (array $r): array => $this->ticks->filterMeta($r), $reports),
             'summary' => $this->ticks->summarize($reports),
             'rejections' => $rejections,
-            'options' => $this->ticks->filterOptions($rejections),
             'providerMeta' => $this->providerMeta(),
         ]);
     }

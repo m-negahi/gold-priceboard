@@ -135,19 +135,6 @@ final class MonitorQueriesTest extends TestCase
         self::assertTrue($unmapped['problem'], 'label e na-shenakhte ham moshkel e.');
     }
 
-    public function test_filter_options_are_unique_and_sorted(): void
-    {
-        $rows = $this->ticks()->rejectionRows([
-            $this->report('t2', ['tgju' => $this->okProvider(1)], [$this->rejection('tgju', 'silver', 'stale'), $this->rejection('tgju', 'ons', 'stale')]),
-            $this->report('t1', ['estjt' => $this->okProvider(1)], [$this->rejection('estjt', 'ons', 'deviation')]),
-        ]);
-
-        $options = $this->ticks()->filterOptions($rows);
-
-        self::assertSame(['ons', 'silver'], $options['symbols']);
-        self::assertSame(['deviation', 'stale'], $options['categories']);
-    }
-
     // ── Upstream ────────────────────────────────────────────────────
 
     private function upstreamCall(string $provider, bool $ok, int $latency, int $attempt = 1, ?string $error = null, string $at = '2026-10-06T10:00:00Z'): UpstreamCallDto

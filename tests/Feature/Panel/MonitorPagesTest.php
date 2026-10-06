@@ -81,7 +81,7 @@ final class MonitorPagesTest extends TestCase
         $this->actingAs($this->admin())->get(route('panel.monitor.ticks'))
             ->assertOk()
             ->assertViewHas('summary', fn (array $s): bool => $s['tgju']['rejections'] === 1)
-            ->assertViewHas('options', fn (array $o): bool => $o['symbols'] === ['ons'])
+            ->assertViewMissing('options')
             ->assertSee('جدول ردها')
             ->assertSee('خط زمانی')
             // Tick e «بدون اجرا» be soorat e default penhan + shomaresh.
