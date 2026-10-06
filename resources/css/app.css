@@ -25,39 +25,56 @@
     --font-sans: 'Vazirmatn Variable', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'Vazirmatn Variable', ui-monospace, monospace;
 
-    /* ── Brand ──────────────────────────────────────────────────────────────
-       Sampled from the reference screenshots in images/ui/, not invented:
-       #246AEF is the exact fill of every primary button and link in them.
-       4.79:1 on white for text AND 4.79:1 for white text on the button. */
-    --color-brand: #246aef;
-    --color-brand-2: #1551c4; /* hover / pressed — 6.99:1 */
-    --color-brand-3: #0d3f9e; /* deepest — 9.45:1 */
-    /* The lighter blue the reference uses for LARGE filled cards (the FAQ
-       banner, the footer "Pricing" card). White on it is 3.29:1, so it is for
-       large or bold text only — never body copy. */
-    --color-brand-bright: #4d8afe;
-    --color-brand-soft: #f0f5ff;
-    --color-brand-soft-2: #d9e5fc;
-    /* Brand on the dark band: #246AEF only reaches 3.51:1 there, so links and
-       labels on navy-black use this lightened variant (4.52:1). */
-    --color-brand-on-dark: #4180f6;
-    /* The same blue as a triplet, for rgba() shadows and halos only — so a
-       brand change never leaves a hardcoded hex behind. */
-    --color-brand-rgb: 36, 106, 239;
+    /* ── Brand — sabz e tire ye Donezo (docs/dashboard-design.md §2) ───────
+       P3-01: ramp e kamel az marja' e tasvib-shode (`images/dashboard-prefer
+       .webp`). FAGHAT baraye chrome: sidebar e fa'al، dokme ye asli، card e
+       featured. HARGEZ baraye jahat e gheymat (un kar e `up`/`down` ast). */
+    --color-brand-50: #edf7f1;
+    --color-brand-100: #d3eddf;
+    --color-brand-200: #a8dbbe;
+    --color-brand-300: #74c396;
+    --color-brand-400: #45a873;
+    --color-brand-500: #2a8d5a;
+    --color-brand-600: #1e7449; /* dokme ye asli */
+    --color-brand-700: #176039; /* sidebar e fa'al، card e featured */
+    --color-brand-800: #114a2c;
+    --color-brand-900: #0c3620;
+    --color-brand-950: #072415;
+
+    /* Alias haye kit e ghabli (login، form kit، panel kit) — hamun esm ha،
+       meghdar e jadid. Kit `bg-brand`/`brand-2`/… masraf mikone؛ in alias ha
+       yani kol e re-theme YEK ja ettefagh oftad، na tu 60 blade. */
+    --color-brand: var(--color-brand-600);
+    --color-brand-2: var(--color-brand-700); /* hover / pressed */
+    --color-brand-3: var(--color-brand-800); /* amigh tarin */
+    --color-brand-bright: var(--color-brand-400); /* sath e bozorg e roshan */
+    --color-brand-soft: var(--color-brand-50);
+    --color-brand-soft-2: var(--color-brand-100);
+    /* Ru band e tire، sabz e 600 contrast e kafi nadare — roshan tar. */
+    --color-brand-on-dark: var(--color-brand-300);
+    /* Triplet baraye rgba() e saye/halo — hich hex e ja-monde ba'd az
+       taghir e brand. (= brand-600) */
+    --color-brand-rgb: 30, 116, 73;
     --color-on-brand: #ffffff;
-    --color-on-brand-2: #e3ecfd;
+    --color-on-brand-2: #d8ecdf;
 
     /* ── Market semantics ───────────────────────────────────────────────────
        RESERVED for price direction and freshness — never a save button, never
        a form error. `-strong` is the badge/fill tone taken from the reference
        ("Market open" is exactly #2DC87F); the plain tone is the same hue
        darkened until it passes AA as text. */
+    /* ⚠️ Deviation e amdi az dashboard-design.md: doc baraye `up` #00B368
+       mide ke be onvan e MATN ru sefid faghat ~2.9:1 contrast dare (AA
+       fail). Pas taghsim: `up` matn e AA-pass، `-strong` hamun fill e
+       roshan e doc (flash/arrow/badge). Ba brand e sabz، `up` faghat ru
+       raghame gheymat mishine va brand ru sath haye bozorg — ghati
+       nemishan (ghanun e «brand ≠ up/down»). */
     --color-up: #1c8654; /* text — 4.58:1 */
-    --color-up-strong: #2dc87f; /* fill — dark text on it 7.76:1 */
-    --color-up-soft: #e3fcf1;
+    --color-up-strong: #00b368; /* fill e doc — flash/arrow */
+    --color-up-soft: #e3f8ed;
     --color-down: #c02e38; /* text — 5.69:1 */
-    --color-down-strong: #e8434e; /* fill */
-    --color-down-soft: #ffebec;
+    --color-down-strong: #e5484d; /* fill e doc */
+    --color-down-soft: #fdeaea;
     --color-flat: #6b6b6b;
     --color-flat-soft: #eceef2;
     /* A price older than `stale_after` is a first-class UI state (F1/F11).
@@ -67,13 +84,17 @@
     --color-stale-soft: #fff6e0;
 
     /* ── Metals ─────────────────────────────────────────────────────────────
-       Instrument identity (icon discs, chips). Ours, not in the reference —
-       it has no gold/silver/copper vocabulary. Never used for text tone. */
-    --color-gold: #d69e2e;
+       Hoviat e instrument (disc e icon، chip). FAGHAT icon/chip، hich vaght
+       tone e matn. `metal-*` esm haye dashboard-design.md §2-and؛ `gold`/… e
+       kutah alias e kit e ghabli. */
+    --color-metal-gold: #c8a031;
+    --color-metal-silver: #8e95a0;
+    --color-metal-copper: #b4683a;
+    --color-gold: var(--color-metal-gold);
     --color-gold-soft: #fef6e7;
-    --color-silver: #8fa0b5;
+    --color-silver: var(--color-metal-silver);
     --color-silver-soft: #f1f5f9;
-    --color-copper: #b45f3f;
+    --color-copper: var(--color-metal-copper);
     --color-copper-soft: #fdf1ec;
     --color-coin: #b8860b;
     --color-coin-soft: #fdf6e3;
@@ -106,10 +127,12 @@
     --color-muted-2: #8a8a8f;
     --color-muted-3: #adadb2;
 
+    /* Sath ha — canvas/surface-2 be meghdar haye GARM e Donezo (doc §2):
+       canvas posht e shell، surface-2 dakhel e shell/sidebar. */
     --color-surface: #ffffff;
-    --color-surface-2: #fafafc;
-    --color-surface-3: #eceef2; /* chips, inset rows */
-    --color-canvas: #f6f6f9;
+    --color-surface-2: #f7f8f6;
+    --color-surface-3: #eceee9; /* chips, inset rows — ham-khanevade ye garm */
+    --color-canvas: #e9eae7;
 
     /* Full-width dark bands (closing CTA, footer). The reference's band is a
        neutral near-black (#1D1D1F), not navy. */
@@ -119,14 +142,30 @@
     --color-muted-invert: #a7a7ad; /* 7.0:1 */
     --color-line-invert: #323236;
 
-    --color-line: #e4e6e9; /* the reference hairline */
-    --color-line-2: #edeef1;
-    --color-line-3: #cfcfd4;
+    --color-line: #e6e7e3; /* hairline e garm e Donezo */
+    --color-line-2: #eeefeb;
+    --color-line-3: #cfd1cb;
 
     /* Card radius as a named utility (`rounded-card`) so Tailwind's numeric
        scale stays untouched. */
     --radius-card: 16px;
     --radius-chip: 999px;
+
+    /* ── Radius e Donezo (doc §2) — scale e Tailwind override mishe ───────
+       In theme kheyli gerd ast؛ `rounded-3xl` (~32px) mal e shell e app e. */
+    --radius-xs: 0.375rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+    --radius-2xl: 1.5rem;
+    --radius-3xl: 2rem;
+
+    /* ── Saye haye narm e Donezo — scale e Tailwind override mishe ──────── */
+    --shadow-xs: 0 1px 2px 0 rgb(21 21 19 / 0.04);
+    --shadow-sm: 0 1px 3px 0 rgb(21 21 19 / 0.05), 0 1px 2px -1px rgb(21 21 19 / 0.04);
+    --shadow-md: 0 4px 10px -2px rgb(21 21 19 / 0.06), 0 2px 4px -2px rgb(21 21 19 / 0.04);
+    --shadow-lg: 0 12px 28px -6px rgb(21 21 19 / 0.08);
 }
 
 /* ── Page-builder token axes ────────────────────────────────────────────────
@@ -233,6 +272,42 @@
     margin-inline: auto;
     padding-inline: 16px;
     max-width: 1440px;
+}
+
+/* ── Utility haye theme e panel (P3-01، doc §2/§4) ────────────────────── */
+
+/* Shell e app: kol e panel dakhel e yek card e gerd e bozorg — «floating
+   panel» e Donezo. */
+@utility shell-app {
+    margin-inline: auto;
+    max-width: 100rem;
+    border-radius: var(--radius-3xl);
+    background: var(--color-surface-2);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+@utility card-p {
+    padding: 1.25rem;
+}
+
+@utility card-p-lg {
+    padding: 1.5rem 1.75rem;
+}
+
+/* Gradient e brand — card e featured va promo. */
+@utility bg-brand-grad {
+    background-image: linear-gradient(135deg, var(--color-brand-600), var(--color-brand-800));
+}
+
+/* Hachure — emza ye in theme: hālat e «gheyr e fa'al / pending» tu bar
+   chart ha. */
+@utility hachure {
+    background-image: repeating-linear-gradient(
+        45deg,
+        var(--color-line-3) 0 2px,
+        transparent 2px 7px
+    );
 }
 
 /* `num` and `ltr` are declared as plain rules, NOT with `@utility`: a Tailwind v4

@@ -364,8 +364,12 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 
 ## Phase 3 — Panel e admin
 
-- [ ] **P3-01** — `resources/css/app.css`: token haye `@theme` (brand/ink/canvas/surface/up/down/metal، radius ta 3xl، shadow، gradient، `hachure`) + utility ha
-- [ ] **P3-02** — Font (local، bedun e CDN) + typography e RTL
+- [x] **P3-01** — `resources/css/app.css`: token haye `@theme` (brand/ink/canvas/surface/up/down/metal، radius ta 3xl، shadow، gradient، `hachure`) + utility ha
+  → Ramp e sabz e Donezo (`brand-50..950`) + canvas/surface-2/line e garm + radius xs..3xl + saye haye narm + `metal-*` + utility ha (`shell-app`، `card-p`، `card-p-lg`، `bg-brand-grad`، `hachure`) be `@theme` e mojud ezafe shod.
+  🔴 **Esm haye token e kit e ghabli HEFZ shodan be onvan e alias** (`--color-brand` → `brand-600`، `brand-2` → `700`، `gold` → `metal-gold`، …): kol e re-theme e abi→sabz tu YEK file oftad، hich blade-i dast nakhord. e2e e token ha sabz munde.
+  ⚠️ Deviation e sabt-shode: `up` e doc (#00B368) be onvan e MATN AA fail mishe → `up` matn e tire mund va #00B368 shod `up-strong` (fill e flash/arrow). Tozih tu khod e css.
+- [x] **P3-02** — Font (local، bedun e CDN) + typography e RTL
+  → Az ghabl amade bud (kit e P2-07): Vazirmatn **Variable** self-host az `@fontsource-variable` (hich CDN)، `--font-sans/mono`، line-height haye Farsi (`--bp-leading-*` ta 1.95)، `.num` (tnum) va `.ltr`. Hich kari lazem nashod — faghat ta'eed.
 - [ ] **P3-03** — Layout e `shell-app` + sidebar + topbar
 - [ ] **P3-00** — Integration e asset haye noskhe ye ghabli (bala ro bebin): review e Media/Panel module ha، register، test، va tasmim e Livewire-vs-controller baraye har safhe
   **🔎 Audit e kamel anjam shod (2026-10-06) — chizhayi ke MOGHE'E register mishkanan:**
