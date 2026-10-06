@@ -24,6 +24,7 @@ const PAGES: Array<{ path: string; heading: RegExp }> = [
     { path: '/dashboard/monitor/upstream', heading: /پایش منابع/ },
     { path: '/dashboard/matrix', heading: /ماتریس/ },
     { path: '/dashboard/charts', heading: /نمودار قیمت/ },
+    { path: '/dashboard/users', heading: /مشتریان/ },
 ];
 
 let page: Page;

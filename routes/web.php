@@ -13,6 +13,7 @@ use App\Modules\Panel\Http\Controllers\MonitorController;
 use App\Modules\Panel\Http\Controllers\PriorityController;
 use App\Modules\Panel\Http\Controllers\ProviderController;
 use App\Modules\Panel\Http\Controllers\ProviderSpreadController;
+use App\Modules\Panel\Http\Controllers\UserController;
 use App\Modules\Pricing\Http\Controllers\PublicBoardController;
 use App\Modules\Seo\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
@@ -101,6 +102,9 @@ Route::middleware(['auth', EnsureAdmin::class])
         // ── Chart (P5-08) ───────────────────────────────────────────
         Route::get('/charts', [ChartController::class, 'show'])->name('charts');
         Route::get('/charts/data', [ChartController::class, 'data'])->name('charts.data');
+
+        // ── Karbaran (Phase 6) ──────────────────────────────────────
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
     });
 
 /*

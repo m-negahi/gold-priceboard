@@ -30,9 +30,14 @@ class UserFactory extends Factory
         ];
     }
 
+    /*
+     * 🔴 Closure e `state()` NABAYAD `static` bashe: Factory un ro `bindTo($this)`
+     * mikone va PHP 8.5 ru closure e static ErrorException mide (avvalin
+     * masraf e `named()` tu P6-02 gereftesh).
+     */
     public function unverified(): static
     {
-        return $this->state(static fn (): array => ['phone_verified_at' => null]);
+        return $this->state(fn (): array => ['phone_verified_at' => null]);
     }
 
     public function admin(): static
@@ -45,6 +50,6 @@ class UserFactory extends Factory
 
     public function named(string $name): static
     {
-        return $this->state(static fn (): array => ['name' => $name]);
+        return $this->state(fn (): array => ['name' => $name]);
     }
 }
