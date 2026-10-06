@@ -18,8 +18,8 @@
 `resources/views/components/**` (form kit: input/select/jalali-date/otp-input/media-picker/…، panel kit: sidebar/modal/datatable/toasts/…، captcha، layout e panel)، `resources/js/alpine/**` (11 component: login، datatable، jalali-date، media-upload، …)، `resources/views/kit/**` (safhe haye namayesh e kit)، module e **Media** (upload + ketabkhane، 21 file) va **Panel** (dashboard + navigation، 12 file).
 🔴 **Hich kodum REGISTER NASHODAN** (provider hashun tu `bootstrap/providers.php` nist، js ha import nashodan) — bi-asar-and ta Phase 3. Tu P3 bayad: review + register + test + hamahangi ba memari (Livewire e ma vs controller e una) + token haye theme. `HtmlSanitizer` (baraye rich-text) amdan nayamade — age lazem shod az Desktop biad.
 
-**Phase**: 2 ✓، 3 ✓ (joz P3-00b Media)، 4 core ✓، 5 dar hal e kar (board+chart ✓)
-**Vaziat e test (2026-10-06)**: **867 test sabz (3650 assertion)**، **e2e 32/32** (login 6 + panel 6 + public 3 + upstream 4 + responsive 13).
+**Phase**: 2 ✓، 3 ✓ (joz P3-00b Media)، 4 core ✓، 5 dar hal e kar (board+chart ✓)، **6 ✓ (P6-01..08)** → gam e ba'di **Phase 7** (ticket + KYC).
+**Vaziat e test (2026-10-06، payan e Phase 6)**: **1084 test sabz (4500 assertion)**، **e2e 84/84**.
 
 ### 📋 Darkhast haye in session (chat ha) — vaziat
 - [x] Dolar e tgju ru tablo (freshness override).
