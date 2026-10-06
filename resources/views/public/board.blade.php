@@ -81,14 +81,17 @@
                                             ])>
                                                 <x-icon :name="$row['icon']" class="size-4" />
                                             </span>
-                                            <button type="button" class="min-w-0 text-start"
-                                                    @click="$dispatch('open-chart', { symbol: @js($row['symbol']), label: @js($row['label']) })">
-                                                <p class="flex items-center gap-1.5 font-medium text-ink hover:text-brand-2">
-                                                    {{ $row['label'] }}
-                                                    <x-icon name="chart" class="size-3.5 text-muted-3" />
+                                            <div class="min-w-0">
+                                                {{-- Link e dakheli be safhe ye instrument (SEO) + dokme ye chart e modal. --}}
+                                                <p class="flex items-center gap-1.5 font-medium text-ink">
+                                                    <a href="{{ route('instrument', $row['symbol']) }}" class="hover:text-brand-2" data-instrument-link="{{ $row['symbol'] }}">{{ $row['label'] }}</a>
+                                                    <button type="button" class="grid size-6 place-items-center rounded-md text-muted-3 hover:bg-surface-2 hover:text-brand-2" aria-label="نمودار {{ $row['label'] }}"
+                                                            @click="$dispatch('open-chart', { symbol: @js($row['symbol']), label: @js($row['label']) })">
+                                                        <x-icon name="chart" class="size-3.5" />
+                                                    </button>
                                                 </p>
                                                 <p class="ltr text-xs text-muted-3">{{ $row['symbol'] }}</p>
-                                            </button>
+                                            </div>
                                         </div>
                                     </td>
 

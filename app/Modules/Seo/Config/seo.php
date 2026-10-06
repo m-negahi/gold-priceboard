@@ -24,6 +24,16 @@ return [
     ],
 
     /*
+     * Safhe ye har instrument (`/price/{symbol}`). `{label}` = esm e Farsi،
+     * `{group}` = gruh (طلا و سکه / نقره / …). Override e per-symbol az
+     * `seo_meta` ba type e `instrument`.
+     */
+    'instrument' => [
+        'title' => 'قیمت {label} امروز',
+        'description' => 'قیمت لحظه‌ای {label} از چند منبع معتبر بازار {group} کنار هم — کمترین، بیشترین، میانگین و نمودار تغییرات.',
+    ],
+
+    /*
      * Safhe haye sitemap. `route` = esm e route (+ kelid e `seo_meta` ba
      * type e `page`). `live` = lastmod az akharin gheymat.
      */

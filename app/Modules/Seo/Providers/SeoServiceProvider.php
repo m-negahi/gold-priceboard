@@ -7,6 +7,7 @@ namespace App\Modules\Seo\Providers;
 use App\Modules\Pricing\Application\Queries\BoardOfferQuery;
 use App\Modules\Pricing\Application\Queries\PublicBoardQuery;
 use App\Modules\Seo\Application\Queries\HomeSeoQuery;
+use App\Modules\Seo\Application\Queries\InstrumentSeoQuery;
 use App\Modules\Seo\Application\Queries\SeoResolver;
 use App\Modules\Seo\Application\Queries\SitemapQuery;
 use App\Modules\Seo\Application\Support\PublicUrl;
@@ -36,6 +37,15 @@ final class SeoServiceProvider extends ServiceProvider
             title: (string) config('seo.home.title'),
             description: (string) config('seo.home.description'),
             faq: array_values((array) config('seo.faq', [])),
+        ));
+
+        $this->app->bind(InstrumentSeoQuery::class, static fn (Application $app): InstrumentSeoQuery => new InstrumentSeoQuery(
+            resolver: $app->make(SeoResolver::class),
+            offers: $app->make(BoardOfferQuery::class),
+            urls: $app->make(PublicUrl::class),
+            siteName: (string) config('seo.site_name'),
+            titleTemplate: (string) config('seo.instrument.title', 'قیمت {label} امروز'),
+            descriptionTemplate: (string) config('seo.instrument.description', ''),
         ));
 
         $this->app->bind(SitemapQuery::class, static fn (Application $app): SitemapQuery => new SitemapQuery(

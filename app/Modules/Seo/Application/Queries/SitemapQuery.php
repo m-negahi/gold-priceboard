@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Seo\Application\Queries;
 
 use App\Modules\Pricing\Application\Queries\PublicBoardQuery;
+use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Seo\Application\Dto\SeoMetaDto;
 use App\Modules\Seo\Application\Support\PublicUrl;
 use Carbon\CarbonImmutable;
@@ -76,6 +77,26 @@ final readonly class SitemapQuery
                 'lastmod' => $lastmod,
                 'changefreq' => $page['changefreq'],
                 'priority' => $page['priority'],
+            ];
+        }
+
+        // Safhe ye har instrument (P10-13): lastmod = akharin gheymat؛ override e
+        // `noindex` e per-symbol (type `instrument`) hazf esh mikone.
+        foreach (Instrument::cases() as $instrument) {
+            $loc = $this->urls->route('instrument', ['symbol' => $instrument->value]);
+            $seo = $this->resolver->resolve('instrument', $instrument->value, new SeoMetaDto(title: '', description: '', canonical: $loc));
+
+            if (! $seo->isIndexable()) {
+                continue;
+            }
+
+            $liveAt ??= $this->board->present()['updatedAt'];
+
+            $entries[] = [
+                'loc' => $seo->canonical,
+                'lastmod' => $liveAt === null ? null : CarbonImmutable::parse($liveAt)->toAtomString(),
+                'changefreq' => 'always',
+                'priority' => '0.8',
             ];
         }
 

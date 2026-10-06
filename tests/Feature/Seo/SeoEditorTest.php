@@ -18,7 +18,8 @@ final class SeoEditorTest extends TestCase
         $this->actingAs(User::factory()->admin()->create())->get('/dashboard/seo')->assertOk();
         $this->put('/dashboard/seo/home', ['title' => 'عنوان ویژه', 'description' => 'توضیح تازه', 'robots' => 'noindex,follow'])->assertRedirect();
         $this->get('/')->assertOk()->assertSee('عنوان ویژه')->assertSee('noindex,follow', false);
-        $this->get('/sitemaps/pages.xml')->assertDontSee('<loc>', false);
+        // Home e noindex az sitemap mire؛ safhe haye instrument (P10-13) sar e jashun-and.
+        $this->get('/sitemaps/pages.xml')->assertDontSee('<loc>'.route('home').'</loc>', false)->assertSee('<loc>'.route('instrument', 'xau-18k-g-irr').'</loc>', false);
         $this->put('/dashboard/seo/home', ['title' => '', 'description' => '', 'robots' => ''])->assertRedirect();
         $this->get('/')->assertOk()->assertSee(config('seo.home.title'));
     }

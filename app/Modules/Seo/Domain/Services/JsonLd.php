@@ -66,6 +66,23 @@ final class JsonLd
     }
 
     /**
+     * `BreadcrumbList` — masir e safhe (khane → gruh → instrument).
+     *
+     * @param  list<array{name: string, url: string}>  $crumbs
+     * @return array<string, mixed>
+     */
+    public static function breadcrumb(array $crumbs): array
+    {
+        $items = [];
+
+        foreach (array_values($crumbs) as $i => $crumb) {
+            $items[] = ['@type' => 'ListItem', 'position' => $i + 1, 'name' => $crumb['name'], 'item' => $crumb['url']];
+        }
+
+        return ['@type' => 'BreadcrumbList', 'itemListElement' => $items];
+    }
+
+    /**
      * @param  list<array{question: string, answer: string}>  $items
      * @return array<string, mixed>
      */

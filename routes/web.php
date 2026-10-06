@@ -18,6 +18,7 @@ use App\Modules\Panel\Http\Controllers\ProviderController;
 use App\Modules\Panel\Http\Controllers\ProviderSpreadController;
 use App\Modules\Panel\Http\Controllers\TicketController;
 use App\Modules\Panel\Http\Controllers\UserController;
+use App\Modules\Pricing\Http\Controllers\InstrumentPageController;
 use App\Modules\Pricing\Http\Controllers\PublicBoardController;
 use App\Modules\Seo\Http\Controllers\SeoController;
 use App\Modules\Seo\Http\Controllers\SeoEditorController;
@@ -34,6 +35,8 @@ Route::get('/', [PublicBoardController::class, 'home'])->name('home');
 // Throttle e per-IP (P10-11): feed e omumi bedun e saghf = API e majani.
 Route::get('/board.json', [PublicBoardController::class, 'boardJson'])->middleware('throttle:board')->name('board.json');
 Route::get('/candles.json', [PublicBoardController::class, 'candlesJson'])->middleware('throttle:candles')->name('candles.json');
+// Safhe ye har instrument (P10-13) — SSR + chart؛ OMUMI.
+Route::get('/price/{symbol}', [InstrumentPageController::class, 'show'])->where('symbol', '[a-z0-9-]+')->name('instrument');
 // Board e TV (P5-03) — full-screen baraye namayeshgar e maghaze؛ OMUMI.
 Route::get('/tv', [PublicBoardController::class, 'tv'])->name('tv');
 Route::get('/tv.json', [PublicBoardController::class, 'tvJson'])->middleware('throttle:tv')->name('tv.json');
