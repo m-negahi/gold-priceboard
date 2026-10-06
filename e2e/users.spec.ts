@@ -136,7 +136,8 @@ test.describe('sakht + naghsh (P6-04)', () => {
         await page.getByLabel('موبایل').fill(TEMP_PHONE);
         await page.getByRole('button', { name: 'ساخت کاربر' }).click();
 
-        await expect(page.getByText('کاربری با این شمارهٔ موبایل از قبل وجود دارد.')).toBeVisible();
+        // Unique e phone hala tu validation (UserProfileRules) gerefte mishe، na tu Action.
+        await expect(page.getByText('این مقدار قبلاً ثبت شده است.').first()).toBeVisible();
     });
 
     test('ertegha be admin va bargasht', async () => {
@@ -224,7 +225,7 @@ test.describe('wallet e dasti (P6-06)', () => {
 
         const form = page.locator('[data-wallet-adjust]');
         await form.getByLabel('نوع').selectOption('credit');
-        await form.getByLabel('مبلغ (تومان)').fill('1,000');
+        await form.getByLabel('مبلغ (ریال)').fill('1,000');
         await form.getByLabel('دلیل').fill('آزمایش e2e شارژ');
         await form.locator('[data-wallet-adjust-submit]').click();
 
@@ -239,7 +240,7 @@ test.describe('wallet e dasti (P6-06)', () => {
         expect(await amountCell.evaluate((el) => getComputedStyle(el).color)).toBe(ok);
 
         await form.getByLabel('نوع').selectOption('debit');
-        await form.getByLabel('مبلغ (تومان)').fill('1000');
+        await form.getByLabel('مبلغ (ریال)').fill('1000');
         await form.getByLabel('دلیل').fill('آزمایش e2e برگشت');
         await form.locator('[data-wallet-adjust-submit]').click();
 
@@ -254,7 +255,7 @@ test.describe('wallet e dasti (P6-06)', () => {
         await rows().first().getByRole('link', { name: /^جزئیات/ }).click();
         const form = page.locator('[data-wallet-adjust]');
         await form.getByLabel('نوع').selectOption('debit');
-        await form.getByLabel('مبلغ (تومان)').fill('99999999999');
+        await form.getByLabel('مبلغ (ریال)').fill('99999999999');
         await form.getByLabel('دلیل').fill('نباید ثبت شود');
         await form.locator('[data-wallet-adjust-submit]').click();
 

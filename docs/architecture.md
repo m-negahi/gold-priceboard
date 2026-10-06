@@ -106,17 +106,21 @@ Chahar dalil (be tartib e ghodrat):
 ```
 pricing:tick (container e price-worker، halghe ye grid-aligned e 15s)
 │
-├─ 0 Lock        Cache::lock('pricing:tick', 14)
-│                Redis down → BEDUN e lock edame (paeen ro bebin)
-├─ 1 TickTime    intdiv(time(),15)*15 — YEK timestamp baraye kol e tick
-├─ 2 Providers   Redis(30s) → PG → pb:providers:last (bi-TTL)
-├─ 3 Fetch       Http::pool — har provider try/catch e khodesh
-├─ 4 Normalize   parse + unit + symbol map   (dakhel e Source)
-├─ 5 Validate    staleness + PriceSanity
-├─ 6 Persist     Redis → Postgres → Influx   (har kodum jodagane isolated)
-├─ 7 ManualBackup raw e accepted e hamin tick → manual_prices (isolated)
-└─ 8 Publish     warm e payload
+├─ 0 Lock         Cache::lock('pricing:tick', 14)            (IngestTickAction)
+│                 Redis down → BEDUN e lock edame (paeen ro bebin)
+├─ 1 TickTime     intdiv(time(),15)*15 — YEK timestamp baraye kol e tick
+├─ 2 Providers    Redis(30s) → PG → pb:providers:last (bi-TTL)
+├─ 3 LoadPrevious SnapshotStorePort::all()  🔴 TANHA marhale ye CRITICAL (TickPipeline::run)
+├─ 4 Fetch        Http::pool — har provider try/catch e khodesh + retry e gozara    (FetchStage)
+│                 Normalize (parse + unit + symbol map) DAKHEL e har QuoteSource ast
+├─ 5 Validate     staleness + PriceSanity + check e cross-provider                 (ValidateStage)
+├─ 6 Enrich       band e rooz، jahat، darsad e taghir — BA'D az Validate           (EnrichStage)
+├─ 7 Persist      Redis → Postgres → Influx (har sink jodagane isolated)            (PersistStage)
+├─ 8 ManualBackup raw e accepted e hamin tick → manual_prices (isolated)            (ManualBackupStage)
+└─ 9 Publish      version + zarabān e nevisande                                     (PublishStage)
 ```
+
+Tartib e stage ha tu `app/Modules/Pricing/Providers/PricingServiceProvider.php` (bind e `TickPipeline`) sabt shode؛ file haye stage tu `app/Modules/Pricing/Application/Pipeline/Stages/`. Command e `pricing:tick` faghat `IngestTickAction::execute()` ro seda mizane va `TickReportDto` ro chap mikone.
 
 ### Policy e shekast
 Har Stage e'lam mikone `Critical` ya `Isolated` ast — **jaye try/catch haye parakande**.
@@ -213,19 +217,25 @@ Octane process ro zende negah midare — pas har chizi ke **halat** dare bayn e 
 
 ## 10. Module ha va marz e masouliat
 
-| Module | Masouliat / manba e data |
-|---|---|
-| Pricing | quote adapter ha, sanity/trust-anchor, tick pipeline, spread ru read, manual/priorities, Redis/PG/Influx |
-| Auth | OTP, active/disabled user, profile e haghighi/hoghoghi, audit e taghirat |
-| Access | role, permission, profile e admin, route gate, navigation, audit e dastresi |
-| Ticket / Kyc | request/status/message/private attachment; estelam e Zohal, gozaresh, decision va notification |
-| Wallet | balance e locked + `wallet_transactions` append-only + idempotency |
-| Api | site credentials/HMAC/status, quota, plan/subscription, charge/refund/usage |
-| Billing | `PaymentGatewayPort`, Zibal, wallet topup, immutable invoice snapshot |
-| Finance | chart e hesab, journal/lines, daftar kol, reversal va settlement |
-| Media / Seo / Panel | file library; public metadata/SEO; controller/view haye dashboard |
+13 module tu `app/Modules/` (yek khat masouliat + class haye kelidi — hame ye esm ha ba code check shodan):
 
-Action ha masir e write, Query ha masir e read-and. Model ha dar `Infrastructure/Persistence/Models`; adapter e source dar `Pricing/Infrastructure/Sources`; Media Actions/Queries/Dto dar `Application`, image processor dar `Infrastructure/Support`. Dependency e gateway dar `BillingServiceProvider` bind mishe. Provider ha dasti dar `bootstrap/providers.php` sabt mishan.
+| Module | Masouliat (yek khat) | Class haye kelidi | ServiceProvider |
+|---|---|---|---|
+| `Common` | zirbana ye moshtarak: `BaseAction`/`BaseQuery`/`TableQuery`، helper ha (`Money`، `Jalali`، `PhoneHelper`، `StringHelper`، `SvgSanitizer`)، middleware haye global (`TrustProxies`، `Normalize*`، `LatinizeDigits`، `SecurityHeaders`)، `QueueName` | `Helpers/Money.php`، `Enums/QueueName.php` | `ModuleServiceProvider` (class e abstract e paye؛ tu `bootstrap/providers.php` sabt NIST — 4 provider e module azash ers mibaran) |
+| `Pricing` | kol e motor e gheymat: QuoteSource ha، tick pipeline، sanity/trust-anchor، spread ru read، manual/priorities، Redis/PG/Influx، board/TV/chart e omumi | `IngestTickAction`، `TickPipeline`، `SourceManager`، `BoardQuery`، `PublicBoardQuery`، `TvBoardQuery`، `CandleQuery`/`ChartQuery`، `EffectivePriceQuery` | `PricingServiceProvider` |
+| `Auth` | login ba mobile + OTP (Kavenegar/Fake)، user e active/disabled، profile e haghighi/hoghoghi + audit، `EnsureAdmin`/`EnsureActiveUser` | `SendOtpAction`، `VerifyOtpAction`، `RedisOtpStore`، `SmsManager`، `UserQuery`، `UserAdminAction` | `AuthServiceProvider` |
+| `Access` | RBAC: role/permission (`PermissionCatalog`)، profile e admin، gate e route/navigation، audit e dastresi | `AccessQuery`، `ManageAccessAction`، `Domain/PermissionCatalog` | `AccessServiceProvider` |
+| `Api` | API e foroushi: HMAC auth، idempotency/charge e har call، plan/subscription/quota، site approval، usage e ruzane | `ApiHmacAuth`، `IdempotentApiCall`، `ChargeApiCall`، `LogApiRequest`، `PurchasePlanAction`، `RollupApiUsageAction`، `HmacSignature` | `ApiServiceProvider` |
+| `Wallet` | kif e pool: balance e cache-shode + `wallet_transactions` e append-only + idempotency e `(wallet, reason, reference)` | `WalletAction`، `AdjustWalletAction`، `ReverseWalletAdjustmentAction`، `WalletQuery` | — (Action/Query e sade؛ autowire) |
+| `Billing` | pardakht: `PaymentGatewayPort` + `ZibalGateway`، topup e wallet، sodur e factor e immutable، safhe haye `/account` | `TopupPaymentAction`، `IssueInvoiceAction`، `CustomerBillingQuery`، `Config/billing.php` | `BillingServiceProvider` (bind e gateway) |
+| `Finance` | daftar e kol: journal e do-tarafe ru har tarakonesh e wallet، settlement e dargah، gozaresh haye admin | `PostWalletJournalAction`، `SettleGatewayPaymentAction`، `FinanceLedgerQuery`، `FinanceMonthlyReportQuery`، `FinanceInvoiceQuery` | — (autowire) |
+| `Kyc` | onboarding + estelam e hoviat (Zohal) posht e `IdentityVerificationPort`؛ job e `RunIdentityChecks`؛ tasmim e admin | `SubmitKycRequestAction`، `QueueIdentityChecksAction`، `DecideKycAction`، `ZohalIdentityVerification` | `KycServiceProvider` |
+| `Ticket` | ticket e moshtari/admin: status/message/event، peyvast e private ba signed URL، SMS e status tu queue | `OpenTicketAction`، `ReplyTicketAction`، `TransitionTicketAction`، `TicketQuery`، `Jobs/SendTicketStatus` | `TicketServiceProvider` |
+| `Media` | ketabkhane ye file: upload/virayesh/hazf، derivative e tasvir، `media_usages` (guard e hazf) | `UploadMediaAction`، `MediaQuery`، `Infrastructure/Support/ImageProcessor` | `MediaServiceProvider` |
+| `Seo` | metadata ye omumi: `seo_meta` + `SeoResolver`، JSON-LD، sitemap، `robots.txt` e dynamic، editor e panel | `SeoResolver`، `SitemapQuery`، `Domain/Services/JsonLd`، `RobotsTxt` | `SeoServiceProvider` |
+| `Panel` | controller/view/navigation e `/dashboard` (hich mantegh e domain — faghat Query/Action e module haye dige ro seda mizane) | `Support/Navigation`، `Queries/DashboardQuery`، controller ha tu `Http/Controllers/` | `PanelServiceProvider` |
+
+Action ha masir e write، Query ha masir e read-and. Model ha dar `Infrastructure/Persistence/Models`؛ adapter e source dar `Pricing/Infrastructure/Sources`؛ Media Actions/Queries/Dto dar `Application`، image processor dar `Infrastructure/Support`. Dependency e gateway dar `BillingServiceProvider` bind mishe. Provider ha dasti dar `bootstrap/providers.php` sabt mishan (tartib: `App`، `Horizon`، `Auth`، `Access`، `Api`، `Billing`، `Media`، `Pricing`، `Panel`، `Seo`، `Ticket`، `Kyc`). Route ha: `routes/web.php` (omumi + panel + account ticket)، `routes/api.php` (`/v1/*`)، `routes/billing.php` (mali/plan/site e panel + `/account/*`)، `routes/identity.php` (user edit + ticket e KYC e panel)، `routes/console.php` (scheduler).
 
 ## 11. Dastresi va hoviat
 
@@ -268,3 +278,227 @@ Baraye database e mojood e ghadimi: aval revision e pre-consolidation/additive r
 - Browser: Playwright az host, fixture e joda, theme/token/RTL/mobile375 check; no real payment/SMS/inquiry. Full PHP va E2E ba'd az integration.
 - Asset taghir kard: `npm run build`, ba'd `php artisan octane:reload`. `.env` taghir kard: container recreate. Worker ha ba deploy restart shan.
 - Service smoke: `/up`, `horizon:status`, `migrate:status`, count/status e Redis e vahed. Live provider tick ra baraye test offline majbur nakon.
+
+## 14. Manba' haye gheymat (QuoteSource ha)
+
+Har provider = yek radif tu `providers` (`key` + `driver`) + yek class tu `app/Modules/Pricing/Infrastructure/Sources/` ke `QuoteSourcePort` ro piade mikone. Switch e `driver → class` tu `SourceManager::make()` ast؛ `SourceManager::drivers()` lista ye driver haye mojaz ro mide. `ProviderSeeder` hame ro **gheyr-fa'al** misaze (`is_active=false`) va `is_active`/`is_trust_anchor` e radif e mojud ro dast nemizane — admin tasmim migire kodum roshan she.
+
+| `key` | `driver` | `kind` | `sort` | Vahed e upstream → rial | Timestamp e upstream | Side ha | Nokte ye vaghei (az docblock e Source) |
+|---|---|---|---|---|---|---|---|
+| `tgju` | `tgju` | reference | 20 | IRR ha **rial**؛ `ons`/`silver`/`copperp` USD — unit **per-entry** | `ts` vaght e Tehran bedun e offset | `last`؛ `tgju_gold_irg18` + `_buy` = ask/bid (abshode) | `ons`/`silver`/`copperp`/`gerami` faghat **ruzane** be-rooz mishan → `freshness_seconds` e `provider_spreads` baraye tgju override |
+| `estjt` | `estjt` | reference | 10 | **toman** ×10؛ «انس طلا» USD (per-instrument) | **nadare** → `payloadHash` (md5 e HTML) | `last` | `POST admin-ajax.php action=new_price`؛ UA e browser + HTTP/1.1 ejbari؛ separator e hezargan `٫` (U+066B) |
+| `nerkh` | `nerkh` | reference | 30 | **toman** ×10؛ `OUNCE`/`OUNCE_SILVER` USD | `update` e har radif **Jalali** (Tehran) → UTC؛ `timestamp` e bala faghat fallback | `last` | `Cache-Control: max-age=30`؛ faghat radif haye marja' map shodan |
+| `nerkh-stock` | `nerkh` (option `item=GOLD18K_STOCK`) | reference | 70 | toman ×10 | hamun nerkh | `last` (faghat `xau-18k-g-irr`) | hamun driver، provider e joda — `NerkhQuoteSource::entries()` ba `options.item` faghat yek radif parse mikone |
+| `milli` | `milli` | platform | 40 | **rial e har milligram** → scale 3 (×1000) | `date` ISO e Tehran bedun e offset | `last` (kharid = foroosh) | `GET /api/v1/public/milli-price/external` |
+| `talasea` | `talasea` | platform | 50 | **toman e har milligram** → ×1000 ×10 | **nadare** → `payloadHash` | `last` (`fee` joda) | `api.talasea.ir` challenge nadare؛ `talasea.ir` dare |
+| `technogold` | `technogold` | platform | 60 | **toman e har gram** ×10 | **nadare** → `payloadHash` | `bid`/`ask` e vaghei: `sell_price`=bid، `buy_price`=ask | esm ha az did e karbar-and؛ bid > ask = map e eshtebah (test dare) |
+| `tlyn` | `tlyn` | platform | 70 | IRR ha **hezar toman** → ×1000 ×10؛ `XAU` USD | `date.utc_timestamp` ISO ba `Z` | `buy`=bid، `sell`=ask؛ sekke ha yek gheymat ru har do side | `status=disabled` rad mishe؛ `GOLD18_INTL`/`GOLD_BUBBLE_*` amdan map nashodan |
+| `manual` | `manual` | reference | 80 | az `manual_prices` (SourceManager mikhune va pass mide) | **nadare (amdan)** → hargez «kohne» rad nemishe | `last` | HTTP nadare؛ `FetchStage` mostaghim `fetch()` ro seda mizane |
+| `mock` | `mock` | reference | 90 | — (tabe' e mahz e zaman × seed) | `ClockPort` | `last` + bid/ask baraye jofte ye vaghei | dev e offline؛ hich IO؛ ba `FrozenClock` determinist |
+
+Vahed ha az enum e `UpstreamUnit` (`rial`/`toman`/`none`) va side ha az `Side` (`last`/`bid`/`ask`) miyan. `providers.upstream_unit` faghat **default** ast — unit e vaghei tu map e har entry e Source mineshine (dars e estjt: ons USD vasat e radif haye toman).
+
+Provider e jadid → skill e `add-price-provider` (yek `case` tu `SourceManager` + yek radif tu seeder + fixture e vaghei tu `tests/Fixtures/`).
+
+---
+
+## 15. Zanjire ye olaviat، feed e mo'asser va backup e dasti
+
+```
+PriorityChain::order(global, custom)          Domain — mahz، bedun e IO
+   │  1. sefareshi (symbol_provider_priorities) aval
+   │  2. baghi ye provider haye fa'al be tartib e providers.sort
+   │  3. kelid e gheyr-fa'al/nashenas nadide
+   │  4. `manual` HAMISHE akhar
+   ├──▶ EffectivePriceQuery::feed()          API e /v1/effective + alarm e panel
+   │      har symbol: avvalin provider e TAZE → vagarna manual → vagarna taze-tarin (flag e stale)
+   │      `usingFallback` roshan = admin bayad befahme
+   └──▶ EloquentManualBackup::sync()         ManualBackupStage (isolated، ba'd az Persist)
+          baraye HAR Instrument yek radif e symbol_price_settings (firstOrCreate ba default)
+          manual_only ya manual_auto_source='none'  → hich
+          manual_auto_source='priority'             → zanjire bedun e manual
+          manual_auto_source='<provider key>'       → faghat hamun provider
+          snapshot e `last` (fallback `ask`)، sen = upstreamAt ?? quotedAt، bayad tu freshness bashe
+          row-lock ru settings → manual_prices.{minor,scale,quote_currency,source_hint,updated_by='auto'}
+          updated_at = zaman e observe e upstream (na now) ta sen e backup sadegh bemune
+```
+
+- Yek manba' e haghighat baraye DO masraf (feed va «پر کردن بر اساس اولویت») — `PriorityChain` tu `Domain/Services/`، entekhab e provider e backup tu `ManualBackupSelector::providerKeys()`.
+- **Default e `manual_auto_source` = `priority`** (migration `2026_10_07_140000_default_manual_auto_source_to_priority`؛ ghablan `none` bud va symbol e tanzim-nashode hich vaght backup nemigereft). `SymbolPriceSettingsQuery::defaults()` hamin ro mide.
+- Manual-only = feed e un symbol faghat `manual_prices` ro mibine؛ hich auto-update (hata ba source e ghabli).
+- UI: `/dashboard/priorities` (`panel.priorities.*`) — olaviat + tanzim e manual-only/backup؛ `/dashboard/manual` (`panel.manual.*`) — gheymat e dasti + import/export e Excel (`ManualPriceWorkbook`).
+
+---
+
+## 16. Vahed e namayesh: zakhire RIAL، tablo ye omumi TOMAN
+
+- DB، Redis، Influx، API (`/api/v1/*`)، panel e admin va TV hame **rial**-and (`QuoteCurrency::displayDivisor()` = 1، `displayLabel()` = «ریال»/«دلار»، `Price::display()` ba bcmath).
+- **Faghat tablo ye omumi (`/` va `/board.json`) toman neshun mide** — khaste ye sahebe proje (2026-10-06). Tabdil tu `PublicBoardQuery` ba `Common\Helpers\Money::tomanDivisor('IRR') = 10` va `Money::tomanDisplay()` (bcmath، nim-be-bala): `divisor`/`quoteLabel` tu payload mire ta SSR va `board.js` yek adad ro render konan؛ `sellDisplay`/`minDisplay`/`avgDisplay` ham toman-and. Dollar bedun e tabdil.
+- Toman be onvan e **vahed e upstream** (`UpstreamUnit::Toman`) dakhel e Source ×10 mishe va rabti be namayesh nadare.
+- Form haye admin (`x-form.money`) rial e sahih migiran (`Money::rialFromInput`).
+
+---
+
+## 17. Mali — takmil e bakhsh 12 (jaryan e code)
+
+| Reason e `wallet_transactions` | Koja neveshte mishe | Reference |
+|---|---|---|
+| `topup` | `Billing\TopupPaymentAction` (ba'd az verify e server-to-server) | `zibal:{track_id}` |
+| `plan_purchase` | `Api\PurchasePlanAction` | `purchase_reference` e eshterak |
+| `api_call` / `refund` | `Api\ChargeApiCallAction` (reserve → ejra → refund ru khata/304) | hash e client + request id |
+| `admin_adjust` | `Wallet\AdjustWalletAction` (panel: `users.wallet.adjust`، `finance.wallet-adjust`) | request key؛ bargasht ba `ReverseWalletAdjustmentAction` |
+
+- Har tarakonesh e wallet tu hamun DB transaction yek sanad e `finance_journals` + `finance_journal_lines` misaze (`Finance\PostWalletJournalAction`)؛ `source_key` unique، trigger haye PG hame ye UPDATE/DELETE ro rad mikonan (jadval e hesab ha tu bakhsh 12).
+- Query haye admin (`FinanceController`، route haye `panel.finance.*` tu `routes/billing.php` ba `can:finance.view` / `can:finance.manage`):
+  - `FinanceLedgerQuery`: `ledger()`، `totals()`، `trialBalance()`، `generalLedger()`، `transaction()`، `journalLines()`، `unsettledPayments()`، `exportRows()` (CSV).
+  - `FinanceMonthlyReportQuery::report()`: satl e **mah e Jalali** ke tu PHP hesab mishe (marz e 00:00 e Tehran، yek aggregate per mah، saghf 24 mah) — `date_trunc('month')` e SQL miladi ast va bi-ma'ni. Mablagh ha rial.
+  - `FinanceInvoiceQuery`: `list()`، `issuable()` (topup e verify-shode / eshterak e karbar e `invoice_verified` bedun e factor)، `invoice()`.
+- Factor: `Billing\IssueInvoiceAction` → `billing_invoices` (trigger e `billing_invoices_immutable`) + `billing_invoice_sequences(year, last_number)` ba `lockForUpdate`. Shomare `PB-YYYY-NNNNNN`؛ **YYYY sal e miladi** ast (`CarbonImmutable::now()->format('Y')`). Faghat karbar e `level=invoice_verified` ba `invoice_profile`؛ ru har source (`site_subscription_id` / `wallet_topup_payment_id`) idempotent. Block e foroshande az `config('billing.seller')` (`app/Modules/Billing/Config/billing.php`؛ env `BILLING_SELLER_*`، `BILLING_VAT_PERCENT` faghat sahm e VAT ro **namayesh** mide، mablagh ro taghir nemide). Ersal be samane ye modian piade **nashode**.
+
+---
+
+## 18. Schema — nama ye kolli (az `database/migrations/`)
+
+Hame ye mablagh ha `bigint` e minor unit (rial → `scale 0`، USD → `scale 4`). `timestampTz` hame ja. Jadval haye framework (`cache`، `cache_locks`، `jobs`، `job_batches`، `failed_jobs`، `sessions`، `password_reset_tokens`، `telescope_*`) inja nayumadan.
+
+| Jadval | Hadaf | Soton haye kelidi / constraint |
+|---|---|---|
+| `users` | hoviat e login (phone) + sath e moshtari | `phone` unique، `is_admin`، `status`، `disabled_at/reason`، `level` (`basic`/…/`invoice_verified`)، `customer_type`، `national_code`، `onboarded_at`، `invoice_requested`، `identity_profile` json، `invoice_profile` json، `last_login_at` |
+| `providers` | config + salamat e har manba' | `key` unique، `driver`، `kind` (reference/platform)، `name/name_fa`، `logo_media_id` FK→media، `is_active`، `is_trust_anchor`، `in_comparison/on_board/in_chart`، `timeout`، `poll_interval_seconds`، `next_poll_at`، `freshness_seconds`، `hide_after_seconds`، `upstream_unit`، `sort`، `options` jsonb، `last_*` (attempt/success/failure/error/latency/symbol_count/rejected_count)، `consecutive_failures`، `health_state`، `last_payload_hash`، softDeletes |
+| `provider_spreads` | spread e namayesh e har (provider, symbol) + override e freshness | `buy_mode/buy_value`، `sell_mode/sell_value` decimal(12,4)، `is_enabled`، `freshness_seconds`، `sort`؛ unique(provider_id, symbol) |
+| `provider_spread_revisions` | tarikhche ye append-only ye spread | `is_removal`، `changed_by`، `effective_from`؛ index(provider_id, symbol, effective_from) |
+| `price_snapshots` | **akharin** gheymat e kham e har (provider, symbol, side) | `quote_currency`، `scale`، `raw_minor`، `prev_minor`، `day_open/high/low_minor`، `change_pct`، `direction`، `pending_outlier_minor`، `has_native_sides`، `upstream_at`، `upstream_lag_seconds`، `quoted_at`؛ unique(provider_id, symbol, side) |
+| `price_changes` | audit e append-only — faghat vaghti `raw_minor` avaz shod | `raw_minor`، `upstream_at`، `observed_at`؛ index(provider_id, symbol, side, observed_at) |
+| `influx_backfills` | provenance e backfill e Influx | `bucket`، `provider_id`، `symbol`، `source`، `range_start/stop`، `points` |
+| `manual_prices` | gheymat e dasti/backup e har symbol | `symbol` unique، `minor`، `scale`، `quote_currency`، `source_hint`، `updated_by` (`auto` = backup e khodkar) |
+| `symbol_provider_priorities` | olaviat e sefareshi e har symbol | unique(symbol, provider_id)، `position` |
+| `symbol_price_settings` | manual-only / backup e har symbol | `symbol` unique، `manual_only`، `manual_fallback_enabled`، `manual_auto_source` (default **`priority`**) |
+| `wallets` | kif e pool (balance = cache) | `owner_id` FK users، `balance_minor`، `currency`، `is_blocked`؛ unique(owner_id, currency) |
+| `wallet_transactions` | ledger e **append-only** (trigger e PG + SQLite) | `direction` (credit/debit)، `amount_minor`، `balance_after_minor`، `reason`، `reference`، `meta`؛ unique(wallet_id, reason, reference) |
+| `api_price_groups` | daste-bandi ye gheymat e customer (fe'lan masraf e asli nadare) | `key` unique، `cost_per_call_minor`، `is_default` |
+| `api_plans` | plan e eshterak | `key` unique، `price_minor`، `calls_per_day`، `cost_per_call_minor`، `duration_days`، `calls_included`، `is_active`، `sort` |
+| `api_clients` | site e moshtari + credential | `user_id`، `plan_id`، `price_group_id`، `client_id` unique، `secret_encrypted`، `status` (pending/approved/…)، `approved_at/by`، `last_used_at`، softDeletes |
+| `api_usage_daily` | rollup e ruzane ye usage | unique(api_client_id, day)، `calls`، `cost_minor` |
+| `site_subscriptions` | snapshot e eshterak e kharide-shode | `api_client_id`، `api_plan_id`، `user_id`، `starts_at/ends_at`، `calls_included`، `calls_per_day`، `price_minor`، `cost_per_call_minor`، `calls_used`، `purchase_reference` unique |
+| `site_subscription_days` / `site_subscription_calls` | masraf e ruzane / idempotency e har call | unique(site_subscription_id, day) / `reference` unique |
+| `wallet_topup_payments` | pardakht e dargah (Zibal) | `request_key`، `track_id` unique، `status`، `gateway_reference`، `verified_at`، `verify_data`؛ unique(user_id, request_key) |
+| `billing_invoices` | factor e **immutable** (trigger) | `number` unique (`PB-YYYY-NNNNNN`)، `kind`، `amount_minor`، `buyer_snapshot`، `lines_snapshot`، `issued_at`؛ FK unique be topup ya subscription |
+| `billing_invoice_sequences` | shomarande ye sali | `year` PK، `last_number` |
+| `finance_accounts` | chart e hesab ha | `code` unique، `name`، `normal_side`، `is_active` |
+| `finance_journals` | header e sanad e do-tarafe (append-only) | `source_key` unique، `memo`، `actor_id`، `reverses_journal_id` unique، `occurred_at`، `posting_txid` (PG) |
+| `finance_journal_lines` | khat haye sanad | `finance_journal_id`، `finance_account_id`، `wallet_id`، `user_id`، `debit_minor`/`credit_minor` (faghat yek taraf mosbat — CHECK)؛ constraint trigger e balance ru COMMIT |
+| `seo_meta` | override e metadata ye safhe ha | unique(seoable_type, seoable_id)، `title`، `description`، `canonical_url`، `robots`، `og_image` |
+| `media` / `media_usages` | ketabkhane ye file + jaye masraf | `path` unique، `mime`، `size`، `width/height`، `alt`، `derivatives` json؛ `media_usages` unique(media_id, usable_type, usable_id, field)، `restrictOnDelete` |
+| `tickets` / `ticket_messages` / `ticket_events` / `ticket_attachments` / `ticket_notifications` | ticket e moshtari/admin + audit + peyvast e private + SMS e ersal-shode | `type`، `status`، `subject`، `meta`، `last_activity_at`؛ message `is_staff`؛ event `kind`/`from_status`/`to_status`؛ attachment `path` unique، `sha256`؛ notification `event_id` unique، `sent_at` |
+| `user_profile_audits` | before/after e virayesh e profile | `user_id`، `actor_id`، `before`، `after` json |
+| `identity_verification_runs` | har ejra ye estelam e Zohal | `submission_key` unique، `status` (queued/…)، `input`، `results` json، `ticket_id` |
+| `access_roles` / `admin_access_profiles` / `admin_role_assignments` / `access_audits` | RBAC | role `name` unique + `permissions` json؛ profile `user_id` PK + `full_access`؛ assignment PK(user_id, role_id)؛ audit `action`، `subject_id`، `before/after` |
+
+Migration ha **ezafe-shi** mimunan؛ baseline e consolidate e 2026-10-07 tu bakhsh 13.
+
+---
+
+## 19. Ops — service ha، command ha، gate ha
+
+### Service haye `docker-compose.local.yml`
+
+| Service | Container | Port e host | Kar |
+|---|---|---|---|
+| `octane` | `pb_octane` | **8300** → 8000 | app (Swoole)، healthcheck `GET /up` |
+| `vite` | `pb_vite` | **5373** | HMR (`vite.config.js` bayad `port: 5373, strictPort: true` bashe) |
+| `horizon` | `pb_horizon` | — | `php artisan horizon` (queue haye `QueueName`: default/notifications/verification) |
+| `price-worker` | `pb_price_worker` | — | halghe ye `while :; do php artisan pricing:tick; sleep $((15 - $(date +%s) % 15)); done` — **amdan scheduler nist** |
+| `scheduler` | `pb_scheduler` | — | `php artisan schedule:work` |
+| `postgresql` | `pb_postgresql` | **55434** | Postgres 18 |
+| `redis` | `pb_redis` | **56381** | yek instance؛ DB0 session/queue/OTP، DB1 cache، DB2 prices؛ `noeviction` + AOF |
+| `influxdb` | `pb_influxdb` | **8386** | Influx 2.7؛ bucket e avaliye `ticks` (retention `INFLUX_RETENTION`، default 30d) |
+
+### Command haye artisan e module ha (`app/Modules/*/Console/Commands/`)
+
+| Command | Option ha | Kar |
+|---|---|---|
+| `pricing:tick` | `--json`، `--quiet-ok`، `--force` (nadide gereftan e `next_poll_at`) | yek tick e kamel (`IngestTickAction`) |
+| `pricing:influx:provision` | `--tokens` | sakht/be-rooz e bucket ha (`ticks`، `candles_1m/5m/15m/1h/4h/1d`) va task ha (`resources/influx/tasks/*.flux`)؛ idempotent |
+| `pricing:influx:drain` | `--batch=2000`، `--max-batches=10` | replay e spool e Influx |
+| `pricing:influx:health` | `--json` | salamat e task ha/candle ha |
+| `api:usage:rollup` | `--date=`، `--days=2` | Redis + ledger → `api_usage_daily` (idempotent) |
+| `otp:flush {phone}` | — | pak kardan e code/cooldown/rate-limit e yek shomare — **faghat dev**؛ e2e azash estefade mikone |
+
+Scheduler (`routes/console.php`): `pricing:influx:drain` har daghighe، `pricing:influx:health` har 5 daghighe، `api:usage:rollup` har 15 daghighe، `horizon:snapshot` har 5 daghighe، `telescope:prune --hours=48` ruzane (faghat agar Telescope fa'al bashe). Hame `withoutOverlapping`.
+
+### Horizon / Telescope
+
+- **Horizon** hamishe register mishe (`App\Providers\HorizonServiceProvider`)؛ `/horizon` ba gate e `viewHorizon` = permission e `monitoring.view` (`AccessQuery::allows`).
+- **Telescope** dev-dependency ast: `AppServiceProvider` faghat tu `local`/`testing` va vaghti class vojud dare `TelescopeServiceProvider` ro register mikone؛ `config/telescope.php` → `TELESCOPE_ENABLED` (default: faghat `local`). Gate e `viewTelescope` = `monitoring.view`. OTP/cookie/signature redact mishan.
+- Tu `PermissionCatalog`، route haye `panel.monitor.*`، `horizon.*`، `telescope.*` zir e group e `monitoring` hastan.
+
+### Taghir dadi، chi lazem e?
+
+| Taghir | Kar |
+|---|---|
+| PHP/Blade | Octane ba `OCTANE_WATCH=true` khodesh reload mikone؛ age nashod `octane:reload` |
+| Asset (JS/CSS) | `npm run build` + **`php artisan octane:reload`** — Octane manifest e Vite ro per-worker cache mikone |
+| `.env` | `docker compose -f docker-compose.local.yml up -d --force-recreate` — `octane:reload` env ro **nemikhune** |
+| Worker ha (horizon/price-worker/scheduler) | ba'd az deploy restart |
+| Influx token/bucket | `pricing:influx:provision --tokens` → token ha tu `.env` → `--force-recreate` |
+
+Script haye yek-bare ye dev tu `scripts/` (`resilience-check.sh` taab-avari ru mohit e vaghei، `fetch-benchmark.php`، `outage-drill.php`، `reset-influx-tokens.php`، …).
+
+---
+
+## 20. Test
+
+### PHP (PHPUnit — dakhel e container)
+
+```bash
+docker compose -f docker-compose.local.yml exec octane php artisan test            # kol
+docker compose -f docker-compose.local.yml exec octane php artisan test --compact  # kholase
+```
+
+- `phpunit.xml` ba `force="true"` ru hame ye env: `DB_CONNECTION=sqlite` + `:memory:`، `CACHE_STORE=array`، `QUEUE_CONNECTION=sync`، `SMS_DRIVER=fake`، `BYPASS_OTP=false`، `TELESCOPE_ENABLED=false`، `REDIS_PRICE_DATABASE=15`، Influx URL e `invalid` (adapter e fake bind mishe). Dalil: container env e vaghei ye `DB_DATABASE=priceboard` ro export mikone va bedun e `force`، `RefreshDatabase` **database e dev ro pak mikard** (yek bar shod).
+- `tests/TestCase.php` kamarband e dovom: sqlite e in-memory ro sarih set mikone، Redis e `default`→DB13، `cache`→DB14، `prices`→DB15 va `RedisManager` ro az no misaze (vagarna `flushdb()` e test ru DB0 e dev mioftad — session ha pak mishodan).
+- Suite ha: `tests/Unit/{Auth,Common,Pricing,Seo}` (bedun e Laravel/DB — Domain e mahz) va `tests/Feature/{Access,Api,Auth,Billing,Common,Kyc,Media,Panel,Pricing,Public,Seo,Ticket,Wallet}` + `ClassLoadabilityTest` (hame ye class haye `app/` load mishan) + `GuardsTest` (config e test ro zende check mikone).
+- `tests/Integration/FinancePostgresTest.php`: faghat ba `PB_TEST_PG_DATABASE=priceboard_verify_*` (guard e regex)؛ trigger/commit e vaghei ye PG. Hargez ru DB e dev.
+- Fake haye port tu `tests/Support/Fakes/`: `ArrayHotCache`، `InMemorySnapshotStore`، `FakeTimeSeries`، `FrozenClock`، `FakeQuoteSource`، `FakeManualBackup`، `InMemoryUpstreamCallLog`، `InMemoryOtpStore`، `FakeIdentityVerification`، `FakePaymentGateway`. Har port e jadid = fake + bind + **test e bind**.
+
+### Fixture ha — hich network
+
+`tests/Fixtures/`: `tgju-ajax.json`، `estjt-new-price.json`، `nerkh-prices.json`، `milli-price-external.json`، `talasea-get-gold-price.json`، `technogold-only-price.json`، `tlyn-price.json`، `zohal/`. Hame payload e **vaghei** e download-shode-and؛ test e har instrument e har source ru meghdar e minor e daghigh assert mikone (jaye bug e 10×). Hich test-i be tgju/estjt/nerkh/…/Zohal/Zibal/Kavenegar request nemizane.
+
+### Playwright (az HOST)
+
+```bash
+docker compose -f docker-compose.local.yml up -d   # stack bala
+npx playwright test                                 # kol e e2e/ — 1 worker، serial
+npx playwright test e2e/login.spec.ts
+```
+
+`playwright.config.ts`: `baseURL` 8300، `fa-IR`/`Asia/Tehran`، `workers: 1` (spec ha DB va session e moshtarak daran). Helper ha tu `e2e/helpers/auth.ts`: `ADMIN`، `artisan()`، `resetOtp()` (`otp:flush`)، `signInAsAdmin()`، `signInAsCustomer()`، `tokenRgb()` (check e token e `@theme`)، `expectNoPageOverflow()`.
+
+| Spec | Chi ro mipushune |
+|---|---|
+| `login.spec.ts` | flow e OTP (normalize ye raghame Farsi، bypass e dev، refresh e vasat e flow، code e ghalat) + token haye brand |
+| `public.spec.ts` | tablo ye omumi ba data ye vaghei، poll e `/board.json` + ETag، flash e sabz، **sefr request e biruni** |
+| `tv.spec.ts` | board e TV bedun e login، `/tv.json` + 304، 375px، sefr request e biruni |
+| `seo.spec.ts` | JSON-LD/FAQ، sitemap index + pages، `robots.txt` e dynamic، 375px |
+| `panel.spec.ts` | mizkar، sidebar، manba' ha، spread + preview، payesh e tick، salamat/matrix |
+| `sidebar.spec.ts` | tooltip e rail e sidebar |
+| `responsive.spec.ts` | drawer e mobile + hame ye safhe haye panel tu 375px bedun e overflow |
+| `monitor.spec.ts` | payesh e tick: kholase ye provider، filter ha، «جدول ردها» |
+| `upstream.spec.ts` | payesh e manba' ha (call haye upstream): filter، search، jozyat e call ba redact، 404 |
+| `charts.spec.ts` | chart e admin: deep-link، baze ye haftegi، legend e manba' ha، link az matrix |
+| `priorities.spec.ts` | olaviat e per-symbol، save/reset، manual-only + badge e tak-manba' |
+| `users.spec.ts` | lista ye karbaran + safhe ye karbar (search/filter/pill/token) |
+| `identity-profile.spec.ts` | profile e haghighi/hoghoghi + audit، ticket ba peyvast، 375px |
+| `onboarding.spec.ts` | onboarding e moshtari (hoghoghi + madrak → ticket؛ validation؛ «خیر») |
+| `tickets.spec.ts` | ticket e moshtari/admin، javab، peyvast ba signed URL، 375px |
+| `finance.spec.ts` | safhe ye mali: 6 tab، gozaresh e mahane ye Jalali، sharj، filter e Jalali + CSV |
+| `access-seo.spec.ts` | naghsh e readonly az UI + save e SEO ba escape |
+| `media.spec.ts` | ketabkhane: upload → virayesh → logo → guard e hazf → hazf |
+| `monitoring-access.spec.ts` | guest → login؛ admin Horizon/Telescope ro mibine |
+
+Ghabl az e2e: `npm run build` + `octane:reload`؛ `public/hot` (Vite dev) nabayad bashe vagarna Alpine dir init mishe va `fill` ha flaky mishan.
+
+### Mutation check — ghanun e kar
+
+Test e sabz hichi sabet nemikone ta vaghti ba kharab kardan e code ghermez nashe. Baraye har mekanism e mohem (bind e container، `×10` e toman، zanjire ye olaviat، consume e atomic e OTP، refund e wallet، `ltrim` e log) yek bar amdan code ro beshkan، fail ro bebin، bargardun — bargasht ba `cp` e backup، **na `git checkout --`**. Natije ye mutation check tu entry e task tu `docs/TASKS.md` sabt mishe.

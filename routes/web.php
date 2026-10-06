@@ -195,6 +195,6 @@ Route::middleware('local-only')
         Route::post('/flash', [KitController::class, 'flash'])->name('flash');
     });
 
-require app_path('Modules/Panel/Http/routes-identity.php');
+require __DIR__.'/identity.php';
 
 require __DIR__.'/billing.php';

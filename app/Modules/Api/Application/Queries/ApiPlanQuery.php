@@ -25,6 +25,18 @@ final readonly class ApiPlanQuery
         return self::row($plan);
     }
 
+    /**
+     * Model e plan baraye Action hayi ke khod e Model ro mikhan
+     * (`PurchasePlanAction`). `findOrFail()` radif e namayeshi mide.
+     */
+    public function modelOrFail(int $id): ApiPlan
+    {
+        /** @var ApiPlan $plan */
+        $plan = ApiPlan::query()->findOrFail($id);
+
+        return $plan;
+    }
+
     /** @return array<string, mixed> */
     private static function row(ApiPlan $plan): array
     {

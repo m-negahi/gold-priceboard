@@ -47,10 +47,15 @@ Tartib e integration: contract haye moshtarak → piade-sazi/test e har masir �
   → 🔴 Do bug e vaghei ke ba Playwright (pixel e canvas) gerefte shod: (1) `overrideIndicator` ba extendData e jadid khat ro az canvas bar NEMIDASHT — hala indicator har bar hazf/sakht mishe؛ (2) cache e series faghat ba kelid e provider bud va fetch e dar-rah e symbol e ghabli ba'd az avaz shodan e symbol cache ro aludeh mikard (khat e 18 ayar ru sekke، -90٪) — kelid = symbol+baze+provider + check e pasokh. Provider e bi-data baraye symbol: «بدون داده» tu legend va kharej az tooltip.
   → Indicator e custom e KLineCharts (`pbProviderLines`) ru pane e candle: har provider e fa'al + `in_chart` yek khat e close ba rang e token (legend ba checkbox). Bardashtan e tik = hazf e khat (extendData)؛ series e har provider yek bar fetch/cache (ba taghir e symbol/baze pak mishe)؛ pasokh e provider e kharej az zanjire (fallback e server) nadide gerefte mishe. Khamoosh kardan e «نمایش در نمودار» tu panel e manba' = hazf az legend. Test: `ChartQueryTest` (+1)، `e2e/charts.spec.ts` (+1).
 - [x] **P10-01** — Yek service e Redis ba database haye joda, noeviction/AOF, entegal e cache e gheymat va hefz e session/queue, test e isolation.
-- [ ] **P10-02** — Audit e import/reference va hazf e code/asset haye bi-masraf; eslah e namespace/jaygah haye khalaf e me'mari.
-- [ ] **P10-03** — Merge e migration haye add/modify/remove tu create haye asli; masir e nasb e taze va hefz e schema/data e mojud har do verify shan.
-- [ ] **P10-04** — Mostanadat e fani e schema/module/flow/ops/test; README va architecture/PLAN/TASKS motabegh ba code.
-- [ ] **P10-05** — Daftar e mali e kol tu dashboard: kholase, ledger e tamame karbaran, filter/export va sanad e bargasht/eslah ba audit.
+- [x] **P10-02** — Audit e import/reference va hazf e code/asset haye bi-masraf; eslah e namespace/jaygah haye khalaf e me'mari.
+  → **Anjam shod (2026-10-06)**: Pint ru app/database/tests/routes → 0 import e bi-masraf. Hazf: `resources/css/tokens.json` (snapshot e generated e kohne، 0 reference). Move: `app/Modules/Panel/Http/routes-identity.php` → `routes/identity.php` (file e gheyr-class tu PSR-4؛ `ClassLoadabilityTest` sabz). Eloquent e mostaghim tu `AccountBillingController` → `ApiClientQuery::findForUserOrFail` + `ApiPlanQuery::modelOrFail` (+ `AccountPurchaseTest` 3 test، mutation check e scope e user ghermez shod). Audit: Domain 0 violation، hich view/Alpine/fixture e bi-reference. Negah dashte shod ba tasmim e sahebe proje: model e `InfluxBackfill` (jadval apply shode، PLAN §1.5). Full suite: 1367 pass.
+- [x] **P10-03** — Merge e migration haye add/modify/remove tu create haye asli; masir e nasb e taze va hefz e schema/data e mojud har do verify shan.
+  → **Verify shod (2026-10-06، agent e read-only + test e vaghei)**: Baseline e 2026-10-07: 27 file، `migrate:status` 0 pending؛ nasb e taze ru PG e movaghat moghayese shod (hich diff e jadval/soton/trigger ba DB e zende). 5 radif e yatim e merge-shode tu jadval e `migrations` ba `2026_10_07_150000_prune_merged_migration_rows` pak shod.
+- [x] **P10-04** — Mostanadat e fani e schema/module/flow/ops/test; README va architecture/PLAN/TASKS motabegh ba code.
+  → **Anjam shod (2026-10-06)**: `docs/architecture.md` (270→505 khat: tartib e vaghei ye stage ha + LoadPrevious، jadval e 13 module/provider ha، §14 jadval e 10 provider، §15 PriorityChain→Effective→ManualBackup، §16 vahed e namayesh (zakhire rial / tablo ye omumi toman)، §17 jaryan e mali، §18 schema e ~35 jadval az migration ha، §19 ops، §20 test)، `README.md` bazneveshte (quickstart)، `docs/PLAN.md` jomle haye kohne eslah. Har path/class/route/command ba grep check shod.
+  ⚠️ Vasat e in kar ma'lum shod checkpoint e `8835861` (session e dige) namayesh e toman e tablo ro be rial bargardunde bud؛ tebgh e dastur e sahebe proje dobare toman shod (`Money::tomanDivisor/tomanDisplay`، `PublicBoardQuery`، test ha).
+- [x] **P10-05** — Daftar e mali e kol tu dashboard: kholase, ledger e tamame karbaran, filter/export va sanad e bargasht/eslah ba audit.
+  → **Verify shod (2026-10-06، agent e read-only + test e vaghei)**: Safhe ye «امور مالی» (P10-06): ledger e hame karbaran + filter/search/bazeh/CSV، taraz + daftar e kol، ebtal/eslah ba audit (`admin_id/note` + journal e do-tarafe). Test: `FinancePageTest`، `FinanceLedgerTest`، `WalletAdjustTest`.
 
 **Gozaresh e review e ghabli:**
 
@@ -110,7 +115,7 @@ Tartib e integration: contract haye moshtarak → piade-sazi/test e har masir �
 - [x] 🔴 **`P5-08`** — Chart/candle tu ADMIN ham namayesh (fe'lan faghat board e omumi). Ezafe be matrix ya safhe ye joda.
   **Pishnahad (chat 2026-10-06)**: safhe ye joda `/dashboard/charts` (sidebar e «نمودارها») + link e mostaghim az har radif e matrix. Reuse e `price-chart.js` + `/candles.json` (interval haye mojud: m1/m5/m15/h1/h4/d1). Baraye haftegi/mahane/salane: tajmi' az `candles_1d` dar lahze ye query (Flux `aggregateWindow` ru d1)، na bucket e jadid. Toggle e khat (area) / candle — KLineCharts har do ro dare.
   → **Anjam shod (2026-10-06)**: safhe ye `/dashboard/charts` («نمودار قیمت» tu sidebar) + icon e chart ru har radif e matrix (deep-link `?symbol=&period=&provider=`، URL ba `replaceState` share-pazir). Baze ha: 5د/15د/1س/4س/روزانه mostaghim az bucket e Influx؛ **هفتگی/ماهانه/سالانه az `candles_1d` ba taghvim e JALALI** (hafte az shanbe، mah/sal e shamsi) — `Application\Support\{CandleAggregator,JalaliBucket}` (mahz). 🔴 Tale: bar e ruzane az 00:00 e Tehran = `20:30Z` e rooz e ghabl — bucket e UTC 1 Mehr ro tu Shahrivar mindaze (test + mutation: UTC -> 6 fail). `ChartPeriod` (allowlist، lookback zir e `MAX_LIMIT` e 5000 ba test). Provider e pish-farz = avvalin e zanjire ye olaviat e hamun symbol (P5-07). Khati = area ba rang e BRAND (na up/down) — `--color-brand-soft` `var(...)`-e va tu canvas resolve nemishe، va `transparent` tu gradient siah mishe → rgba az hex e brand. Test: 9 unit + 5 feature + `e2e/charts.spec.ts` 5/5 + responsive. Kol: 949 PHP + 52/52 e2e.
-- [ ] `P4-07`/`P4-10` — panel haye admin/customer (customer «felan vel»).
+- [x] `P4-07`/`P4-10` — panel haye admin/customer → P6-02/03/06 va P8-08 (hame tamam).
 - [x] `P5-03` (board TV)، `P5-05` (SEO) — anjam shod (paeen). Mande ye Phase 5: `P5-09` (UI e virayesh e `seo_meta`).
 
 **Peygiri e Phase 4**:
@@ -546,13 +551,13 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 - [x] **P4-04** — HMAC auth middleware (canonical، skew ±30s، nonce yek-bar-masraf fail-closed، decoy-HMAC) → `4224dde`، 9 test
 - [x] **P4-05** — Debit e atomic ba Lua + refund ru error/304 — **fail-CLOSED** → `4224dde`
 - [x] **P4-06** — Endpoint ha (`prices`/`candles`/`instruments`/`providers`/`wallet`) + `ETag` → `4224dde`، 7 test
-- [ ] ~~**P4-07** — `CustomerList` + `WalletLedger` tu panel e ADMIN (model/Query amade — faghat UI)~~ → edgham shod tu **P6-02/P6-03/P6-06** (2026-10-06)
+- [x] ~~**P4-07** — `CustomerList` + `WalletLedger` tu panel e ADMIN (model/Query amade — faghat UI)~~ → edgham shod tu **P6-02/P6-03/P6-06** (2026-10-06)
 - [x] **P4-08** — Test: debit e dobare mamnu'، refund، fail-closed vaghti Redis down ast
   → Tu `ApiChargeTest`/`ApiHmacAuthTest`/`WalletLedgerTest` (bala). Review e 2026-10-06: replay e response ba lock e per-client, conflict e request e motefavet, retry ba wallet e khali, refund va reference e kutah (PLAN Phase 4). API: 43 test / 172 assertion pass; mutation e hazf e fingerprint test ro ghermez kard.
 
 **Darkhast haye sahebe proje (2026-10-06، vasat e session):**
 - [x] **P4-09** — Model e karbari: **website + plan** — karbar website ezafe mikone (masalan tala.ir)، baraye HAR website yek client_id/secret migire، bad **plan** mikhare (masalan 1200 call/rooz): kharid e plan wallet ro be andaze ye gheymat e plan SHARJ mikone va masraf pay-as-you-go kasr mishe. Saghf e ruzane ye plan tu `ChargeApiCall` e'mal mishe (429).
-- [ ] ~~**P4-10** — Panel e CUSTOMER (self-serve): lista ye website ha، sakht e website (credential yek bar namayesh)، kharid e plan، mande/ledger e wallet.~~ → jabeja shod be **P8-08** (ba'd az ticket/ta'eed e site، 2026-10-06)
+- [x] ~~**P4-10** — Panel e CUSTOMER (self-serve): lista ye website ha، sakht e website (credential yek bar namayesh)، kharid e plan، mande/ledger e wallet.~~ → jabeja shod be **P8-08** (ba'd az ticket/ta'eed e site، 2026-10-06)
 - [x] **P4-11** — **API inspector** (mini-Telescope): har call e API ba request/response/payload/khata/hazine/duration sabt she va tu panel dide she.
 - [x] **P4-12** — UX e behtar e `/dashboard/monitor` (anjam shod).
 - [x] **P4-13** — **Manba' e DASTI (fallback) + feed e mo'asser** (khaste ye sahebe proje، 2026-10-06): age hame provider ha ghat' shan، API/tablo ghat' nashe.
@@ -634,14 +639,22 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 
 > Darkhast: karbar site ezafe mikone → **ticket**؛ api key/secret HAMUN moghe dade mishe vali ta ta'eed e site **kar nemikone**. Admin enamad ro check mikone va ta'eed mikone → az hamun lahze API fa'al. Plan haye eshteraki (moddat، gheymat، tedad e call، …) ro admin ta'rif mikone va karbar baraye har site mikhare؛ wallet sharj mishe va pay-as-you-go kasr mishe.
 
-- [ ] **P8-01** — Migration e ezafe-shi ru `api_clients`: `status` (pending / approved / rejected / suspended) + `approved_at`/`approved_by`. 🔴 **Backfill: client haye mojud `approved`** — vagarna ba deploy hame ye moshtari haye fe'li ghat' mishan. `ApiHmacAuth` faghat `approved` + karbar e active ro ghabul kone (401/403 e sarih).
-- [ ] **P8-02** — Karbar site ezafe mikone → client (key/secret yek bar namayesh) ba `pending` + **ticket e `site_approval`** khodkar.
-- [ ] **P8-03** — Ru ticket e site: **estelam e enamad** (Zohal) — domain tatbigh dare؟ monghazi nashode؟ level? → admin ta'eed → `approved_at` → API fa'al.
-- [ ] **P8-04** — **Plan ha tu admin (CRUD)**: migration e ezafe-shi ru `api_plans`: `duration_days`، `calls_included` (kol)، `calls_per_day`، `price_minor`، `cost_per_call_minor` (ezafe bar sahmie).
-- [ ] **P8-05** — **Eshterak** (`site_subscriptions`: client، plan، `starts_at`، `ends_at`، sahmie/masraf، gheymat e pardakhti) — kharid az wallet **kasr** mishe؛ monghazi shodan؛ tamdid.
-- [ ] **P8-06** — Mantegh e kasr: ⚠️ **montazer e tasmim e sahebe proje** (soal e 1 e paeen). `P4-09` (kharid = sharj e wallet) ba in tarahi fargh dare.
-- [ ] **P8-07** — **Sharj e wallet ba dargah e pardakht** (callback + verify e idempotent) + **factor e rasmi** baraye karbar e `invoice_verified`.
-- [ ] **P8-08** — **Panel e customer** (self-serve — jaye `P4-10`): dashboard، site ha + key ha، eshterak ha، wallet، usage، ticket ha.
+- [x] **P8-01** — Migration e ezafe-shi ru `api_clients`: `status` (pending / approved / rejected / suspended) + `approved_at`/`approved_by`. 🔴 **Backfill: client haye mojud `approved`** — vagarna ba deploy hame ye moshtari haye fe'li ghat' mishan. `ApiHmacAuth` faghat `approved` + karbar e active ro ghabul kone (401/403 e sarih).
+  → **Verify shod (2026-10-06، agent e read-only + test e vaghei)**: `api_clients.status/approved_at/approved_by` tu create e edgham-shode؛ `ApiHmacAuth` faghat approved+active (403). Test: `SiteApprovalTest`، `ApiHmacAuthTest`.
+- [x] **P8-02** — Karbar site ezafe mikone → client (key/secret yek bar namayesh) ba `pending` + **ticket e `site_approval`** khodkar.
+  → **Verify shod (2026-10-06، agent e read-only + test e vaghei)**: `CreateSiteAction` (client pending + ticket e `site_approval` tu yek transaction)؛ `POST /account/sites` + namayesh e yek-bare ye secret. Test: `SiteApprovalTest` + `AccountBillingHttpTest` (HTTP) + `e2e/account-billing.spec.ts`.
+- [x] **P8-03** — Ru ticket e site: **estelam e enamad** (Zohal) — domain tatbigh dare؟ monghazi nashode؟ level? → admin ta'eed → `approved_at` → API fa'al.
+  → **Verify shod (2026-10-06، agent e read-only + test e vaghei)**: `DecideSiteAction` (estelam e enamad az `IdentityVerificationPort`، domain mismatch → failed، approve faghat ba check e passed e <24h)؛ panel `/dashboard/sites`. Test: `SiteApprovalTest` 3 + `SiteApprovalHttpTest` 8 + `e2e/sites.spec.ts` 4.
+- [x] **P8-04** — **Plan ha tu admin (CRUD)**: migration e ezafe-shi ru `api_plans`: `duration_days`، `calls_included` (kol)، `calls_per_day`، `price_minor`، `cost_per_call_minor` (ezafe bar sahmie).
+  → **Verify shod (2026-10-06، agent e read-only + test e vaghei)**: `ApiPlanController` + `ApiPlanAction` (create/update/archive)، soton ha tu `api_plans`؛ Test: `ApiPlanAdminTest`، `ApiPlanTest`، `e2e/plans.spec.ts` 4.
+- [x] **P8-05** — **Eshterak** (`site_subscriptions`: client، plan، `starts_at`، `ends_at`، sahmie/masraf، gheymat e pardakhti) — kharid az wallet **kasr** mishe؛ monghazi shodan؛ tamdid.
+  → **Verify shod (2026-10-06، agent e read-only + test e vaghei)**: `site_subscriptions` + `PurchasePlanAction` (idempotent، kasr e wallet، tamdid = max(now، ends_at e ghabli)، factor). Test: `SubscriptionBillingTest` + `test_buying_before_expiry_stacks_the_new_subscription_after_the_previous_end`.
+- [x] **P8-06** — Mantegh e kasr: ⚠️ **montazer e tasmim e sahebe proje** (soal e 1 e paeen). `P4-09` (kharid = sharj e wallet) ba in tarahi fargh dare.
+  → **Verify shod (2026-10-06، agent e read-only + test e vaghei)**: Tasmim: dakhel e sahmie majani، bish az sahmie pay-as-you-go ba `cost_per_call_minor` e plan، 0 → 429 `over_quota`، bedun e eshterak nerkh e group. `ChargeApiCallAction` + middleware `ChargeApiCall`. Test: `SubscriptionBillingTest` (+ `..._returns_429_without_wallet_debit`، mutation check: 429→402 ghermez)، `ApiChargeTest`.
+- [x] **P8-07** — **Sharj e wallet ba dargah e pardakht** (callback + verify e idempotent) + **factor e rasmi** baraye karbar e `invoice_verified`.
+  → **Verify shod (2026-10-06، agent e read-only + test e vaghei)**: Zibal: `PaymentGatewayPort` + `ZibalGateway` (verify/inquiry)، `TopupPaymentAction` (start idempotent، verify yek bar، mismatch bedun e credit)، `IssueInvoiceAction` (faghat `invoice_verified`، `PB-YYYY-NNNNNN`، immutable). Test: `TopupPaymentTest` 7، `ZibalGatewayTest` 2.
+- [x] **P8-08** — **Panel e customer** (self-serve — jaye `P4-10`): dashboard، site ha + key ha، eshterak ha، wallet، usage، ticket ha.
+  → **Verify shod (2026-10-06، agent e read-only + test e vaghei)**: `/account` (dashboard/sites/subscriptions/wallet/usage/factor) az `CustomerBillingQuery`؛ ticket ha az P7. Test: `TopupPaymentTest`، `AccountBillingHttpTest` (topup/callback idempotent)، `e2e/account-billing.spec.ts` 7.
 
 ### ❓ Soal haye baz baraye sahebe proje (ghabl az Phase 6–8)
 1. **Plan + pay-as-you-go**: dakhel e sahmie ye eshterak call ha majani-and va faghat **bishtar az sahmie** az wallet kasr mishe؟ ya eshterak faghat «haghe dastresi»-e va HAR call kasr mishe؟
@@ -678,13 +691,15 @@ Bakhsh haye shoroo-shode va review e bug ha tamam-and. Baraye scope e jadid: `P7
 - [x] **P9-06** — **Sakht e ticket ba chand file (multiple upload)**: karbar va admin (baraye yek karbar) ticket besazan ba **chand** peyvast. Az uploader e mojud e proje estefade she (kit: `x-form.media-picker` / `alpine/media-upload.js`) — na yek uploader e jadid. Hamun disk e PRIVATE va download e emza-dar e `P7-02`؛ validate e tedad/hajm/mime har file + kol.
 - [x] **P9-07** — `/dashboard/users`: **esm e karbar link** be safhe ye jozyat esh (`/dashboard/users/{id}`).
 - [x] **P9-08** — **Virayesh e karbar** tu panel: esm، email، noe e moshtari، code/shenase melli، sath (+ taghir e mobile ba ehtiat — unique). Har taghir audit she (ki، kay، ghabl/ba'd).
-- [ ] **P9-09** — **Eslah/hazf e sanad e sharj e kif pool** — 🔴 `wallet_transactions` **append-only** ast (ghanun e non-negotiable + trigger e DB e `P6-07`)، pas «virayesh/hazf» be shekl e **sanad e BARGASHT** piade mishe: dokme ye «ابطال» ru har tarakonesh → yek tarakonesh e mokhalef (reason `admin_reversal`، `reference` = id e sanad e asli، dalil + admin)؛ «اصلاح» = ebtal + sanad e jadid e dorost. Sanad e asli dar list «ابطال‌شده» neshun dade mishe. Ebtal e dobare ye yek sanad mamnu' (idempotent)؛ mande nabayad manfi she (ya sarih ejaze ba hoshdar).
+- [x] **P9-09** — **Eslah/hazf e sanad e sharj e kif pool** — 🔴 `wallet_transactions` **append-only** ast (ghanun e non-negotiable + trigger e DB e `P6-07`)، pas «virayesh/hazf» be shekl e **sanad e BARGASHT** piade mishe: dokme ye «ابطال» ru har tarakonesh → yek tarakonesh e mokhalef (reason `admin_reversal`، `reference` = id e sanad e asli، dalil + admin)؛ «اصلاح» = ebtal + sanad e jadid e dorost. Sanad e asli dar list «ابطال‌شده» neshun dade mishe. Ebtal e dobare ye yek sanad mamnu' (idempotent)؛ mande nabayad manfi she (ya sarih ejaze ba hoshdar).
+  → **Verify shod (2026-10-06، agent e read-only + test e vaghei)**: `ReverseWalletAdjustmentAction` (`reverse`/`correct`: sanad e mokhalef ba `admin_reversal` + reference = id e asli، idempotent، mande manfi nemishe)؛ `/dashboard/finance/{id}` + pill e «ابطال‌شده». Test: `FinanceLedgerTest` 7 + `FinanceReversalHttpTest` 10 (reverse e dovom idempotent — bedun e radif e jadid، na khata).
 - [x] **P9-10** — **Naghsh/dastresi (RBAC) baraye admin ha**: sahebe proje khodesh naghsh (role) ta'rif kone va be har naghsh permission bede (didan/virayesh e har bakhsh e panel: karbaran، kif pool، ticket، manba' ha، …)؛ middleware/gate ru har route va dokme. Ba taeed e jadid piade shod: role/permission, audit, last-manager guard va UI; Access/SEO browser test pass.
 
 ## Tasmim haye vasat e rah
 
 | Tarikh | Tasmim | Chera |
 |---|---|---|
+| 2026-10-06 | Kasr e API: dakhel e sahmie majani، mazad pay-as-you-go ba `cost_per_call_minor` e plan، plan ba nerkh e 0 ba'd az sahmie → 429 (`over_quota`)؛ bedun e eshterak nerkh e price-group | sahmie ye forookhte-shode nabayad az wallet kasr she؛ 0 ya'ni «faghat sahmie»، na majani ta abad |
 | 2026-10-06 | Olaviat e global: estjt (اتحادیه) ghabl az tgju | khaste ye sarih e sahebe proje؛ tgju baraye symbol haye bi-estjt hamchenan avval e zanjire-ast |
 | 2026-10-06 | Backup e dasti default `priority` (khodkar az zanjire ye hamun symbol)؛ `none` faghat entekhab e sarih؛ dasti faghat override | feed e moshtari bayad bedun e dast e admin por bemune؛ vorudi ye dasti tu halat e adi faghat ja migereft |
 | 2026-10-06 | Tablo ye omumi toman، DB/panel/TV/API rial؛ tabdil faghat ba `Money::tomanDivisor` tu `PublicBoardQuery` (yek `divisor` baraye SSR+JS) | DB rial mimune (architecture §8)؛ do masir e format (bcmath e SSR vs float e JS) ba ham fargh mikardan |

@@ -35,4 +35,16 @@ final readonly class ApiClientQuery extends BaseQuery
             ->orderByDesc('id')
             ->get(['id', 'user_id', 'plan_id', 'name', 'website_url', 'client_id', 'is_active', 'last_used_at', 'created_at', 'deleted_at']);
     }
+
+    /**
+     * Site e YEK karbar ba id — baraye kharid e plan. 404 agar site mal e
+     * karbar e digar bashe؛ in filter hamun marz e amniati e kharid ast.
+     */
+    public function findForUserOrFail(int $userId, int $id): ApiClient
+    {
+        /** @var ApiClient $client */
+        $client = $this->query()->where('user_id', $userId)->findOrFail($id);
+
+        return $client;
+    }
 }

@@ -7,7 +7,9 @@
 >
 > | Chi | Plan migoft | Alan | Koja |
 > |---|---|---|---|
-> | Tartib e Stage ha | Fetch → Normalize → Validate → Persist → Publish | **Fetch → Validate → Enrich → Persist → Publish** (Normalize dakhel e Source ha-st؛ Validate GHABL az Enrich ta `dayHigh` ba meghdar e kharab aludeh nashe) | `P1-15`, `P1-20` |
+> | Tartib e Stage ha | Fetch → Normalize → Validate → Persist → Publish | **Fetch → Validate → Enrich → Persist → ManualBackup → Publish** (Normalize dakhel e Source ha-st؛ Validate GHABL az Enrich ta `dayHigh` ba meghdar e kharab aludeh nashe؛ `ManualBackupStage` ba'd az Persist raw e accepted ro be `manual_prices` mibare) | `P1-15`, `P1-20`, `P5-07` |
+> | Provider ha | tgju، estjt (+ ba'dan baghi) | **10 driver**: tgju، estjt، nerkh (+ `nerkh-stock` ba hamun driver)، milli، talasea، technogold، **tlyn**، manual، mock — lista tu `SourceManager::drivers()`؛ seeder hame ro gheyr-fa'al misaze | 2026-10-06 |
+> | Backup e dasti | — | default e `symbol_price_settings.manual_auto_source` = **`priority`** (na `none`): har symbol e tanzim-nashode az zanjire ye olaviat backup migire | migration `2026_10_07_140000` |
 > | SMS e dev | driver e `LogSms` e joda | **hazf shod** — `FakeSms` khodesh log mizane (tashkhis e sahebe projeh) | `P2-05` |
 > | Retry e fetch | nabud | khata haye GOZARA ye ettesal (cURL 35/7/…) yek bar retry، clamp be budget؛ timeout HARGEZ retry nemishe | `P1-25` |
 > | Avvalin tick e provider | faghat band e motlagh | **check e cross-provider** (miane ye provider haye dige، saghf 20%) | `P1-24` |
@@ -28,7 +30,7 @@
 
 `/Users/m.negahi/Projects/priceboard` faghat Docker scaffolding dare — hich code e Laravel nist، git repo ham nist. Hadaf: site e moghayese ye gheymat e tala/noghre/mes beyn e provider haye Irani + foroosh e API be customers.
 
-Marhale ye avval `tgju`، `estjt` va `nerkh` (`live.nerkh.io/api/prices`، JSON e toman ba timestamp e Jalali). Platform ha: milli، talasea، technogold az API e khodeshun (2026-10-06)؛ baghi (wallgold، taline، hamrahgold، melligold) ba'dan faghat **yek adapter e jadid + yek radif dar `providers`** mishan.
+Marhale ye avval `tgju`، `estjt` va `nerkh` (`live.nerkh.io/api/prices`، JSON e toman ba timestamp e Jalali؛ `nerkh-stock` ham hamun driver ba option e `item=GOLD18K_STOCK`). Platform ha: milli، talasea، technogold، tlyn az API e khodeshun (2026-10-06)؛ `manual` (fallback e dasti) va `mock` (dev e offline) ham driver-and. Baghi (wallgold، taline، hamrahgold، melligold) ba'dan faghat **yek adapter e jadid + yek radif dar `providers`** mishan (jadval e kamel: `docs/architecture.md` §14).
 
 `~/Projects/hg_website` **marja' e stack** ast (Laravel 13 / PHP 8.5 / PG 18 / Redis 8 / Octane / Livewire 4 / Tailwind 4)، **vali olgu ye me'mari nist** — khaste ye sahebe projeh in ast ke me'mari **standard tar va behtar az un projeh** bashe.
 
@@ -86,20 +88,21 @@ app/Modules/Pricing/
 │   ├── ValueObjects/   Price · Symbol · Spread · Freshness · TickTime
 │   ├── Enums/          Instrument · Metal · QuoteCurrency · Unit · Side
 │   │                   · SpreadMode · Interval · Direction · HealthState
-│   ├── Services/       SpreadPricer · QuoteEnricher · PriceSanity
-│   └── Ports/          QuoteSourcePort · SnapshotStorePort
-│                       · HotCachePort · TimeSeriesPort · ClockPort
+│   ├── Services/       SpreadPricer · QuoteEnricher · PriceSanity · PriorityChain
+│   │                   · ManualBackupSelector · DisplayPriceParser · SensitiveRedactor · TransientFailure
+│   └── Ports/          QuoteSourcePort · SnapshotStorePort · HotCachePort · TimeSeriesPort
+│                       · ClockPort · ManualBackupPort · UpstreamLogPort
 ├── Application/
 │   ├── Actions/        (WRITE) IngestTickAction · ProviderAction
 │   │                   · ProviderSpreadAction · RecordHealthAction
 │   ├── Queries/        (READ)  BoardQuery · CandleQuery · ProviderQuery · SpreadQuery
-│   ├── Pipeline/       TickPipeline + Stages/{Fetch,Validate,Enrich,Persist,Publish}Stage
+│   ├── Pipeline/       TickPipeline + Stages/{Fetch,Validate,Enrich,Persist,ManualBackup,Publish}Stage
 │   └── Dto/            RawQuoteDto · TickDto · SnapshotDto · CandleDto
 │                       · BoardRowDto · TickReportDto · SinkResultDto
 ├── Infrastructure/              ← hame ye chiz e "biruni" faghat inja
-│   ├── Sources/        TgjuQuoteSource · EstjtQuoteSource · MockQuoteSource
-│   ├── Persistence/    EloquentSnapshotStore · Models/{Provider,ProviderSpread,
-│   │                   PriceSnapshot,PriceChange}
+│   ├── Sources/        SourceManager · {Tgju,Estjt,Nerkh,Milli,Talasea,Technogold,Tlyn,Manual,Mock}QuoteSource
+│   ├── Persistence/    EloquentSnapshotStore · EloquentManualBackup · Models/{Provider,ProviderSpread,
+│   │                   PriceSnapshot,PriceChange,ManualPrice,SymbolPriceSetting,…}
 │   ├── Cache/          RedisHotCache · CacheKey
 │   ├── TimeSeries/     InfluxTimeSeries · Flux · FluxCsv · InfluxSpool
 │   └── Support/        NumberParser · PersianText
@@ -288,8 +291,8 @@ Ta'eed shode: HTTP 200، `{gold: "<table html>", coin: "<table html>"}`.
 ### 1.5 Schema (Postgres)
 ```php
 // providers
-key(32,unique) · driver(32) · name · name_fa · website · logo_path
-is_active · in_comparison · on_board · in_chart
+key(32,unique) · driver(32) · kind(16) reference|platform · name · name_fa · website · logo_path · logo_media_id(FK media)
+is_active · is_trust_anchor · in_comparison · on_board · in_chart
 timeout(10) · poll_interval_seconds(15) · next_poll_at
 freshness_seconds(900) · hide_after_seconds(600) · upstream_unit · sort · options jsonb
 last_attempt_at · last_success_at · last_failure_at · last_error(500)
@@ -312,7 +315,7 @@ Esm `provider_spreads` **na** `price_groups`: Phase 4 yek mehvar e **kamelan jod
 ```php
 // provider_spread_revisions  (append-only)
 provider_id · symbol · buy_mode · buy_value · sell_mode · sell_value
-changed_by(64) · effective_from · created_at · index(provider_id, symbol, effective_from)
+is_removal · changed_by(64) · effective_from · created_at · index(provider_id, symbol, effective_from)
 ```
 Tu hamun transaction e `ProviderSpreadAction`. Avvalin bar ke maghaze-i be nerkh e namayesh dade shode e'teraz kone، in javab ast.
 
@@ -322,7 +325,7 @@ provider_id · symbol(32) · side(4) last|bid|ask
 quote_currency(3) · scale(tinyint)
 raw_minor bigint       // daghighan chi provider goft — currency-unified, BEDUN e spread
 prev_minor · day_open_minor · day_high_minor · day_low_minor
-change_pct decimal(9,4) · direction(8)
+change_pct decimal(9,4) · direction(8) · pending_outlier_minor   // avvalin breach e deviation، montazer e ta'eed e tick e ba'di
 has_native_sides · upstream_at · upstream_lag_seconds · quoted_at
 unique(provider_id, symbol, side) · index(symbol, side) · index(quoted_at)
 ```
@@ -369,7 +372,7 @@ Cardinality ≈ **165 series**. Influx ta 10⁶. **Hichi az headroom kharj nakon
 - `sort(desc) → limit → sort(asc)` baraye **akharin** N bar؛ `limit` e khali ghadimi tarin ha ro mide (bug e chart e khali). `n` server-side ru 5000 cap.
 
 **Task ha** (6 ta، `pricing:influx:provision` e idempotent، Flux tu `resources/influx/tasks/*.flux` checked-in): `every` **joda az** andaze ye bar، lookback ≥ 2 bar → bar e emruz pey-dar-pey refresh mishe، hich partial-bar stitching lazem nist. `1d` har 15 daghighe ba `-50h`.
-🔴 **`option location = timezone.fixed(offset: 3h30m)` ru task haye `4h`/`1d` ejbari.** Bedun esh `window(every: 1d)` be nime-shab e UTC = 03:30 Tehran align mishe → **har candle e ruzane do rooz e kari ye Irani ro sovar mishe** — eshtebah be shekli ke mah ha kasi nemifahme. `timezone.fixed` na `location(name:)` chun Iran az 2022 DST nadare. Offset tu `config/pricing.php`.
+🔴 **`option location = timezone.fixed(offset: 3h30m)` ru task haye `4h`/`1d` ejbari.** Bedun esh `window(every: 1d)` be nime-shab e UTC = 03:30 Tehran align mishe → **har candle e ruzane do rooz e kari ye Irani ro sovar mishe** — eshtebah be shekli ke mah ha kasi nemifahme. `timezone.fixed` na `location(name:)` chun Iran az 2022 DST nadare. Offset tu `app/Modules/Pricing/Config/pricing.php` (`tz_offset`؛ config e module publish nemishe tu `config/`).
 
 **Do token**: `WRITE_TOKEN` (write-only ru `ticks`، worker) va `READ_TOKEN` (read-only، web). Token e web lo bere، kasi natune tarikhche ja'l kone.
 **Hajm**: ~950k point/rooz → **~25–50 MB/rooz**، 30 rooz ≈ 0.8–1.5 GB.
@@ -400,6 +403,7 @@ Se ghanun e `SpreadPricer`: `change_pct`/`direction` **hargez** tanzim nemishan 
 | milli (rial/mg) | `[',']` | `'.'` scale 3 (×1000) |
 | talasea (toman/mg) | `[',']` | `'.'` scale 3 (×1000) ×10 |
 | technogold (toman/g) | `[',']` | `null` ×10 |
+| tlyn (hezar toman/g؛ XAU USD) | `[',']` | `'.'` scale 3 (×1000) ×10 |
 
 **Staleness**: `lag = tickAt - upstream_at` → reject agar `lag > effectiveFreshness` ya `lag < -120s`.
 `effectiveFreshness` **bayad per-instrument bashe**: `usd-irr`/`xau-oz-usd` taghriban 24/5 (180s)، `xag-925-g-irr` mitune yek sa'at nakhore، sekke ha faghat sa'at e bazaar. Yek threshold e global ya gheymat e 2021 ro rah mide ya instrument haye kond ro mindaze.
@@ -417,9 +421,13 @@ estjt ts nadare → `md5` e HTML (`last_payload_hash`): bi-taghir >10 daghighe t
 | 2 | — | critical | `ProviderQuery::activeForTick()` — Redis(30s) → PG → `:last` (bi-TTL). **PG down nabayad polling ro motevaghef kone** |
 | 3 | Fetch | isolated/provider | `Http::pool`. **Shekast e yeki hargez be baghi nemirese** |
 | 4 | Normalize | isolated/provider | parse + unit + symbol map |
-| 5 | Validate | isolated/quote | staleness + `PriceSanity` |
-| 6 | Persist | **isolated/sink** | Redis → Postgres → Influx |
-| 7 | Publish | isolated | warm e payload |
+| 5 | Validate | isolated/quote | staleness + `PriceSanity` + check e cross-provider |
+| 6 | Enrich | isolated | band e rooz، jahat، darsad e taghir (BA'D az Validate) |
+| 7 | Persist | **isolated/sink** | Redis → Postgres → Influx |
+| 8 | ManualBackup | isolated | raw e accepted → `manual_prices` tebgh e `symbol_price_settings` (P5-07) |
+| 9 | Publish | isolated | version + zarabān e nevisande |
+
+(Marhale ye «LoadPrevious» — khundan e snapshot haye ghabli az Postgres — **tanha marhale ye critical** ast va dakhel e `TickPipeline::run()` ghabl az stage ha ejra mishe.)
 
 Khoruji `TickReportDto`: chi gerefte shod، chi rad shod va chera، har sink chi shod. Log e JSON + chap e console (Finglish).
 **Faghat lock e gerefte shode va sefr provider (har do amdi) mitunan tick ro motevaghef konan. Hich chiz tu Persist.** Hame `Log::warning` (na `report()`) — vagarna Sentry ba 5,760 event e yeksan tu yek ghat'i flood mishe.
@@ -511,7 +519,7 @@ meta jsonb · created_at · unique(wallet_id, reason, reference)   // kasr e dob
 - Retry e API (review e 2026-10-06): `X-Pb-Request-Id` ta 128 byte va scoped be client ast. Nonce e auth har bar taze. Hamun ID + method/URI/body/If-None-Match e yeksan → **hamun response e cache-shode** ta 24 saat, `X-Pb-Replayed: 1`, `X-Pb-Cost: 0`; data e taze ba charge e ghabli serve nemishe. ID e masraf-shode ba request e motefavet ya cache e az-dast-rafte → 409 va ID e jadid lazem ast. Lock e moshtarak jolo e ejra e hamzaman ro migire (409 + Retry-After: 1). Cache/lock failure → 503. Reference e ledger hash e client+ID, ba prefix e refund ham zir e 64 byte ast; reference haye ghadimi baraye jologiri az double-charge check mishan.
 - Har call: reserve → ejra → error/304 → **refund**. Tasmim atomic ba **Lua** ru Redis (Octane concurrent ast؛ read-then-write e joda az limit rad mishe)، ledger e PG manba' e haghighat.
 - ⚠️ **Baraye wallet fail-CLOSED ast** (bar khalaf e model e quota ke fail-open bud): Redis down → nemitunim kasr konim → service nemidim، vagarna majani midim.
-- Endpoint ha: `/v1/instruments`، `/v1/providers`، `/v1/prices`، `/v1/prices/{symbol}`، `/v1/candles`، `/v1/wallet`.
+- Endpoint ha (`routes/api.php`): `/v1/instruments`، `/v1/providers`، `/v1/wallet` (bedun e charge) va `/v1/prices`، `/v1/prices/{symbol}`، `/v1/effective` (feed e mo'asser ba zanjire ye olaviat)، `/v1/candles` (ba `IdempotentApiCall` + `ChargeApiCall`).
 - **ETag ru snapshot** — tafavot e beyn e kasr kardan baraye 5,760 poll e bi-taghir tu rooz va kasr baraye taghir haye vaghei. Customer motavajeh mishe kodum ro mikonim.
 
 ---

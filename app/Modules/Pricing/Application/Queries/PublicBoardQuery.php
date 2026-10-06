@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Pricing\Application\Queries;
 
+use App\Modules\Common\Helpers\Money;
 use App\Modules\Pricing\Application\Dto\BoardDto;
 use App\Modules\Pricing\Application\Dto\BoardRowDto;
 use App\Modules\Pricing\Domain\Enums\Instrument;
@@ -61,7 +62,11 @@ final readonly class PublicBoardQuery
                 }
             }
 
-            $divisor = $instrument->quote()->displayDivisor();
+            // 🔴 Tablo ye omumi TOMAN neshun mide (khaste ye sahebe proje،
+            // 2026-10-06) — DB/API/panel rial mimunan. Yek `divisor` baraye
+            // SSR va JS؛ reshte haye *Display ham ba hamun zarib.
+            $toman = Money::tomanDivisor($instrument->quote()->value);
+            $divisor = $instrument->quote()->displayDivisor() * $toman;
             $precision = $instrument->quote()->displayPrecision();
             $minimum = $prices === [] ? null : new Price(min($prices), $instrument->quote());
             $maximum = $prices === [] ? null : new Price(max($prices), $instrument->quote());
@@ -76,16 +81,16 @@ final readonly class PublicBoardQuery
                 'icon' => $instrument->icon(),
                 'unit' => $instrument->unit()->value,
                 'quote' => $instrument->quote()->value,
-                'quoteLabel' => $instrument->quote()->displayLabel(),
+                'quoteLabel' => $toman > 1 ? 'تومان' : $instrument->quote()->displayLabel(),
                 'divisor' => $divisor,
                 'precision' => $precision,
                 'cells' => $cells,
-                // Moghayese: kamtarin / bishtarin / miangin (major unit).
-                'min' => $minimum?->toFloat(),
-                'max' => $maximum?->toFloat(),
-                'avg' => $average === null ? null : (float) bcdiv($average, bcpow('10', (string) $instrument->quote()->scale()), $instrument->quote()->scale() + 6),
-                'minDisplay' => $minimum?->display(),
-                'maxDisplay' => $maximum?->display(),
+                // Moghayese: kamtarin / bishtarin / miangin (major unit e NAMAYESH).
+                'min' => $minimum === null ? null : $minimum->toFloat() / $toman,
+                'max' => $maximum === null ? null : $maximum->toFloat() / $toman,
+                'avg' => $average === null ? null : (float) bcdiv($average, bcpow('10', (string) $instrument->quote()->scale()), $instrument->quote()->scale() + 6) / $toman,
+                'minDisplay' => $minimum === null ? null : $this->priceDisplay($minimum),
+                'maxDisplay' => $maximum === null ? null : $this->priceDisplay($maximum),
                 'avgDisplay' => $prices === [] ? null : $this->averageDisplay($sum, count($prices), $instrument->quote()),
                 'count' => count($prices),
             ];
@@ -117,8 +122,8 @@ final readonly class PublicBoardQuery
         return [
             'sell' => $row->sell->toFloat(),
             'buy' => $row->buy->toFloat(),
-            'sellDisplay' => $row->sell->display(),
-            'buyDisplay' => $row->buy->display(),
+            'sellDisplay' => $this->priceDisplay($row->sell),
+            'buyDisplay' => $this->priceDisplay($row->buy),
             'changePercent' => $row->changePercent,
             'direction' => $row->direction->value,
             'isStale' => $row->isStale,
@@ -127,9 +132,24 @@ final readonly class PublicBoardQuery
         ];
     }
 
+    /** Rial → toman e gerd-shode؛ dollar hamun `Price::display()`. */
+    private function priceDisplay(Price $price): string
+    {
+        return $price->quote === QuoteCurrency::IRR
+            ? Money::tomanDisplay($price->minor)
+            : $price->display();
+    }
+
     /** Miangin e SSR/poll az jam' e minor, bedun float ya double-rounding. */
     private function averageDisplay(string $sumMinor, int $count, QuoteCurrency $quote): string
     {
+        if ($quote === QuoteCurrency::IRR) {
+            // Miangin e minor (nim-be-bala) → toman.
+            $avgMinor = bcdiv(bcadd(bcmul($sumMinor, '2', 0), (string) $count, 0), bcmul((string) $count, '2', 0), 0);
+
+            return Money::tomanDisplay((int) $avgMinor);
+        }
+
         $precision = $quote->displayPrecision();
         $scaled = bcmul($sumMinor, bcpow('10', (string) $precision), 0);
         $divisor = bcmul((string) $count, bcpow('10', (string) $quote->scale()), 0);

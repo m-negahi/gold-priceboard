@@ -6,8 +6,8 @@ namespace App\Modules\Billing\Http\Controllers;
 
 use App\Modules\Api\Application\Actions\CreateSiteAction;
 use App\Modules\Api\Application\Actions\PurchasePlanAction;
-use App\Modules\Api\Infrastructure\Persistence\Models\ApiClient;
-use App\Modules\Api\Infrastructure\Persistence\Models\ApiPlan;
+use App\Modules\Api\Application\Queries\ApiClientQuery;
+use App\Modules\Api\Application\Queries\ApiPlanQuery;
 use App\Modules\Billing\Application\Actions\TopupPaymentAction;
 use App\Modules\Billing\Application\Queries\CustomerBillingQuery;
 use App\Modules\Common\Helpers\Money;
@@ -26,6 +26,8 @@ final readonly class AccountBillingController
         private CreateSiteAction $sites,
         private PurchasePlanAction $purchase,
         private TopupPaymentAction $topups,
+        private ApiClientQuery $clients,
+        private ApiPlanQuery $plans,
     ) {}
 
     public function dashboard(Request $request): View
@@ -79,8 +81,8 @@ final readonly class AccountBillingController
             'plan_id' => ['required', 'integer', 'min:1'],
             'purchase_key' => ['required', 'uuid'],
         ]);
-        $site = ApiClient::query()->where('user_id', $request->user()->id)->findOrFail($data['site_id']);
-        $plan = ApiPlan::query()->findOrFail($data['plan_id']);
+        $site = $this->clients->findForUserOrFail((int) $request->user()->id, (int) $data['site_id']);
+        $plan = $this->plans->modelOrFail((int) $data['plan_id']);
         try {
             $this->purchase->purchase($site, $plan, $data['purchase_key']);
         } catch (WalletException|InvalidArgumentException $exception) {

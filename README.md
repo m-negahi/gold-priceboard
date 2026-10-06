@@ -1,48 +1,66 @@
 # PriceBoard
 
-Tablo e moghayese e gheymat e tala/noghre/mes va platform e foroosh e API. Laravel13/PHP8.5, PostgreSQL18, Redis8, InfluxDB2.7, Octane/Swoole, Alpine3/Tailwind4/Vite8.
+Tablo ye moghayese ye gheymat e **tala / noghre / mes** beyn e provider haye Irani (tgju، estjt، nerkh، milli، talasea، technogold، tlyn) + foroosh e API be customer ha (wallet، plan e eshteraki، factor).
 
-## Ejra e local
+**Stack**: Laravel 13 · PHP 8.5 · PostgreSQL 18 · Redis 8 (yek instance، DB0/1/2) · InfluxDB 2.7 · Octane/Swoole · Livewire 4 · Alpine 3 · Tailwind v4 · Vite 8 · KLineCharts 10 (self-host) · Docker.
+
+## Quickstart (local)
 
 ```sh
-cp .env.example .env
-# credential ha va APP_KEY ra dar mohit e khodet tanzim kon.
+cp .env.example .env            # credential ha + APP_KEY ro khodet por kon؛ .env ro commit nakon
 docker compose -f docker-compose.local.yml up -d --build
-npm install
-npm run build
-docker compose -f docker-compose.local.yml exec octane php artisan migrate --force
-docker compose -f docker-compose.local.yml exec octane php artisan db:seed
-docker compose -f docker-compose.local.yml exec octane php artisan octane:reload
+
+dc="docker compose -f docker-compose.local.yml exec octane"
+$dc php artisan migrate --force                 # hamishe ezafe-shi — hich migrate:fresh ru data ye vaghei
+$dc php artisan db:seed                         # ProviderSeeder (hame gheyr-fa'al) + AdminSeeder
+$dc php artisan pricing:influx:provision --tokens   # bucket/task haye Influx + token haye read/write → .env
+docker compose -f docker-compose.local.yml up -d --force-recreate   # ba'd az har taghir e .env
+
+npm install && npm run build
+$dc php artisan octane:reload                   # ba'd az har build e asset
 ```
 
-App ru `http://localhost:8300`, dashboard ru `/dashboard`, hesab e customer ru `/account`. Login mobile/OTP ast. Seeder provider ha ro inactive misaze ta admin marja e motabar va source haye lazem ro entekhab kone. `.env` ra commit nakon; Zohal/Zibal/Kavenegar faghat ba credential/template e khodet faal mishan. `BYPASS_OTP` faghat baraye local ast.
+Ba'd: tu panel (`/dashboard/providers`) provider haye lazem ro **fa'al** kon va yek marja' e e'temad (trust anchor) entekhab kon. Container e `price-worker` har 15 saniye `pricing:tick` mizane؛ dasti ham mishe:
 
-Redis faghat yek service ru56381: DB0 session/queue/OTP, DB1 cache, DB2 prices; noeviction+AOF. PostgreSQL55434, Influx8386, Vite5373. Hame mabalegh rial-and; ons/quote e jahani USD mimune.
+```sh
+$dc php artisan pricing:tick --force     # yek tick e kamel، gozaresh e Finglish tu console (--json ham dare)
+$dc php artisan pricing:influx:health    # salamat e candle ha / task ha
+```
 
-## Bakhsh ha
+| Chi | Koja |
+|---|---|
+| Site e omumi (board + chart) | http://localhost:8300 · `/tv` board e TV |
+| Panel e admin | http://localhost:8300/dashboard (login ba mobile + OTP؛ `BYPASS_OTP` faghat local) |
+| Hesab e customer | http://localhost:8300/account |
+| API e foroushi | `GET /v1/{instruments,providers,prices,prices/{symbol},effective,candles,wallet}` ba HMAC |
+| Horizon / Telescope | `/horizon` · `/telescope` (faghat admin ba permission e `monitoring.view`؛ Telescope faghat local) |
+| Vite HMR · Postgres · Redis · Influx | 5373 · 55434 · 56381 · 8386 |
 
-- Providers+salamat e zende; priorities+manual-only+backup+Excel.
-- Users haghighi/hoghoghi, estelam e Zohal, tickets ba madarek e private.
-- RBAC role/permission, audit, SEO editor, media library.
-- Mali e kol: wallet ledger, journal do-tarafe, trial balance, reversal/correction, settlement, invoice.
-- Customer: site/credentials, taeed e site, plans/subscription/quota, wallet/topup, usage va tickets.
+Port ha amdan shift shodan ta ba projeh haye dige conflict nakhoran — avazeshun nakon bedun e `docker ps -a`.
+
+## Ghanun haye kelidi (kholase — kamel tu `CLAUDE.md`)
+
+- Comment/console/gozaresh **Finglish**؛ matn e UI Farsi؛ adad ha ba raghame Latin.
+- `Domain/` hich chiz e Laravel nemibine؛ hich Eloquent tu Livewire/Blade/Controller (faghat `Action`/`Query`).
+- Gheymat hamishe `bigint` e minor unit + `scale` — hargez float. Hame ye mablagh ha **rial**؛ faghat quote haye jahani (ons/noghre/mes) USD.
+- Spread ru **read** e'mal mishe، na write. `wallet_transactions` va `finance_journals` append-only.
+- Hich test-i be provider/Zohal/Zibal/Kavenegar e vaghei network nemizane — fixture tu `tests/Fixtures/`.
 
 ## Test
 
 ```sh
-docker compose -f docker-compose.local.yml exec -T octane php artisan test --compact
-npx playwright test
-vendor/bin/pint --dirty --format agent
+$dc php artisan test --compact        # PHPUnit: SQLite in-memory + Redis DB13/14/15 (dev dast nemikhore)
+npx playwright test                   # e2e az HOST؛ stack bayad bala bashe؛ 1 worker
+$dc vendor/bin/pint --dirty
 ```
 
-PHP test ha SQLite e in-memory va Redis13/14/15 estefade mikonan. Test e PG e mali faghat ru database e disposable ba name e `priceboard_verify_*` va env e `PB_TEST_PG_DATABASE` ejra mishe; default DB ra reset nakon. Browser suite ba stack e local va assets e build-shode ejra mishe.
+Test e PostgreSQL e mali (`tests/Integration/FinancePostgresTest.php`) faghat ba `PB_TEST_PG_DATABASE=priceboard_verify_*` ejra mishe — hargez ru DB e dev.
 
 ## Mostanadat
 
-- [Task ha va vaziyat](docs/TASKS.md)
-- [Plan va tasmim ha](docs/PLAN.md)
-- [Meamari, mali/RBAC/KYC va migration runbook](docs/architecture.md)
-- [Dashboard kit va token ha](docs/dashboard-design.md)
-- [Workflow e repository](CLAUDE.md)
-
-Baseline e migration ha ba darkhast e sahebe proje consolidate shode. Database e ghadimi bayad aval upgrade e additive e pre-baseline ra daryaft karde bashe; `migrate:fresh` ru data e mojood mamnu ast.
+- [`docs/TASKS.md`](docs/TASKS.md) — **koja hastim** (aval in ro bekhun)
+- [`docs/PLAN.md`](docs/PLAN.md) — plan va tasmim ha (chi va chera)
+- [`docs/architecture.md`](docs/architecture.md) — laye ha، pipeline، manba' ha، mali، schema، ops، test
+- [`docs/dashboard-design.md`](docs/dashboard-design.md) — token ha va component haye theme
+- [`CLAUDE.md`](CLAUDE.md) · [`app/Modules/CLAUDE.md`](app/Modules/CLAUDE.md) · [`resources/views/CLAUDE.md`](resources/views/CLAUDE.md) — ghanun haye kar
+- `.claude/skills/` — dastur e amal e gam-be-gam (`add-price-provider`، `pricing-architecture`، `influx-timeseries`، `dashboard-ui`، `docker-dev`)

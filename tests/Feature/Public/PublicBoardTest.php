@@ -41,16 +41,17 @@ final class PublicBoardTest extends TestCase
             // `LatinizeDigits` «۱۸» ro Latin mikone.
             ->assertSee('طلای 18 عیار')
             ->assertSee('تی‌جی‌جی‌یو')
-            ->assertSee('266,400,000')
-            ->assertDontSee('26,640,000')
-            ->assertSee('قیمت‌ها به ریال');
+            // 🔴 TOMAN (khaste ye sahebe proje): 266,400,000 rial / 10.
+            ->assertSee('26,640,000')
+            ->assertDontSee('266,400,000')
+            ->assertSee('قیمت‌ها به تومان');
     }
 
     /**
      * SSR va JS har do az `divisor` e radif estefade mikonan؛ agar in adad
      * ghalat bashe، poll e ba'di ye Alpine gheymat ro 10 barabar mikone.
      */
-    public function test_board_rows_display_rial_without_scaling_and_keep_genuine_usd_quotes(): void
+    public function test_board_rows_carry_the_toman_divisor_for_rial_and_none_for_dollar(): void
     {
         $this->seedPrice();
 
@@ -65,9 +66,12 @@ final class PublicBoardTest extends TestCase
 
         $rows = collect($this->getJson('/board.json')->assertOk()->json('rows'))->keyBy('symbol');
 
-        $this->assertSame(1, $rows['xau-18k-g-irr']['divisor']);
-        $this->assertSame('ریال', $rows['xau-18k-g-irr']['quoteLabel']);
-        $this->assertEqualsWithDelta(266_400_000, $rows['xau-18k-g-irr']['min'], 0.0);
+        $this->assertSame(10, $rows['xau-18k-g-irr']['divisor']);
+        $this->assertSame('تومان', $rows['xau-18k-g-irr']['quoteLabel']);
+        $this->assertEqualsWithDelta(26_640_000, $rows['xau-18k-g-irr']['min'], 0.0);
+        $this->assertSame('26,640,000', $rows['xau-18k-g-irr']['minDisplay']);
+        $this->assertSame('26,640,000', $rows['xau-18k-g-irr']['avgDisplay']);
+        $this->assertSame('26,640,000', $rows['xau-18k-g-irr']['cells']['tgju']['sellDisplay']);
 
         $this->assertSame(1, $rows['xau-oz-usd']['divisor']);
         $this->assertSame('دلار', $rows['xau-oz-usd']['quoteLabel']);
@@ -104,13 +108,16 @@ final class PublicBoardTest extends TestCase
             'change_pct' => 0, 'direction' => 'flat', 'quoted_at' => now(),
         ]);
 
-        $this->get('/')->assertOk()->assertSee('9,007,199,254,740,993')
-            ->assertDontSee('9,007,199,254,740,992');
+        // Toman ba bcmath (nim-be-bala): …993 rial → …099.3 → …099؛ …995 → …099.5 → …100.
+        // Bala ye 2^53 float ragham gom mikard — in daghighan hamun check ast.
+        $this->get('/')->assertOk()->assertSee('900,719,925,474,099')
+            ->assertDontSee('9,007,199,254,740,99');
         $this->getJson('/board.json')->assertOk()
-            ->assertJsonPath('rows.0.cells.tgju.sellDisplay', '9,007,199,254,740,993')
-            ->assertJsonPath('rows.0.minDisplay', '9,007,199,254,740,993')
-            ->assertJsonPath('rows.0.maxDisplay', '9,007,199,254,740,995')
-            ->assertJsonPath('rows.0.avgDisplay', '9,007,199,254,740,994');
+            ->assertJsonPath('rows.0.cells.tgju.sellDisplay', '900,719,925,474,099')
+            ->assertJsonPath('rows.0.minDisplay', '900,719,925,474,099')
+            ->assertJsonPath('rows.0.maxDisplay', '900,719,925,474,100')
+            // miangin e minor = …994 → 900,719,925,474,099.4 → …099
+            ->assertJsonPath('rows.0.avgDisplay', '900,719,925,474,099');
     }
 
     public function test_the_home_page_shows_an_empty_state_with_no_prices(): void
