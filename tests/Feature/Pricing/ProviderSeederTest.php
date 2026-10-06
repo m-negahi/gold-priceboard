@@ -69,6 +69,12 @@ final class ProviderSeederTest extends TestCase
         $this->assertSame(90_000, (int) $overrides[Instrument::SilverOunce->value]);
         $this->assertSame(90_000, (int) $overrides[Instrument::CopperPound->value]);
         $this->assertSame(90_000, (int) $overrides[Instrument::CoinGerami->value]);
+
+        // Dollar: shab/ta'til yakh mizane (andaze-giri: 124,005s bedun e
+        // update) — 2 rooz ta gap e akhare-hafte radesh nakone vali dollar
+        // e yek-hafte-i «taze» e'lam nashe. (Khaste ye sahebe proje،
+        // 2026-10-06: «dolar e tgju ro ham biar».)
+        $this->assertSame(172_800, (int) $overrides[Instrument::UsdIrr->value]);
     }
 
     public function test_estjt_keeps_its_measured_timeout(): void

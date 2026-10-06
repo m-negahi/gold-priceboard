@@ -63,6 +63,16 @@ final class ProviderSeeder extends Seeder
             Instrument::SilverOunce->value => 90_000,
             Instrument::CopperPound->value => 90_000,
             Instrument::CoinGerami->value => 90_000,
+            /*
+             * 🔴 Dollar (`price_dollar_rl`): tu sa'at e bazaar e arz zende
+             * update mishe (fixture: ts e hamun lahze)، vali shab/ta'til
+             * YAKH mizane — andaze-giri ye vaghei (2026-10-06): 124,005s
+             * (~1.4 rooz) bedun e update. Default e 180s e `Instrument`
+             * un ro tu bootstrap ba'd az har ta'tili kamel hazf mikard.
+             * 2 rooz: gap e akhare-hafte ro pushesh mide vali dollar e
+             * yek-hafte-i ro «taze» ja nemizane.
+             */
+            Instrument::UsdIrr->value => 172_800,
         ]);
 
         $this->provider([
