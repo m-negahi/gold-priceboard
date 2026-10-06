@@ -83,7 +83,9 @@ final class LoginFlowTest extends TestCase
                 && $i['phone'] === self::E164
                 && $i['resendIn'] > 0
                 && $i['expiresIn'] > 0
-                && $i['code'] === null);
+                && $i['code'] === null
+                // Bedun e bypass hich vaght «pending» nist.
+                && $i['bypassPending'] === false);
     }
 
     // ── Gereftan e code ─────────────────────────────────────────────
@@ -117,7 +119,71 @@ final class LoginFlowTest extends TestCase
 
         $this->postJson(route('login.code'), ['phone' => self::PHONE])
             ->assertStatus(429)
-            ->assertJsonPath('retry_after', fn ($s): bool => is_int($s) && $s > 0 && $s <= 60);
+            ->assertJsonPath('retry_after', fn ($s): bool => is_int($s) && $s > 0 && $s <= 60)
+            // 🔴 Bedun e bypass in kelid ASLAN nabayad bashe.
+            ->assertJsonMissingPath('bypass_pending');
+    }
+
+    // ── 🔴 Bypass + cooldown e session e DIGAR ──────────────────────
+
+    /**
+     * Bon-bast e saket ke vaghe'an gir kardim: code ru hamun shomare tu yek
+     * session e DIGAR (browser/e2e e digar) sakhte shode. Store faghat HASH
+     * negah midare، pas code e ghadimi ghabl e reveal NIST. Bedun e in flag
+     * dev ru step e code mioftad bedun e code va bedun e hich tozih.
+     *
+     * Hal: cooldown ghat' NEMISHE (limit ha armed mimunan) — faghat zire
+     * bypass flag midim ta UI bege «sabr kon va ارسال دوباره bezan».
+     */
+    private function codeFromAnotherSession(): void
+    {
+        config()->set('otp.bypass', true);
+        $this->app->forgetInstance(SendOtpAction::class);
+
+        $this->postJson(route('login.code'), ['phone' => self::PHONE])->assertOk();
+
+        // Browser e jadid: session khali، vali state e OTP e Redis mimune.
+        $this->app['session']->flush();
+    }
+
+    public function test_bypass_flags_a_code_issued_to_another_session(): void
+    {
+        $this->codeFromAnotherSession();
+
+        $this->postJson(route('login.code'), ['phone' => self::PHONE])
+            ->assertStatus(429)
+            ->assertJsonPath('bypass_pending', true)
+            // Code e ghadimi reveal NEMISHE — faghat hash dar dastres e.
+            ->assertJsonMissingPath('code');
+    }
+
+    public function test_a_refresh_after_another_sessions_code_flags_bypass_pending(): void
+    {
+        $this->codeFromAnotherSession();
+
+        // 429 shomare ro tu session e jadid sabt mikone…
+        $this->postJson(route('login.code'), ['phone' => self::PHONE])->assertStatus(429);
+
+        // …pas refresh be step e code mire — bayad befahme code nadarim.
+        $this->get('/login')
+            ->assertOk()
+            ->assertViewHas('initial', fn (array $i): bool => $i['step'] === 'code'
+                && $i['code'] === null
+                && $i['bypassPending'] === true);
+    }
+
+    public function test_the_session_that_owns_the_code_is_not_pending(): void
+    {
+        config()->set('otp.bypass', true);
+        $this->app->forgetInstance(SendOtpAction::class);
+
+        $this->postJson(route('login.code'), ['phone' => self::PHONE])->assertOk();
+
+        // Hamun session — code dare، pas «pending» nist.
+        $this->get('/login')
+            ->assertOk()
+            ->assertViewHas('initial', fn (array $i): bool => is_string($i['code'])
+                && $i['bypassPending'] === false);
     }
 
     public function test_an_invalid_phone_is_a_validation_error(): void

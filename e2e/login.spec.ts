@@ -82,6 +82,41 @@ test.describe('login', () => {
  * default mishe va hamin ja mishkane — na tu cheshm e avvalin karbar.
  */
 test.describe('design tokens', () => {
+    /**
+     * 🔴 Bug e vaghei: code tu YEK browser sakhte shod، browser e DOVOM ru
+     * hamun shomare 429 gereft va ru step e code bedun e code va bedun e
+     * tozih gir kard. Store faghat hash dare، pas code e ghadimi reveal
+     * NEMISHE — vali UI bayad bege chera va chi kar kone.
+     */
+    test('code e session e digar: tozih e bypass be jaye safhe ye khali', async ({ browser }) => {
+        // In describe `beforeEach(resetOtp)` nadare — state e test e ghabli
+        // vagarna browser e AVAL ro ham 429 mikone.
+        resetOtp(ADMIN);
+
+        const first = await browser.newContext();
+        const second = await browser.newContext();
+
+        try {
+            // Browser e aval code migire (kart e bypass ba code).
+            const a = await first.newPage();
+            await requestCode(a);
+            await expect(a.locator('[data-otp-bypass]')).toBeVisible();
+
+            // Browser e dovom (cookie/session e joda) ru hamun shomare -> 429.
+            const b = await second.newPage();
+            await requestCode(b);
+
+            // Code e ghadimi reveal NEMISHE…
+            await expect(b.locator('[data-otp-bypass]')).toBeHidden();
+            // …vali tozih e «ارسال دوباره» dide mishe، na safhe ye khali.
+            await expect(b.locator('[data-otp-bypass-pending]')).toBeVisible();
+            await expect(b.locator('[data-otp-bypass-pending]')).toContainText('ارسال دوباره');
+        } finally {
+            await first.close();
+            await second.close();
+        }
+    });
+
     test('token haye brand ru dokme ye asli resolve mishan', async ({ page }) => {
         await page.goto('/login');
 

@@ -66,6 +66,11 @@ final readonly class LoginController
                 return new JsonResponse([
                     'message' => $e->getMessage(),
                     'retry_after' => $e->retryAfterSeconds,
+                    // 🔴 Zire bypass، code e zende ehtemalan tu session e
+                    // DIGAR sakhte shode va faghat HASH-esh dar dastres e —
+                    // ghabl e reveal nist. Flag faghat ta UI tozih bede؛
+                    // cooldown ghat' NEMISHE (limit ha armed mimunan).
+                    ...((bool) config('otp.bypass', false) ? ['bypass_pending' => true] : []),
                 ], 429);
             }
 
@@ -138,7 +143,7 @@ final readonly class LoginController
      * Step e avvaliye: age code e zende ya cooldown-i hast -> step e `code`
      * ba shomarande ye server؛ vagarna step e `phone` va session pak.
      *
-     * @return array{step: string, phone: string, resendIn: int, expiresIn: int, code: string|null}
+     * @return array{step: string, phone: string, resendIn: int, expiresIn: int, code: string|null, bypassPending: bool}
      */
     private function initialState(Request $request): array
     {
@@ -148,17 +153,22 @@ final readonly class LoginController
         if ($challenge === null) {
             $this->forget($request);
 
-            return ['step' => 'phone', 'phone' => $phone, 'resendIn' => 0, 'expiresIn' => 0, 'code' => null];
+            return ['step' => 'phone', 'phone' => $phone, 'resendIn' => 0, 'expiresIn' => 0, 'code' => null, 'bypassPending' => false];
         }
 
-        $code = $request->session()->get(self::SESSION_CODE);
+        $bypass = (bool) config('otp.bypass', false);
+        $stored = $request->session()->get(self::SESSION_CODE);
+        $code = is_string($stored) && $bypass ? $stored : null;
 
         return [
             'step' => 'code',
             'phone' => $challenge->phone,
             'resendIn' => $challenge->resendInSeconds,
             'expiresIn' => $challenge->expiresInSeconds,
-            'code' => is_string($code) && (bool) config('otp.bypass', false) ? $code : null,
+            'code' => $code,
+            // Zire bypass، code-i zende-st vali in session nadaresh (tu
+            // session e digar sakhte shode) — UI bayad tozih bede.
+            'bypassPending' => $bypass && $code === null,
         ];
     }
 

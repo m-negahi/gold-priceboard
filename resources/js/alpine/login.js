@@ -19,6 +19,11 @@ export default ({ routes, initial = {} }) => ({
     verifying: false,
     error: '',
     revealedCode: initial.code ?? null,
+    /**
+     * Bypass vali code tu session-e DIGAR sakhte shode (store faghat hash
+     * dare). UI tozih mide ta dev bedune «ارسال دوباره» bezane.
+     */
+    bypassPending: initial.bypassPending ?? false,
     ticker: null,
     abort: null,
 
@@ -95,6 +100,7 @@ export default ({ routes, initial = {} }) => ({
 
         if (response.status === 429) {
             // Dakhel-e cooldown: SMS-e dovom nist, vali safhe-ye code ba zaman-e vaghe'i-e mande.
+            this.bypassPending = response.body.bypass_pending ?? false;
             this.startCountdown(response.body.retry_after ?? 0);
             this.step = 'code';
             return;
@@ -107,6 +113,7 @@ export default ({ routes, initial = {} }) => ({
 
         this.code = '';
         this.revealedCode = response.body.code ?? null;
+        this.bypassPending = false;
         this.expiresIn = response.body.expires_in ?? 0;
         this.startCountdown(response.body.resend_in ?? 0);
         this.step = 'code';
@@ -144,6 +151,7 @@ export default ({ routes, initial = {} }) => ({
         this.error = '';
         this.code = '';
         this.revealedCode = null;
+        this.bypassPending = false;
         this.post(routes.reset, {});
     },
 

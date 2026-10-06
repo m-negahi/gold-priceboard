@@ -122,6 +122,16 @@
                             </button>
                         </div>
 
+                        {{-- Bypass vali code tu session e DIGAR sakhte shode (store faghat
+                             hash dare، pas inja reveal-shodani nist). Bedun e in، dev ru step
+                             e code bedun e code va bedun e tozih gir mikard. --}}
+                        <div x-show="bypassPending && !revealedCode" x-cloak class="mt-6 rounded-xl border border-warn/20 bg-warn-soft px-4 py-3 text-sm" data-otp-bypass-pending>
+                            {{-- ⚠️ Onvan amdan «حالت آزمایشی» NIST: un matn kart e code ro
+                                 yekta moshakhas mikone (e2e ba getByText peydash mikone). --}}
+                            <p class="font-medium text-warn">کد در نشست دیگری است</p>
+                            <p class="text-ink-3">کد فعلی این شماره در نشست دیگری صادر شده و این‌جا قابل نمایش نیست. بعد از پایان شمارش، «ارسال دوباره» را بزنید تا کد تازه همین‌جا نمایش داده شود.</p>
+                        </div>
+
                         <div class="mt-8 flex items-center justify-between gap-4 border-t border-line pt-6 text-sm">
                             <span class="text-muted">کد را دریافت نکردید؟</span>
 
