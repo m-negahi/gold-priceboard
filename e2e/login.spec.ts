@@ -45,7 +45,8 @@ test.describe('login', () => {
         await page.getByRole('button', { name: 'پر کردن خودکار' }).click();
 
         await page.waitForURL('**/dashboard');
-        await expect(page.getByRole('heading', { name: 'میزکار به‌زودی' })).toBeVisible();
+        // Mizkar e VAGHEI (P3-05) — h1 e safhe.
+        await expect(page.getByRole('heading', { level: 1, name: 'میزکار' })).toBeVisible();
     });
 
     test('refresh e vasat e flow be step e code bar migarde — shomarande az server', async ({ page }) => {

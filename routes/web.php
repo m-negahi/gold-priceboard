@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Auth\Http\Controllers\LoginController;
 use App\Modules\Auth\Http\Middleware\EnsureAdmin;
+use App\Modules\Panel\Http\Controllers\DashboardController;
 use App\Modules\Panel\Http\Controllers\KitController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,15 +33,12 @@ Route::post('/logout', [LoginController::class, 'logout'])
 
 /*
  * ── Panel (faghat admin) ─────────────────────────────────────────────
- * ⚠️ Dashboard fe'lan placeholder ast (P3-00/P3-05): DashboardQuery e
- * noskhe ye ghabli be Pricing e UN vabaste-ast va bayad be BoardQuery e in
- * proje vasl she.
  */
 Route::middleware(['auth', EnsureAdmin::class])
     ->prefix('dashboard')
     ->name('panel.')
     ->group(function (): void {
-        Route::get('/', static fn () => view('panel-placeholder'))->name('dashboard');
+        Route::get('/', [DashboardController::class, 'show'])->name('dashboard');
     });
 
 /*
