@@ -18,8 +18,17 @@
 `resources/views/components/**` (form kit: input/select/jalali-date/otp-input/media-picker/…، panel kit: sidebar/modal/datatable/toasts/…، captcha، layout e panel)، `resources/js/alpine/**` (11 component: login، datatable، jalali-date، media-upload، …)، `resources/views/kit/**` (safhe haye namayesh e kit)، module e **Media** (upload + ketabkhane، 21 file) va **Panel** (dashboard + navigation، 12 file).
 🔴 **Hich kodum REGISTER NASHODAN** (provider hashun tu `bootstrap/providers.php` nist، js ha import nashodan) — bi-asar-and ta Phase 3. Tu P3 bayad: review + register + test + hamahangi ba memari (Livewire e ma vs controller e una) + token haye theme. `HtmlSanitizer` (baraye rich-text) amdan nayamade — age lazem shod az Desktop biad.
 
-**Phase**: 2 tamum (P2-08 ✓، review e code e P2-09 anjam shod) → **Phase 3**
-**Task e fe'li**: `P3-01` (token haye theme) — P3-00 ba'd az layout
+**Phase**: 2 ✓، 3 ✓ (joz P3-00b Media)، **4 — core kamel** → mande: P4-07/P4-10 (panel ha)
+**Akharin session (2026-10-06)**: Phase 2 review + Phase 3 KAMEL (panel، provider/spread، monitoring، matrix) + Phase 4 core (wallet، HMAC API، billing، plan، inspector) + darkhast haye vasat e session.
+**Vaziat e test**: **831 test (3500 assertion) sabz**، **e2e 12/12** (login 6 + panel 6).
+
+🔴 **Mande ye Phase 4**:
+- `P4-07` — admin: CustomerList + WalletLedger (model/Query amade، faghat UI mande)
+- `P4-10` — panel e CUSTOMER (self-serve): website ezafe kardan، credential، kharid e plan، wallet. (Model e kamel: `api_clients.website_url`/`plan_id`، `PurchasePlanAction`، saghf e ruzane — hame amade، faghat UI)
+- 🔴 **`.env` e Influx 401** — token haye write/read bi-e'tebar (volume reset shode)؛ tick ha be spool miran (emn). Hall tu P3-05 sabt shode (faghat sahebe proje، `.env`).
+- ⚠️ `price_group_id` va `cost_per_call_minor` e `api_price_groups` mandan؛ `ApiPlan` jaygozin e asli shod (nerkh ru plan). Group baraye dasteh-bandi e gheymat e customer (Phase ba'd) mimune.
+
+**Tamiz-kari ye memory**: cookie e session shod `pb8300_session` (collision ba proje ye ghabli ru localhost → logout-e-refresh — hall shod).
 
 **🔎 CODE REVIEW e kol anjam shod — 2026-10-06 (bakhsh e review e P2-09):**
 Kol e doc ha + kol e code khunde shod. 6 fix:
@@ -420,13 +429,13 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 
 ## Phase 4 — Wallet + API
 
-- [ ] **P4-01** — Migration e `wallets` + `wallet_transactions` (append-only، `unique(wallet_id, reason, reference)`)
-- [ ] **P4-02** — `WalletAction` (credit/debit) + `WalletQuery` (balance az ledger)
-- [ ] **P4-03** — Migration e `api_clients` + `api_price_groups` (mehvar e **jodagane** az `provider_spreads`)
-- [ ] **P4-04** — HMAC auth middleware (+ decoy-HMAC، nonce، skew)
-- [ ] **P4-05** — Debit e atomic ba Lua + refund ru error/304 — **fail-CLOSED**
-- [ ] **P4-06** — Endpoint ha + `ETag` ru snapshot
-- [ ] **P4-07** — `CustomerList` + `WalletLedger` tu panel e ADMIN
+- [x] **P4-01** — Migration e `wallets` + `wallet_transactions` (append-only، `unique(wallet_id, reason, reference)`) → commit `c431896`
+- [x] **P4-02** — `WalletAction` (credit/debit/refund/block) + `WalletQuery` (balance az ledger + `verifyBalance`) → `c431896`، 9 test
+- [x] **P4-03** — Migration e `api_clients` + `api_price_groups` + `ApiClientAction` (secret ENCRYPT، na hash) → `4224dde`
+- [x] **P4-04** — HMAC auth middleware (canonical، skew ±30s، nonce yek-bar-masraf fail-closed، decoy-HMAC) → `4224dde`، 9 test
+- [x] **P4-05** — Debit e atomic ba Lua + refund ru error/304 — **fail-CLOSED** → `4224dde`
+- [x] **P4-06** — Endpoint ha (`prices`/`candles`/`instruments`/`providers`/`wallet`) + `ETag` → `4224dde`، 7 test
+- [ ] **P4-07** — `CustomerList` + `WalletLedger` tu panel e ADMIN (model/Query amade — faghat UI) e ADMIN
 - [x] **P4-08** — Test: debit e dobare mamnu'، refund، fail-closed vaghti Redis down ast
   → Tu `ApiChargeTest`/`ApiHmacAuthTest`/`WalletLedgerTest` (bala).
 
