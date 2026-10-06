@@ -55,8 +55,15 @@ final class Navigation
                 'label' => 'مشتریان و مالی', // Phase 4
                 'items' => [
                     ['key' => 'customers', 'label' => 'مشتریان', 'icon' => 'users', 'route' => 'panel.users.index'],
-                    ['key' => 'tickets', 'label' => 'تیکت‌ها', 'icon' => 'ticket', 'route' => 'panel.tickets.index'],
                     ['key' => 'wallets', 'label' => 'کیف پول', 'icon' => 'wallet', 'route' => null],
+                ],
+            ],
+            [
+                // Goruh e JODA (khaste ye sahebe proje): har darkhast e karbar
+                // ticket-e — ertegha ye sath، ta'eed e site، poshtibani.
+                'label' => 'پشتیبانی',
+                'items' => [
+                    ['key' => 'tickets', 'label' => 'تیکت‌ها', 'icon' => 'ticket', 'route' => 'panel.tickets.index'],
                 ],
             ],
             [
