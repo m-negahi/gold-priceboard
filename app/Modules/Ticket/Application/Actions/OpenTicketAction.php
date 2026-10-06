@@ -9,6 +9,7 @@ use App\Modules\Ticket\Domain\Enums\TicketType;
 use App\Modules\Ticket\Infrastructure\Persistence\Models\Ticket;
 use App\Modules\Ticket\Infrastructure\Persistence\Models\TicketEvent;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -17,10 +18,15 @@ use Illuminate\Support\Facades\DB;
  */
 final readonly class OpenTicketAction
 {
-    /** @param array<string, mixed>|null $meta */
-    public function execute(int $userId, TicketType $type, string $subject, string $body, ?array $meta = null): Ticket
+    public function __construct(private StoreTicketAttachmentsAction $attachments) {}
+
+    /**
+     * @param  array<string, mixed>|null  $meta
+     * @param  array<int, UploadedFile>  $files  peyvast haye payam e aval (P7-02)
+     */
+    public function execute(int $userId, TicketType $type, string $subject, string $body, ?array $meta = null, array $files = []): Ticket
     {
-        return DB::transaction(static function () use ($userId, $type, $subject, $body, $meta): Ticket {
+        return DB::transaction(function () use ($userId, $type, $subject, $body, $meta, $files): Ticket {
             $ticket = new Ticket([
                 'user_id' => $userId,
                 'type' => $type,
@@ -29,7 +35,7 @@ final readonly class OpenTicketAction
             ]);
             $ticket->forceFill(['last_activity_at' => CarbonImmutable::now()])->save();
 
-            $ticket->messages()->create([
+            $message = $ticket->messages()->create([
                 'author_id' => $userId,
                 'is_staff' => false,
                 'body' => $body,
@@ -41,6 +47,8 @@ final readonly class OpenTicketAction
                 'kind' => 'created',
                 'to_status' => TicketStatus::Open->value,
             ]);
+
+            $this->attachments->execute($ticket, $message->id, $userId, $files);
 
             return $ticket;
         });

@@ -11,6 +11,7 @@ use App\Modules\Ticket\Application\Queries\TicketQuery;
 use App\Modules\Ticket\Domain\Enums\TicketStatus;
 use App\Modules\Ticket\Domain\Enums\TicketType;
 use App\Modules\Ticket\Domain\Exceptions\TicketException;
+use App\Modules\Ticket\Http\Support\AttachmentRules;
 use App\Modules\Ticket\Infrastructure\Persistence\Models\Ticket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -68,7 +69,7 @@ final readonly class TicketController
 
     public function reply(Request $request, int $ticket): RedirectResponse
     {
-        $data = $request->validate(['body' => ['required', 'string', 'max:5000']]);
+        $data = $request->validate(['body' => ['required', 'string', 'max:5000'], ...AttachmentRules::rules()], AttachmentRules::messages());
 
         /** @var Ticket $model */
         $model = $this->tickets->findOrFail($ticket);
@@ -76,7 +77,7 @@ final readonly class TicketController
         $admin = $request->user();
 
         try {
-            $this->reply->execute($model, $admin->id, $data['body'], staff: true);
+            $this->reply->execute($model, $admin->id, $data['body'], staff: true, files: $request->file('files', []));
         } catch (TicketException $e) {
             return back()->withErrors(['body' => $e->getMessage()])->withInput();
         }

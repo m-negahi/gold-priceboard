@@ -24,6 +24,13 @@ final class TicketException extends RuntimeException
 
     public const PENDING_EXISTS = 6;
 
+    public const FILE_TYPE = 7;
+
+    public static function fileType(): self
+    {
+        return new self('نوع فایل مجاز نیست (فقط PDF، JPG، PNG، WEBP).', self::FILE_TYPE);
+    }
+
     public static function closed(): self
     {
         return new self('این تیکت بسته است؛ برای ادامه تیکت را دوباره باز کنید.', self::CLOSED);

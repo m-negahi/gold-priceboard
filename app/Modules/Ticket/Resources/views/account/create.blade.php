@@ -8,13 +8,16 @@
         </a>
         <h1 class="mt-1 text-2xl font-extrabold text-ink">تیکت جدید</h1>
 
-        <form method="POST" action="{{ route('account.tickets.store') }}" class="mt-6 space-y-4 rounded-2xl bg-surface card-p-lg shadow-xs" data-ticket-create-form>
+        <form method="POST" action="{{ route('account.tickets.store') }}" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl bg-surface card-p-lg shadow-xs" data-ticket-create-form>
             @csrf
             <x-form.field name="subject" label="موضوع" required>
                 <x-form.input name="subject" :value="old('subject')" maxlength="200" />
             </x-form.field>
             <x-form.field name="body" label="متن پیام" required>
                 <x-form.textarea name="body" rows="6" maxlength="5000">{{ old('body') }}</x-form.textarea>
+            </x-form.field>
+            <x-form.field name="files" :error="$errors->first('files') ?: ($errors->first('files.*') ?: null)" label="پیوست (اختیاری)" hint="حداکثر ۵ فایل PDF/JPG/PNG/WEBP، هر کدام تا ۵ مگابایت.">
+                <x-form.file />
             </x-form.field>
             <div class="flex justify-end">
                 <button type="submit"

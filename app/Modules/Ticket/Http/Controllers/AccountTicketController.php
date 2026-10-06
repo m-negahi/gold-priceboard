@@ -10,6 +10,7 @@ use App\Modules\Ticket\Application\Actions\ReplyTicketAction;
 use App\Modules\Ticket\Application\Queries\TicketQuery;
 use App\Modules\Ticket\Domain\Enums\TicketType;
 use App\Modules\Ticket\Domain\Exceptions\TicketException;
+use App\Modules\Ticket\Http\Support\AttachmentRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -47,9 +48,10 @@ final readonly class AccountTicketController
         $data = $request->validate([
             'subject' => ['required', 'string', 'max:200'],
             'body' => ['required', 'string', 'max:5000'],
-        ]);
+            ...AttachmentRules::rules(),
+        ], AttachmentRules::messages());
 
-        $ticket = $this->open->execute($this->userId($request), TicketType::Support, $data['subject'], $data['body']);
+        $ticket = $this->open->execute($this->userId($request), TicketType::Support, $data['subject'], $data['body'], files: $request->file('files', []));
 
         return redirect()->route('account.tickets.show', $ticket->id)->with('status', 'تیکت ثبت شد؛ پاسخ پشتیبانی همین‌جا نمایش داده می‌شود.');
     }
@@ -64,10 +66,10 @@ final readonly class AccountTicketController
     public function reply(Request $request, int $ticket): RedirectResponse
     {
         $model = $this->tickets->findForOwnerOrFail($ticket, $this->userId($request));
-        $data = $request->validate(['body' => ['required', 'string', 'max:5000']]);
+        $data = $request->validate(['body' => ['required', 'string', 'max:5000'], ...AttachmentRules::rules()], AttachmentRules::messages());
 
         try {
-            $this->reply->execute($model, $this->userId($request), $data['body']);
+            $this->reply->execute($model, $this->userId($request), $data['body'], files: $request->file('files', []));
         } catch (TicketException $e) {
             return back()->withErrors(['body' => $e->getMessage()])->withInput();
         }

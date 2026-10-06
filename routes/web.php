@@ -18,6 +18,7 @@ use App\Modules\Panel\Http\Controllers\UserController;
 use App\Modules\Pricing\Http\Controllers\PublicBoardController;
 use App\Modules\Seo\Http\Controllers\SeoController;
 use App\Modules\Ticket\Http\Controllers\AccountTicketController;
+use App\Modules\Ticket\Http\Controllers\TicketAttachmentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -137,6 +138,13 @@ Route::middleware('auth')
         Route::get('/tickets/{ticket}', [AccountTicketController::class, 'show'])->whereNumber('ticket')->name('tickets.show');
         Route::post('/tickets/{ticket}/reply', [AccountTicketController::class, 'reply'])->whereNumber('ticket')->name('tickets.reply');
     });
+
+// Download e peyvast (P7-02): emza ye zamandar (relative — host-independent) +
+// saheb/admin tu controller. Hamun URL baraye admin va karbar.
+Route::get('/tickets/attachments/{attachment}', [TicketAttachmentController::class, 'download'])
+    ->middleware(['auth', 'signed:relative'])
+    ->whereNumber('attachment')
+    ->name('tickets.attachments.download');
 
 /*
  * ── Kit e component ha (FAGHAT dev) ──────────────────────────────────

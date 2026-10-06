@@ -10,9 +10,12 @@ use App\Modules\Common\Helpers\StringHelper;
 use App\Modules\Common\Queries\BaseQuery;
 use App\Modules\Ticket\Domain\Enums\TicketStatus;
 use App\Modules\Ticket\Infrastructure\Persistence\Models\Ticket;
+use App\Modules\Ticket\Infrastructure\Persistence\Models\TicketAttachment;
 use App\Modules\Ticket\Infrastructure\Persistence\Models\TicketEvent;
 use App\Modules\Ticket\Infrastructure\Persistence\Models\TicketMessage;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\URL;
 
 /**
  * Khundan e ticket ha (P7-01) — inbox e admin، lista/safhe ye karbar.
@@ -110,6 +113,25 @@ final readonly class TicketQuery extends BaseQuery
             ->all();
     }
 
+    /** Omr e link e download — kutah، chun safhe har bar link e taze misaze. */
+    private const LINK_MINUTES = 30;
+
+    /**
+     * Peyvast baraye download: admin har peyvast؛ baghi faghat peyvast e
+     * ticket e KHODESHUN (filter tu HAMUN query — 404 baraye digari).
+     */
+    public function attachmentForViewerOrFail(int $attachmentId, int $viewerId, bool $isAdmin): TicketAttachment
+    {
+        $query = TicketAttachment::query()->whereKey($attachmentId);
+
+        if (! $isAdmin) {
+            $query->whereHas('ticket', static fn ($t) => $t->where('user_id', $viewerId));
+        }
+
+        /** @var TicketAttachment */
+        return $query->firstOrFail();
+    }
+
     public function findForOwnerOrFail(int $ticketId, int $userId): Ticket
     {
         /** @var Ticket */
@@ -125,10 +147,17 @@ final readonly class TicketQuery extends BaseQuery
      */
     public function detail(Ticket $ticket, bool $staff): array
     {
-        $ticket->loadMissing(['user', 'messages.author:id,name,phone']);
+        $ticket->loadMissing(['user', 'messages.author:id,name,phone', 'attachments']);
+
+        $expires = CarbonImmutable::now()->addMinutes(self::LINK_MINUTES);
+        $files = $ticket->attachments->sortBy('id')->groupBy('message_id');
 
         $messages = $ticket->messages->sortBy('id')->values()->map(static fn (TicketMessage $m): array => [
             'id' => $m->id,
+            'attachments' => ($files->get($m->id) ?? collect())
+                ->map(static fn (TicketAttachment $a): array => self::attachment($a, $expires))
+                ->values()
+                ->all(),
             'body' => $m->body,
             'staff' => $m->is_staff,
             'author' => match (true) {
@@ -158,6 +187,20 @@ final readonly class TicketQuery extends BaseQuery
                 'level' => $user->level,
                 'customerType' => $user->customer_type,
             ] : null,
+        ];
+    }
+
+    /** @return array{id: int, name: string, size: string, mime: string, url: string} */
+    private static function attachment(TicketAttachment $a, CarbonImmutable $expires): array
+    {
+        $kb = $a->size_bytes / 1024;
+
+        return [
+            'id' => $a->id,
+            'name' => $a->original_name,
+            'size' => $kb >= 1024 ? number_format($kb / 1024, 1).' MB' : max(1, (int) round($kb)).' KB',
+            'mime' => $a->mime,
+            'url' => URL::temporarySignedRoute('tickets.attachments.download', $expires, ['attachment' => $a->id], absolute: false),
         ];
     }
 

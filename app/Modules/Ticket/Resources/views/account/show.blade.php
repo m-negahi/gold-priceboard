@@ -27,15 +27,19 @@
                         <span class="num">{{ $message['at'] }}</span>
                     </div>
                     <p class="mt-2 whitespace-pre-line break-words text-sm text-ink">{{ $message['body'] }}</p>
+                    <x-panel.attachments :files="$message['attachments']" />
                 </li>
             @endforeach
         </ol>
 
         @if ($ticket['canReply'])
-            <form method="POST" action="{{ route('account.tickets.reply', $ticket['id']) }}" class="mt-6 space-y-3 rounded-2xl bg-surface card-p shadow-xs" data-ticket-reply>
+            <form method="POST" action="{{ route('account.tickets.reply', $ticket['id']) }}" enctype="multipart/form-data" class="mt-6 space-y-3 rounded-2xl bg-surface card-p shadow-xs" data-ticket-reply>
                 @csrf
                 <x-form.field name="body" label="پیام شما" required>
                     <x-form.textarea name="body" rows="4" maxlength="5000">{{ old('body') }}</x-form.textarea>
+                </x-form.field>
+                <x-form.field name="files" :error="$errors->first('files') ?: ($errors->first('files.*') ?: null)" label="پیوست (اختیاری)" hint="حداکثر ۵ فایل PDF/JPG/PNG/WEBP، هر کدام تا ۵ مگابایت.">
+                    <x-form.file />
                 </x-form.field>
                 <div class="flex justify-end">
                     <button type="submit"

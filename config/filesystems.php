@@ -47,6 +47,18 @@ return [
             'report' => false,
         ],
 
+        // Madarek e ticket (P7-02): PRIVATE — birun az `public/` va birun az
+        // root e disk e `local` (ke `serve` dare). Bedun e `url`: download faghat
+        // az controller e emza-dar ba check e saheb/admin.
+        'tickets' => [
+            'driver' => 'local',
+            'root' => storage_path('app/tickets'),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
