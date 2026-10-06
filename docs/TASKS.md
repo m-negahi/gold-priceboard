@@ -412,7 +412,9 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → Test: `TickReportLedgerTest` (gharardad ru HAR DO impl: tartib، saghf e 50، limit) + `MonitorPagesTest` (tick e VAGHEI ba driver e mock bedun e network → daftarche → safhe؛ kelid haye payload). 
 - [x] **P3-10** — `InstrumentMatrix` (`provider × symbol` + sen e har khune + marker e `is_derived`)
   → `InstrumentMatrixQuery` — AMDAN az `BoardQuery` nemikhune: un radif e makhfi ro hazf mikone dar hali ke «chera ru tablo nist» daghighan hadaf e in safhe-ast. Har khune: sen + tone (taze/kohne/makhfi) + `bid/ask` e native + `*` e derived. **801 test sabz، e2e 6/6.** Screenshot ha: `monitor.png`/`health.png`/`matrix.png`.
-- [ ] **P3-11** — Verify ba Playwright + moghayese ba `images/dashboard-prefer.webp`
+- [x] **P3-11** — Verify ba Playwright + moghayese ba `images/dashboard-prefer.webp`
+  → `e2e/panel.spec.ts` (6 test، yek session e login baraye kol e suite): mizkar (stat + salamat + jadval + **gradient e brand e card e featured resolve mishe**)، nav e sidebar، lista/form e provider (key readonly + por، driver pre-select)، spread (16 radif + preview e `←`)، payesh e zende (gozaresh ba pill e tgju)، salamat + matrix. **Kol e e2e: 12/12 sabz.**
+  → Moghayese ba `dashboard-prefer.webp` momken nabud — file tu repo NIST (bala ro bebin)؛ az spec e `dashboard-design.md` peyravi shod.
 
 ---
 
