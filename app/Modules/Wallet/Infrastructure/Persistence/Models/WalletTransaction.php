@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Wallet\Infrastructure\Persistence\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -20,6 +21,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $balance_after_minor
  * @property string $reason
  * @property string $reference
+ * @property array<string, mixed>|null $meta
+ * @property CarbonImmutable|null $created_at
  */
 class WalletTransaction extends Model
 {

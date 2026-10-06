@@ -13,6 +13,7 @@ use App\Modules\Common\Helpers\Money;
 use App\Modules\Common\Helpers\PhoneHelper;
 use App\Modules\Wallet\Application\Queries\WalletQuery;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Str;
 
 /**
  * View-model e safhe ye yek karbar (P6-03) — FAGHAT jam'-bandi ye khoruji
@@ -50,6 +51,10 @@ final readonly class UserDetailQuery
         return [
             'profile' => $this->profile($user),
             'wallet' => $this->wallet($user),
+            // Kelid e idempotency e form e adjust (P6-06): HAR render taze —
+            // ersal e dobare ye HAMUN form yek radif misaze. Biroon az
+            // `wallet` chun karbar e bedun e kif ham sharj mishe.
+            'walletAdjustKey' => (string) Str::uuid(),
             'sites' => $this->clients->forUser($user->id)
                 ->map(fn (ApiClient $client): array => $this->site($client))
                 ->all(),
@@ -85,6 +90,9 @@ final readonly class UserDetailQuery
             return null;
         }
 
+        $rows = $this->wallets->ledger($wallet, self::LEDGER_LIMIT);
+        $admins = $this->adminLabels(array_filter(array_column($rows, 'adminId')));
+
         $ledger = array_map(fn (array $tx): array => [
             'id' => $tx['id'],
             'credit' => $tx['direction'] === 'credit',
@@ -93,8 +101,9 @@ final readonly class UserDetailQuery
             'reason' => self::REASONS[$tx['reason']] ?? $tx['reason'],
             'reference' => $tx['reference'],
             'note' => $tx['note'] ?? null,
+            'admin' => $tx['adminId'] === null ? null : ($admins[$tx['adminId']] ?? '#'.$tx['adminId']),
             'at' => $tx['createdAt'] === null ? null : Jalali::dateTime(CarbonImmutable::parse($tx['createdAt'])),
-        ], $this->wallets->ledger($wallet, self::LEDGER_LIMIT));
+        ], $rows);
 
         return [
             'id' => $wallet->id,
@@ -102,6 +111,22 @@ final readonly class UserDetailQuery
             'isBlocked' => (bool) $wallet->is_blocked,
             'ledger' => $ledger,
         ];
+    }
+
+    /**
+     * Esm/mobile e admin haye sabt-konande ye adjust — YEK query baraye kol e
+     * ledger (na N+1).
+     *
+     * @param  array<int, int>  $ids
+     * @return array<int, string>
+     */
+    private function adminLabels(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return $this->users->labelsFor(array_values(array_unique($ids)));
     }
 
     /** @return array<string, mixed> */

@@ -203,3 +203,60 @@ test.describe('disable/enable (P6-05)', () => {
         await expect(page.locator('[data-user-status]')).toHaveAttribute('data-user-status', 'active');
     });
 });
+
+test.describe('wallet e dasti (P6-06)', () => {
+    /**
+     * Karbar e SABET e e2e baraye wallet: ledger append-only ast (P6-07 —
+     * trigger e DB delete ro rad mikone)، pas in karbar hich vaght pak
+     * nemishe؛ har ejra yek sharj + hamun ghadr kasr → mande sefr mimune.
+     */
+    const WALLET_PHONE = '+989990009999';
+
+    test('sharj ba dalil → ledger + mande، kasr e hamun ghadr → bargasht', async () => {
+        const out = artisan('tinker', `--execute=$u = App\\Modules\\Auth\\Infrastructure\\Persistence\\Models\\User::firstOrCreate(['phone' => '${WALLET_PHONE}'], ['name' => 'e2e wallet']); echo 'ID=' . $u->id;`);
+        const id = /ID=(\d+)/.exec(out)?.[1];
+        expect(id, out).toBeTruthy();
+
+        await page.goto(`/dashboard/users/${id}`);
+        const balance = page.locator('[data-wallet-balance]');
+        const before = (await balance.count()) > 0 ? await balance.innerText() : null;
+
+        const form = page.locator('[data-wallet-adjust]');
+        await form.getByLabel('نوع').selectOption('credit');
+        await form.getByLabel('مبلغ (تومان)').fill('1,000');
+        await form.getByLabel('دلیل').fill('آزمایش e2e شارژ');
+        await form.locator('[data-wallet-adjust-submit]').click();
+
+        const firstRow = page.locator('[data-ledger-row]').first();
+        await expect(firstRow).toContainText('اصلاح دستی ادمین');
+        await expect(firstRow).toContainText('آزمایش e2e شارژ');
+        await expect(firstRow.locator('[data-ledger-admin]')).toContainText('0' + ADMIN);
+        await expect(firstRow).toContainText('+1,000');
+        // Rang e mablagh e sharj = token e ok.
+        const ok = await tokenRgb('--color-ok');
+        const amountCell = firstRow.locator('td').nth(2);
+        expect(await amountCell.evaluate((el) => getComputedStyle(el).color)).toBe(ok);
+
+        await form.getByLabel('نوع').selectOption('debit');
+        await form.getByLabel('مبلغ (تومان)').fill('1000');
+        await form.getByLabel('دلیل').fill('آزمایش e2e برگشت');
+        await form.locator('[data-wallet-adjust-submit]').click();
+
+        await expect(page.locator('[data-ledger-row]').first()).toContainText('−1,000');
+        if (before !== null) {
+            await expect(balance).toHaveText(before);
+        }
+    });
+
+    test('kasr e bishtar az mande khata mide', async () => {
+        await page.goto('/dashboard/users?q=09990009999');
+        await rows().first().getByRole('link', { name: /^جزئیات/ }).click();
+        const form = page.locator('[data-wallet-adjust]');
+        await form.getByLabel('نوع').selectOption('debit');
+        await form.getByLabel('مبلغ (تومان)').fill('99999999999');
+        await form.getByLabel('دلیل').fill('نباید ثبت شود');
+        await form.locator('[data-wallet-adjust-submit]').click();
+
+        await expect(page.locator('[data-user-error]')).toHaveText('موجودی کیف پول کافی نیست.');
+    });
+});

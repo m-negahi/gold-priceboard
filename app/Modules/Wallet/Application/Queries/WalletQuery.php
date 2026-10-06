@@ -62,6 +62,9 @@ final readonly class WalletQuery
                 'balanceAfterMinor' => $tx->balance_after_minor,
                 'reason' => $tx->reason,
                 'reference' => $tx->reference,
+                // Adjust e dasti (P6-06): dalil + kodum admin.
+                'note' => is_array($tx->meta) && isset($tx->meta['note']) ? (string) $tx->meta['note'] : null,
+                'adminId' => is_array($tx->meta) && isset($tx->meta['admin_id']) ? (int) $tx->meta['admin_id'] : null,
                 'createdAt' => $tx->created_at?->toIso8601String(),
             ])
             ->all();

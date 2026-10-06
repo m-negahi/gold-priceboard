@@ -104,6 +104,26 @@ final readonly class UserQuery extends BaseQuery
         $builder->whereRaw('lower(name) like ?', ['%'.addcslashes(mb_strtolower($term), '%_\\').'%']);
     }
 
+    /**
+     * id -> «esm (mobile)» baraye namayesh e kesi ke kari karde (masalan
+     * admin e adjust e wallet — P6-06). Yek query.
+     *
+     * @param  array<int, int>  $ids
+     * @return array<int, string>
+     */
+    public function labelsFor(array $ids): array
+    {
+        return $this->query()
+            ->whereKey($ids)
+            ->get(['id', 'name', 'phone'])
+            ->mapWithKeys(static function (User $user): array {
+                $phone = PhoneHelper::toLocal($user->phone) ?? $user->phone;
+
+                return [$user->id => $user->name === null || $user->name === '' ? $phone : "{$user->name} ({$phone})"];
+            })
+            ->all();
+    }
+
     /** @return array<string, mixed> */
     private function listRow(User $user): array
     {

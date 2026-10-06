@@ -102,6 +102,28 @@
                 </div>
             </div>
 
+            {{-- Sharj/kasr e dasti (P6-06) — radif e JADID e ledger (`admin_adjust` + admin + dalil).
+                 `idempotency_key` ba har render taze: ersal e dobare ye hamin form yek radif misaze. --}}
+            <form method="POST" action="{{ route('panel.users.wallet.adjust', $profile['id']) }}"
+                  class="mt-4 grid gap-3 rounded-xl bg-surface-2 p-3 sm:grid-cols-[8rem_10rem_1fr_auto] sm:items-end" data-wallet-adjust>
+                @csrf
+                <input type="hidden" name="idempotency_key" value="{{ $walletAdjustKey }}">
+                <x-form.field name="direction" label="نوع">
+                    <x-form.select name="direction" :options="['credit' => 'شارژ (+)', 'debit' => 'کسر (−)']" :value="old('direction', 'credit')" />
+                </x-form.field>
+                <x-form.field name="amount" label="مبلغ (تومان)" required>
+                    <x-form.input name="amount" ltr inputmode="decimal" autocomplete="off" :value="old('amount')" maxlength="32" placeholder="125,000" />
+                </x-form.field>
+                <x-form.field name="note" label="دلیل" required>
+                    <x-form.input name="note" :value="old('note')" maxlength="255" />
+                </x-form.field>
+                <button type="submit" data-wallet-adjust-submit
+                        class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-brand hover:bg-brand-2">
+                    <x-icon name="wallet" class="size-4" />
+                    ثبت
+                </button>
+            </form>
+
             @if ($wallet === null)
                 <p class="mt-4 rounded-xl bg-surface-3 px-4 py-6 text-center text-sm text-muted">هنوز کیف پولی ساخته نشده است.</p>
             @else
@@ -124,6 +146,9 @@
                                         {{ $tx['reason'] }}
                                         @if ($tx['note'])
                                             <p class="mt-0.5 text-xs text-muted">{{ $tx['note'] }}</p>
+                                        @endif
+                                        @if ($tx['admin'])
+                                            <p class="mt-0.5 text-xs text-muted-3" data-ledger-admin>ثبت توسط {{ $tx['admin'] }}</p>
                                         @endif
                                     </td>
                                     <td @class(['num whitespace-nowrap px-3 py-2 font-semibold', 'text-ok' => $tx['credit'], 'text-down' => ! $tx['credit']])>

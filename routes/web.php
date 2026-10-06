@@ -110,6 +110,7 @@ Route::middleware(['auth', EnsureAdmin::class])
         Route::post('/users/{user}/role', [UserController::class, 'role'])->whereNumber('user')->name('users.role');
         Route::post('/users/{user}/disable', [UserController::class, 'disable'])->whereNumber('user')->name('users.disable');
         Route::post('/users/{user}/enable', [UserController::class, 'enable'])->whereNumber('user')->name('users.enable');
+        Route::post('/users/{user}/wallet', [UserController::class, 'adjustWallet'])->whereNumber('user')->name('users.wallet.adjust');
         Route::get('/users/{user}', [UserController::class, 'show'])->whereNumber('user')->name('users.show');
     });
 

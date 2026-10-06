@@ -11,7 +11,10 @@ use App\Modules\Auth\Domain\Enums\UserLevel;
 use App\Modules\Auth\Domain\Enums\UserStatus;
 use App\Modules\Auth\Domain\Exceptions\UserAdminException;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
+use App\Modules\Common\Helpers\Money;
 use App\Modules\Panel\Queries\UserDetailQuery;
+use App\Modules\Wallet\Application\Actions\AdjustWalletAction;
+use App\Modules\Wallet\Domain\Exceptions\WalletException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -28,6 +31,7 @@ final readonly class UserController
         private UserQuery $users,
         private UserDetailQuery $detail,
         private UserAdminAction $admin,
+        private AdjustWalletAction $adjust,
     ) {}
 
     public function index(Request $request): View
@@ -156,6 +160,49 @@ final readonly class UserController
             'kind' => 'success',
             'title' => 'کاربر فعال شد',
             'message' => 'دسترسی ورود و API برگشت.',
+        ]);
+    }
+
+    /**
+     * P6-06 — sharj/kasr e dasti. Mablagh TOMAN e matni ast va ba
+     * `Money::tomanToRial` (string/bcmath) be rial mire — hich float.
+     */
+    public function adjustWallet(Request $request, int $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'direction' => ['required', Rule::in(['credit', 'debit'])],
+            'amount' => ['required', 'string', 'max:32'],
+            'note' => ['required', 'string', 'max:255'],
+            'idempotency_key' => ['required', 'uuid'],
+        ]);
+
+        $amountMinor = Money::tomanToRial($data['amount']);
+
+        if ($amountMinor === null || $amountMinor <= 0) {
+            return back()->withErrors(['amount' => 'مبلغ معتبر نیست (تومان، حداکثر یک رقم اعشار).'])->withInput();
+        }
+
+        /** @var User $target */
+        $target = $this->users->findOrFail($user);
+        /** @var User $actor */
+        $actor = $request->user();
+
+        try {
+            $this->adjust->execute($target->id, $data['direction'], $amountMinor, $data['note'], $actor->id, $data['idempotency_key']);
+        } catch (WalletException $e) {
+            $message = match ($e->getCode()) {
+                WalletException::INSUFFICIENT => 'موجودی کیف پول کافی نیست.',
+                WalletException::BLOCKED => 'کیف پول مسدود است.',
+                default => 'ثبت تراکنش ممکن نشد.',
+            };
+
+            return back()->withErrors(['amount' => $message])->withInput();
+        }
+
+        return redirect()->route('panel.users.show', $target->id)->with('toast', [
+            'kind' => 'success',
+            'title' => $data['direction'] === 'credit' ? 'کیف پول شارژ شد' : 'از کیف پول کسر شد',
+            'message' => Money::rialToToman($amountMinor).' تومان — ثبت در دفتر کل.',
         ]);
     }
 }
