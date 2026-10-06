@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Auth\Http\Controllers\LoginController;
 use App\Modules\Auth\Http\Middleware\EnsureAdmin;
+use App\Modules\Kyc\Http\Controllers\OnboardingController;
 use App\Modules\Panel\Http\Controllers\ChartController;
 use App\Modules\Panel\Http\Controllers\DashboardController;
 use App\Modules\Panel\Http\Controllers\KitController;
@@ -122,6 +123,16 @@ Route::middleware(['auth', EnsureAdmin::class])
         Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply'])->whereNumber('ticket')->name('tickets.reply');
         Route::post('/tickets/{ticket}/status', [TicketController::class, 'status'])->whereNumber('ticket')->name('tickets.status');
     });
+
+/*
+ * ── Onboarding (P7-03) ───────────────────────────────────────────────
+ * Ba'd az avvalin login e moshtari (redirect e `LoginController`)؛ karbar e
+ * `basic` ba'dan ham az inja darkhast e ertegha mide.
+ */
+Route::middleware('auth')->group(function (): void {
+    Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
+    Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
+});
 
 /*
  * ── Hesab e karbar (Phase 7) ─────────────────────────────────────────

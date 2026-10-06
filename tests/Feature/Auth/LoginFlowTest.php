@@ -195,13 +195,14 @@ final class LoginFlowTest extends TestCase
 
     // ── Verify + vorud ──────────────────────────────────────────────
 
-    public function test_the_full_flow_signs_in_a_new_user_and_redirects_home(): void
+    /** P7-03: karbar e TAZE avval be onboarding mire (soal e factor e rasmi). */
+    public function test_the_full_flow_signs_in_a_new_user_and_redirects_to_onboarding(): void
     {
         $code = $this->requestCode();
 
         $this->postJson(route('login.verify'), ['phone' => self::PHONE, 'code' => $code])
             ->assertOk()
-            ->assertJsonPath('redirect', route('home'));
+            ->assertJsonPath('redirect', route('onboarding.show'));
 
         $this->assertAuthenticated();
         $this->assertSame(self::E164, User::query()->sole()->phone);

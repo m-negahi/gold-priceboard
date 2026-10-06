@@ -172,7 +172,8 @@ test.describe('disable/enable (P6-05)', () => {
         await customer.getByLabel('شماره موبایل').fill(TEMP_PHONE);
         await customer.getByRole('button', { name: 'دریافت کد ورود' }).click();
         await customer.getByRole('button', { name: 'پر کردن خودکار' }).click();
-        await customer.waitForURL((url) => url.pathname === '/');
+        // P7-03: karbar e taze avval be onboarding mire.
+        await customer.waitForURL((url) => url.pathname === '/onboarding');
 
         // Admin disable mikone.
         await page.goto('/dashboard/users?q=' + TEMP_PHONE);

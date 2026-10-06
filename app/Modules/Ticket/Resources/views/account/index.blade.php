@@ -7,11 +7,18 @@
                 <h1 class="text-2xl font-extrabold text-ink">تیکت‌های من</h1>
                 <p class="mt-1 text-sm text-muted">درخواست‌ها و گفت‌وگو با پشتیبانی.</p>
             </div>
+            <div class="flex flex-wrap gap-2">
+            <a href="{{ route('onboarding.show') }}" data-kyc-link
+               class="inline-flex h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-ink ring-1 ring-line hover:bg-surface-3">
+                <x-icon name="shield" class="size-4" />
+                فاکتور رسمی / ارتقای سطح
+            </a>
             <a href="{{ route('account.tickets.create') }}" data-ticket-create
                class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-brand shadow-(--bp-elev-brand) hover:bg-brand-2">
                 <x-icon name="plus" class="size-4" />
                 تیکت جدید
             </a>
+            </div>
         </div>
 
         @if (session('status'))

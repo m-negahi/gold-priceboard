@@ -44,6 +44,8 @@ use Illuminate\Notifications\Notifiable;
  * @property UserLevel $level
  * @property CustomerType $customer_type
  * @property string|null $national_code
+ * @property CarbonImmutable|null $onboarded_at
+ * @property bool|null $invoice_requested
  */
 class User extends Authenticatable
 {
@@ -93,7 +95,19 @@ class User extends Authenticatable
             'disabled_at' => 'immutable_datetime',
             'level' => UserLevel::class,
             'customer_type' => CustomerType::class,
+            'onboarded_at' => 'immutable_datetime',
+            'invoice_requested' => 'boolean',
         ];
+    }
+
+    /**
+     * Onboarding (P7-03) faghat baraye moshtari va faghat ta vaghti be soal
+     * e «فاکتور رسمی» javab nadade. `onboarded_at` fillable nist (tasmim e
+     * `Kyc` Action ha).
+     */
+    public function needsOnboarding(): bool
+    {
+        return ! $this->is_admin && $this->onboarded_at === null;
     }
 
     /** Karbar e disable na login dare na API (P6-05). */

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Api\Providers\ApiServiceProvider;
 use App\Modules\Auth\Providers\AuthServiceProvider;
+use App\Modules\Kyc\Providers\KycServiceProvider;
 use App\Modules\Panel\Providers\PanelServiceProvider;
 use App\Modules\Pricing\Providers\PricingServiceProvider;
 use App\Modules\Seo\Providers\SeoServiceProvider;
@@ -25,4 +26,5 @@ return [
     PanelServiceProvider::class,
     SeoServiceProvider::class,
     TicketServiceProvider::class,
+    KycServiceProvider::class,
 ];

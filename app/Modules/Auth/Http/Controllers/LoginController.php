@@ -126,7 +126,12 @@ final readonly class LoginController
         $request->session()->regenerate();
 
         return new JsonResponse([
-            'redirect' => $user->is_admin ? route('panel.dashboard') : route('home'),
+            // P7-03: moshtari ke hanuz be soal e factor javab nadade → onboarding.
+            'redirect' => match (true) {
+                $user->is_admin => route('panel.dashboard'),
+                $user->needsOnboarding() => route('onboarding.show'),
+                default => route('home'),
+            },
         ]);
     }
 
