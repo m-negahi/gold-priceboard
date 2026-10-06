@@ -505,6 +505,7 @@ meta jsonb · created_at · unique(wallet_id, reason, reference)   // kasr e dob
 `balance_minor` **cache** ast؛ manba' e haghighat ledger ast → ekhtelaf ghabl e kashf.
 
 - Auth: `client_id` + HMAC-SHA256، canonical `METHOD\nURI\nTS\nNONCE\nsha256(body)`، skew ±30s، nonce TTL 90s، decoy-HMAC baraye timing attack.
+- Retry e API (review e 2026-10-06): `X-Pb-Request-Id` ta 128 byte va scoped be client ast. Nonce e auth har bar taze. Hamun ID + method/URI/body/If-None-Match e yeksan → **hamun response e cache-shode** ta 24 saat, `X-Pb-Replayed: 1`, `X-Pb-Cost: 0`; data e taze ba charge e ghabli serve nemishe. ID e masraf-shode ba request e motefavet ya cache e az-dast-rafte → 409 va ID e jadid lazem ast. Lock e moshtarak jolo e ejra e hamzaman ro migire (409 + Retry-After: 1). Cache/lock failure → 503. Reference e ledger hash e client+ID, ba prefix e refund ham zir e 64 byte ast; reference haye ghadimi baraye jologiri az double-charge check mishan.
 - Har call: reserve → ejra → error/304 → **refund**. Tasmim atomic ba **Lua** ru Redis (Octane concurrent ast؛ read-then-write e joda az limit rad mishe)، ledger e PG manba' e haghighat.
 - ⚠️ **Baraye wallet fail-CLOSED ast** (bar khalaf e model e quota ke fail-open bud): Redis down → nemitunim kasr konim → service nemidim، vagarna majani midim.
 - Endpoint ha: `/v1/instruments`، `/v1/providers`، `/v1/prices`، `/v1/prices/{symbol}`، `/v1/candles`، `/v1/wallet`.
