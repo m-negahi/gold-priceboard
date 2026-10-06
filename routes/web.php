@@ -6,6 +6,7 @@ use App\Modules\Auth\Http\Controllers\LoginController;
 use App\Modules\Auth\Http\Middleware\EnsureAdmin;
 use App\Modules\Panel\Http\Controllers\DashboardController;
 use App\Modules\Panel\Http\Controllers\KitController;
+use App\Modules\Panel\Http\Controllers\ManualPriceController;
 use App\Modules\Panel\Http\Controllers\MatrixController;
 use App\Modules\Panel\Http\Controllers\MonitorController;
 use App\Modules\Panel\Http\Controllers\ProviderController;
@@ -63,6 +64,12 @@ Route::middleware(['auth', EnsureAdmin::class])
         // form `@method('PUT')` dare.
         Route::put('/providers/{key}/spreads/{symbol}/remove', [ProviderSpreadController::class, 'remove'])->name('providers.spreads.remove');
         Route::post('/providers/{key}/spreads/preview', [ProviderSpreadController::class, 'preview'])->name('providers.spreads.preview');
+
+        // ── Gheymat e dasti (fallback — Phase 4/5) ──────────────────
+        Route::get('/manual', [ManualPriceController::class, 'index'])->name('manual.index');
+        Route::post('/manual', [ManualPriceController::class, 'update'])->name('manual.update');
+        Route::post('/manual/seed', [ManualPriceController::class, 'seed'])->name('manual.seed');
+        Route::post('/manual/remove', [ManualPriceController::class, 'remove'])->name('manual.remove');
 
         // ── Monitoring (P3-08/09/10) ────────────────────────────────
         Route::get('/health', [MonitorController::class, 'health'])->name('health');

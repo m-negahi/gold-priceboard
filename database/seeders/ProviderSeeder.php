@@ -114,6 +114,22 @@ final class ProviderSeeder extends Seeder
             Instrument::GoldOunce->value => 90_000,
         ]);
 
+        /*
+         * 🔴 Manual — fallback e dasti (khaste ye sahebe proje). `sort = 80`
+         * ya'ni AKHARIN olaviat (provider haye vaghei avval، manual akhar).
+         * Khamoosh shoru' mishe؛ admin roshan mikone va az panel e «قیمت
+         * دستی» por/seed esh mikone. Timestamp nemide pas hargez stale rad
+         * nemishe — fallback e akhar ast.
+         */
+        $this->provider([
+            'key' => 'manual',
+            'driver' => 'manual',
+            'name' => 'Manual',
+            'name_fa' => 'دستی (پشتیبان)',
+            'kind' => 'reference',
+            'sort' => 80,
+        ], []);
+
         $this->provider([
             'key' => 'mock',
             'driver' => 'mock',

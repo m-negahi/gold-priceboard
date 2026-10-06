@@ -36,7 +36,7 @@ final class ProviderSeederTest extends TestCase
         $this->seedProviders();
 
         $this->assertSame(
-            ['estjt', 'mock', 'tgju'],
+            ['estjt', 'manual', 'mock', 'tgju'],
             Provider::query()->orderBy('key')->pluck('key')->all(),
         );
     }

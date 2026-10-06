@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Api\Http\Controllers\CandlesController;
+use App\Modules\Api\Http\Controllers\EffectiveController;
 use App\Modules\Api\Http\Controllers\MetaController;
 use App\Modules\Api\Http\Controllers\PricesController;
 use App\Modules\Api\Http\Controllers\WalletController;
@@ -30,6 +31,8 @@ Route::prefix('v1')->middleware([LogApiRequest::class, ApiHmacAuth::class])->gro
     Route::middleware(ChargeApiCall::class)->group(function (): void {
         Route::get('/prices', [PricesController::class, 'index'])->name('api.prices');
         Route::get('/prices/{symbol}', [PricesController::class, 'show'])->name('api.prices.show');
+        // Feed e mo'asser: yek gheymat/symbol ba olaviat + fallback be manual.
+        Route::get('/effective', [EffectiveController::class, 'index'])->name('api.effective');
         Route::get('/candles', [CandlesController::class, 'index'])->name('api.candles');
     });
 });

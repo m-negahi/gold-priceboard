@@ -34,6 +34,7 @@ final class Navigation
                     ['key' => 'health', 'label' => 'سلامت منابع', 'icon' => 'pulse', 'route' => 'panel.health'],
                     ['key' => 'monitor', 'label' => 'پایش زنده', 'icon' => 'eye', 'route' => 'panel.monitor.ticks'],
                     ['key' => 'matrix', 'label' => 'ماتریس نمادها', 'icon' => 'coins', 'route' => 'panel.matrix'],
+                    ['key' => 'manual', 'label' => 'قیمت دستی', 'icon' => 'pencil', 'route' => 'panel.manual.index'],
                 ],
             ],
             [
