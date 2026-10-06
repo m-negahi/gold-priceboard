@@ -565,6 +565,14 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 5. Karbar e **haghighi** (bedun e factor e rasmi) mitune site ezafe kone va plan bekhare؟ ya KYC ejbari-e؟
 6. Estelam e hoviat `birth_date` mikhad — tu onboarding beporsim؟
 
+### ✅ Pish-farz haye MOVAGHAT baraye soal haye bala (2026-10-06 — sahebe proje goft «hame ye phase ha ro pish bebar»؛ har kodum ghabel e bargasht)
+1. **Kasr**: eshterak `calls_included` (kol e dore) + `calls_per_day` dare؛ call dakhel e sahmie **majani**؛ bishtar az sahmie → **pay-as-you-go** az wallet ba `cost_per_call_minor` e plan (age 0 bud → 429). Site bedun e eshterak e fa'al → pay-as-you-go ba nerkh e pish-farz (raftar e fe'li). Kharid e plan wallet ro **KASR** mikone (jaye `P4-09` ke sharj mikard).
+2. **Dargah**: **Zibal** posht e `PaymentGatewayPort` (adapter + fake)؛ `ZIBAL_MERCHANT` az env (sandbox e Zibal merchant = `zibal`). Test ha hich network nemizanan.
+3. **Zohal**: `ZOHAL_TOKEN` az env؛ bedun e token adapter «تنظیم نشده» bar migardune va check ha ⚠️ neshun midan — hich chiz nemishkane. Hich call e vaghei az test/agent.
+4. «tala/dolar» — fe'lan kari nemikonim (Zohal API e gheymat nadare).
+5. **KYC ejbari NIST**: karbar e haghighi site ezafe mikone va plan mikhare؛ factor e rasmi faghat baraye `invoice_verified`.
+6. **Tarikh e tavalod** e namayande tu onboarding e hoghoghi porsideh mishe (baraye estelam e hoviat).
+
 ### Tartib e pishnahadi
 Phase 5 (baghi: `P5-08` chart e admin، `P5-03` TV، `P5-05` SEO) → **Phase 6** (pish-niaz e hame: karbar/status) → **Phase 7** (ticket + KYC) → **Phase 8** (site/plan/pardakht). `P4-15..17` (Telescope/Horizon/queue) har vaght beyn e in ha.
 
