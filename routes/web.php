@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Route;
  */
 Route::get('/', [PublicBoardController::class, 'home'])->name('home');
 Route::get('/board.json', [PublicBoardController::class, 'boardJson'])->name('board.json');
+Route::get('/candles.json', [PublicBoardController::class, 'candlesJson'])->name('candles.json');
 
 /*
  * ── Login ba OTP ─────────────────────────────────────────────────────

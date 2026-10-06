@@ -88,10 +88,14 @@
                                             ])>
                                                 <x-icon :name="$row['icon']" class="size-4" />
                                             </span>
-                                            <div class="min-w-0">
-                                                <p class="font-medium text-ink">{{ $row['label'] }}</p>
+                                            <button type="button" class="min-w-0 text-start"
+                                                    @click="$dispatch('open-chart', { symbol: @js($row['symbol']), label: @js($row['label']) })">
+                                                <p class="flex items-center gap-1.5 font-medium text-ink hover:text-brand-2">
+                                                    {{ $row['label'] }}
+                                                    <x-icon name="chart" class="size-3.5 text-muted-3" />
+                                                </p>
                                                 <p class="ltr text-xs text-muted-3">{{ $row['symbol'] }}</p>
-                                            </div>
+                                            </button>
                                         </div>
                                     </td>
 
@@ -134,5 +138,55 @@
         <p class="mt-4 text-xs text-muted-2">
             قیمت‌ها به تومان (نمادهای جهانی به دلار) است. * = نرخ خرید/فروش محاسبه‌شده از اسپرد، نه نرخ اعلامی منبع.
         </p>
+    </div>
+
+    {{-- ── Modal e chart (P5-04) — KLineCharts، lazy-load ─────────────── --}}
+    <div x-data="priceChart({ url: @js(route('candles.json')) })"
+         @open-chart.window="show($event.detail)"
+         @keydown.escape.window="close()">
+        <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+            <div x-show="open" x-transition.opacity.duration.150ms class="absolute inset-0 bg-ink/50" @click="close()" aria-hidden="true"></div>
+
+            <div x-show="open" x-trap.noscroll="open"
+                 x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="translate-y-4 opacity-0" x-transition:enter-end="translate-y-0 opacity-100"
+                 class="relative flex h-[85dvh] w-full max-w-3xl flex-col rounded-t-2xl bg-surface shadow-(--bp-elev-lg) sm:h-[32rem] sm:rounded-2xl" role="dialog" aria-modal="true">
+
+                <header class="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+                    <div class="min-w-0">
+                        <h2 class="truncate font-bold text-ink" x-text="label"></h2>
+                        <p class="ltr text-xs text-muted-3"><span x-text="symbol"></span> · <span x-text="provider"></span></p>
+                    </div>
+                    <button type="button" @click="close()" class="grid size-9 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink" aria-label="بستن">
+                        <x-icon name="close" class="size-5" />
+                    </button>
+                </header>
+
+                {{-- Dokme haye interval. --}}
+                <div class="flex items-center gap-1 border-b border-line px-3 py-2">
+                    @foreach (\App\Modules\Pricing\Domain\Enums\Interval::labels() as $value => $il)
+                        <button type="button" @click="setInterval(@js($value))"
+                                class="rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors"
+                                :class="interval === @js($value) ? 'bg-brand-soft text-brand-2' : 'text-muted hover:bg-surface-3 hover:text-ink'">
+                            {{ $il }}
+                        </button>
+                    @endforeach
+                </div>
+
+                <div class="relative min-h-0 flex-1">
+                    <div x-ref="canvas" class="size-full"></div>
+
+                    <div x-show="loading" x-cloak class="absolute inset-0 grid place-items-center bg-surface/60">
+                        <span class="size-6 animate-spin rounded-full border-2 border-line-3 border-t-brand"></span>
+                    </div>
+                    <div x-show="empty && !loading" x-cloak class="absolute inset-0 grid place-items-center text-sm text-muted">
+                        برای این بازه هنوز داده‌ای نیست.
+                    </div>
+                </div>
+
+                <template x-if="degraded">
+                    <p class="border-t border-line bg-warn-soft px-5 py-2 text-xs text-warn">نمودار از آخرین داده‌ی سالم — ممکن است چند لحظه عقب باشد.</p>
+                </template>
+            </div>
+        </div>
     </div>
 </x-layouts.site>

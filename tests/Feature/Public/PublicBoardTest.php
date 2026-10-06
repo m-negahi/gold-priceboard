@@ -70,6 +70,24 @@ final class PublicBoardTest extends TestCase
         $this->getJson('/board.json', ['If-None-Match' => $etag])->assertStatus(304);
     }
 
+    public function test_candles_endpoint_validates_the_symbol(): void
+    {
+        $this->getJson('/candles.json?symbol=nist-hamchin&interval=m5')->assertStatus(422);
+    }
+
+    public function test_candles_endpoint_returns_a_series_shape(): void
+    {
+        $this->seedPrice();
+
+        // Influx fake nist tu test — CandleQuery degraded bar migardune
+        // (Influx dar dastres nist)، vali shape bayad salem bashe.
+        $this->getJson('/candles.json?symbol=xau-18k-g-irr&interval=m5')
+            ->assertOk()
+            ->assertJsonStructure(['data', 'symbol', 'interval', 'provider', 'precision', 'displayDivisor', 'degraded'])
+            ->assertJsonPath('symbol', 'xau-18k-g-irr')
+            ->assertJsonPath('interval', 'm5');
+    }
+
     public function test_only_board_providers_appear(): void
     {
         $this->seedPrice();

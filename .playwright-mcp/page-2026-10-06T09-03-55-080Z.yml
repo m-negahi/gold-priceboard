@@ -1,0 +1,5 @@
+- generic [active] [ref=e1]:
+  - status [ref=e3]:
+    - generic [ref=e6]: Loading...
+  - status
+  - alert [ref=e7]
