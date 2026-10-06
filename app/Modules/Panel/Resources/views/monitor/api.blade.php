@@ -6,6 +6,22 @@
         ? '—'
         : \Carbon\CarbonImmutable::parse($iso)->setTimezone('Asia/Tehran')->format('H:i:s');
 
+    // Response ro khanа kon: age JSON e motabar bud، pretty + unescape
+    // (vagarna raghame Farsi/matn `\uXXXX` dide mishe — mesle Telescope na).
+    $pretty = static function (?string $raw): ?string {
+        if ($raw === null || $raw === '') {
+            return $raw;
+        }
+
+        $decoded = json_decode($raw, true);
+
+        if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+            return $raw; // JSON nist — kham neshun bede.
+        }
+
+        return (string) json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    };
+
     $tone = static fn (int $status): string => match (true) {
         $status >= 500 => 'down',
         $status === 402 || $status === 403 || $status === 429 => 'warn',
@@ -68,18 +84,28 @@
                         <div class="flex gap-2"><dt class="text-muted">مانده بعد از کسر:</dt><dd class="num">{{ ($call['balance'] ?? null) !== null ? number_format((int) $call['balance']) : '—' }}</dd></div>
                     </dl>
 
-                    @if (($call['body'] ?? null) !== null)
+                    @if (($call['request_headers'] ?? []) !== [])
+                        <div>
+                            <p class="mb-1 font-medium text-muted">هدرهای درخواست:</p>
+                            <pre class="ltr overflow-x-auto rounded-lg bg-surface-2 p-3 text-[0.6875rem] leading-5">@foreach ((array) $call['request_headers'] as $hName => $hVal){{ $hName }}: {{ $hVal }}
+@endforeach</pre>
+                        </div>
+                    @endif
+
+                    @if (($call['request_body'] ?? null) !== null)
                         <div>
                             <p class="mb-1 font-medium text-muted">Payload درخواست:</p>
-                            <pre class="ltr overflow-x-auto rounded-lg bg-surface-2 p-3 text-[0.6875rem] leading-5">{{ $call['body'] }}</pre>
+                            <pre class="ltr overflow-x-auto rounded-lg bg-surface-2 p-3 text-[0.6875rem] leading-5">{{ $call['request_body'] }}</pre>
                         </div>
                     @endif
 
                     @if (($call['response'] ?? null) !== null)
                         <div>
-                            <p class="mb-1 font-medium text-muted">پاسخ (خطا):</p>
-                            <pre class="ltr overflow-x-auto rounded-lg bg-danger-soft p-3 text-[0.6875rem] leading-5 text-danger">{{ $call['response'] }}</pre>
+                            <p class="mb-1 font-medium text-muted">پاسخ:</p>
+                            <pre class="ltr max-h-80 overflow-auto rounded-lg p-3 text-[0.6875rem] leading-5 {{ $status >= 400 ? 'bg-danger-soft text-danger' : 'bg-surface-2' }}">{{ $pretty($call['response']) }}</pre>
                         </div>
+                    @elseif ($status === 304)
+                        <p class="text-muted-2">۳۰۴ — بدنه‌ای ندارد (داده تغییری نکرده، هزینه برگشت خورد).</p>
                     @endif
                 </div>
             </details>
