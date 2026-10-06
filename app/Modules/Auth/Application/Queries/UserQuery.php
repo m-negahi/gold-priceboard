@@ -29,6 +29,27 @@ final readonly class UserQuery extends BaseQuery
     public const PER_PAGE = 25;
 
     /** @return array<string, mixed> */
+    /**
+     * Karbar ba SHOMARE ye mobile ya ID — baraye form haye admin ke yek field
+     * e «کاربر» daran (sharj e kif pool az safhe ye mali).
+     */
+    public function findByPhoneOrId(string $value): ?User
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('/^\d{1,9}$/', $value) === 1) {
+            return User::query()->find((int) $value);
+        }
+
+        $phone = PhoneHelper::normalize($value);
+
+        return $phone === null ? null : User::query()->where('phone', $phone)->first();
+    }
+
     public function profile(int $id): array
     {
         $user = $this->findOrFail($id);

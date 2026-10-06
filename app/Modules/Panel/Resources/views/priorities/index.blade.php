@@ -1,8 +1,9 @@
-{{-- «اولویت منابع» per-symbol (P5-07): zanjire ye har symbol — feed e
-     mo'asser (API) va «پر کردن بر اساس اولویت» e gheymat e dasti har do az
-     hamin miyan. AJAX (hich reload/scroll)، hamun olgu ye safhe ye dasti. --}}
+{{-- «تنظیم قیمت نمادها» per-symbol (P5-07 + 2026-10-06): zanjire ye olaviat
+     + siasat e pushtiban e har symbol. Feed e mo'asser (API) va backup e
+     KHODKAR e gheymat e dasti har do az hamin zanjire miyan. Input e dasti
+     faghat vaghti ke feed vaghe'an ru dasti bashe. AJAX (hich reload/scroll). --}}
 
-<x-layouts.panel title="اولویت و قیمت دستی" current="priorities" :breadcrumbs="['پنل', 'اولویت و قیمت دستی']">
+<x-layouts.panel title="تنظیم قیمت نمادها" current="priorities" :breadcrumbs="['پنل', 'تنظیم قیمت نمادها']">
     <div x-data="symbolPriorities({
             route: @js(route('panel.priorities.update')),
             rows: @js($rows),
@@ -13,7 +14,6 @@
             routes: {
                 manual: @js(route('panel.manual.update')),
                 remove: @js(route('panel.manual.remove')),
-                seedPriority: @js(route('panel.manual.seed-priority')),
                 settings: @js(route('panel.priorities.settings')),
                 preview: @js(route('panel.manual.import.preview')),
                 confirm: @js(route('panel.manual.import.confirm')),
@@ -22,17 +22,19 @@
 
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-                <h1 class="text-2xl font-extrabold text-ink md:text-3xl">اولویت و قیمت دستی</h1>
-                <p class="mt-1 text-sm text-muted">برای هر نماد مشخص کنید قیمت اول از کدام منبع گرفته شود و اگر آن منبع کهنه یا قطع بود، نوبت کدام است.</p>
+                <h1 class="text-2xl font-extrabold text-ink md:text-3xl">تنظیم قیمت نمادها</h1>
+                <p class="mt-1 text-sm text-muted">برای هر نماد مشخص کنید قیمت اول از کدام منبع گرفته شود، اگر کهنه یا قطع بود نوبت کدام است، و پشتیبان دستی چطور پر شود.</p>
             </div>
 
-            <x-panel.help key="priorities" title="راهنمای اولویت منابع">
+            <x-panel.help key="priorities" title="راهنمای تنظیم قیمت نمادها">
                 <h3>چطور کار می‌کند؟</h3>
                 <ul>
                     <li>برای هر نماد، اولین منبعِ این زنجیره که قیمت <b>تازه</b> دارد انتخاب می‌شود؛ اگر کهنه یا قطع بود، نوبت منبع بعدی است.</li>
                     <li>نمادی که اولویت سفارشی ندارد، از <b>ترتیب پیش‌فرض</b> (ستون ترتیب در صفحه منابع قیمت) پیروی می‌کند.</li>
                     <li>منبعی که در زنجیره سفارشی نیست حذف نمی‌شود — بعد از منابع انتخابی و به ترتیب پیش‌فرض می‌آید. پس افزودن منبع جدید هیچ نمادی را بی‌قیمت نمی‌کند.</li>
                     <li><b>دستی</b> همیشه آخر است: فقط وقتی همه منابع واقعی کهنه یا قطع باشند استفاده می‌شود.</li>
+                    <li>پشتیبان دستی به‌صورت پیش‌فرض <b>خودکار</b> از همین زنجیره پر می‌شود (اولین منبع تازه). منبعی که نمادی را ندارد رد می‌شود و نوبت بعدی است.</li>
+                    <li>نماد <b>تک‌منبع</b> فقط یک منبع واقعی دارد: با قطع آن منبع، مستقیم روی پشتیبان می‌افتد.</li>
                 </ul>
                 <h3>کجا اثر دارد؟</h3>
                 <p>«فقط دستی» قیمت ثبت‌شده شما را مستقیم در فید API استفاده می‌کند؛ اولویت‌ها حفظ می‌شوند و تا خاموش کردن این حالت، هیچ منبعی برای این نماد انتخاب یا خودکار کپی نمی‌شود.</p>
@@ -41,18 +43,16 @@
         </div>
 
         <div class="mt-5 flex flex-wrap items-center gap-3 rounded-2xl bg-surface card-p shadow-xs">
-            <p class="flex-1 text-sm text-muted" x-show="!effective.alarm">قیمت مؤثر هر نماد در کارت آن مشخص است. قیمت‌های ریالی را به ریال وارد کنید؛ نمادهای جهانی به دلار باقی می‌مانند.</p>
-            <p x-show="effective.alarm" x-cloak class="flex-1 text-sm text-warn"><span class="num font-bold" x-text="effective.fallbackCount"></span> نماد از قیمت پشتیبان یا کهنه استفاده می‌کند.</p>
-            @can('pricing.manage')
-                <button type="button" @click="seedPriority()" :disabled="busy" class="inline-flex h-11 items-center gap-2 rounded-xl border border-line px-4 text-sm font-semibold hover:bg-surface-2 disabled:opacity-50"><x-icon name="layers" class="size-4" />کپی قیمت‌های تازه از اولویت‌ها</button>
-            @endcan
+            <p class="flex-1 text-sm text-muted" x-show="!effective.alarm">همه نمادها از منبع زنده قیمت می‌گیرند؛ پشتیبان دستی خودکار به‌روز است. ورود دستی فقط برای نماد «فقط دستی» یا نمادی که منبع تازه ندارد نمایش داده می‌شود.</p>
+            <p x-show="effective.alarm" x-cloak class="flex-1 text-sm text-warn"><span class="num font-bold" x-text="effective.fallbackCount"></span> نماد از قیمت پشتیبان یا کهنه استفاده می‌کند — قیمت دستی آن‌ها را بررسی کنید.</p>
         </div>
         @unless ($manualActive)
             <p class="mt-3 rounded-xl bg-warn-soft p-3 text-sm text-warn">منبع دستی خاموش است؛ پشتیبان دستی در فید استفاده نمی‌شود. حالت «فقط دستی» مستقل است و قیمت شما را مستقیم استفاده می‌کند.</p>
         @endunless
 
         @can('pricing.manage')
-        <section class="mt-5 rounded-2xl bg-surface card-p shadow-xs" data-manual-import>
+        {{-- Import e Excel faghat vaghti ma'ni dare ke yek symbol «فقط دستی» bashe. --}}
+        <section x-show="anyManualOnly" x-cloak class="mt-5 rounded-2xl bg-surface card-p shadow-xs" data-manual-import>
             <div class="flex flex-wrap items-center gap-3">
                 <div class="min-w-0 flex-1"><h2 class="font-bold text-ink">ورود قیمت‌ها از اکسل</h2><p class="mt-1 text-sm text-muted">فایل xlsx با ستون‌های symbol، label، price و unit. واحد IRR برای ریال و USD برای دلار؛ ردیف‌های بدون قیمت نادیده گرفته می‌شوند.</p></div>
                 <a href="{{ route('panel.manual.template') }}" class="inline-flex h-11 items-center gap-2 rounded-xl border border-line px-4 text-sm font-medium"><x-icon name="download" class="size-4" />نمونه اکسل</a>
@@ -111,11 +111,14 @@
                             @endcan
                         </div>
 
-                        <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted"><span>قیمت مؤثر:</span><span class="font-semibold text-ink" x-text="row.manualOnly ? 'فقط دستی' : (row.selectedProvider ? name(row.selectedProvider) : 'بدون قیمت')"></span><span x-show="row.usingFallback" class="rounded-full bg-warn-soft px-2 py-1 text-warn">پشتیبان</span><span x-show="row.manualOnly" class="text-muted">اولویت‌ها حفظ شده‌اند؛ انتخاب منبع و کپی خودکار متوقف است.</span></div>
+                        <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted"><span>قیمت مؤثر:</span><span class="font-semibold text-ink" x-text="row.manualOnly ? 'فقط دستی' : (row.selectedProvider ? name(row.selectedProvider) : 'بدون قیمت')"></span><span x-show="row.usingFallback" class="rounded-full bg-warn-soft px-2 py-1 text-warn">پشتیبان</span><span x-show="row.sourceCount <= 1" data-source-badge class="rounded-full bg-warn-soft px-2 py-1 text-warn" :title="row.sourceCount === 0 ? 'هیچ منبع واقعی این نماد را نمی‌دهد' : 'فقط یک منبع واقعی این نماد را می‌دهد'" x-text="row.sourceCount === 0 ? 'بدون منبع' : 'تک‌منبع'"></span><span x-show="row.manualOnly" class="text-muted">اولویت‌ها حفظ شده‌اند؛ انتخاب منبع و کپی خودکار متوقف است.</span></div>
 
                         @can('pricing.manage')
                         <div class="mt-4 grid gap-4 rounded-xl bg-surface-2 p-3 md:grid-cols-2 xl:grid-cols-3" data-manual-row>
-                            <div><label class="mb-1.5 block text-sm font-medium" :for="'price-' + row.symbol">قیمت دستی (<span x-text="row.unitLabel"></span>)</label><div class="flex items-center gap-2"><input type="text" inputmode="decimal" :id="'price-' + row.symbol" x-model="row.display" @keydown.enter.prevent="savePrice(row)" :aria-label="'قیمت ' + row.label" class="num ltr h-11 min-w-0 flex-1 rounded-xl border border-line-3 bg-surface px-3 text-sm focus:border-brand focus:outline-none"><button type="button" @click="savePrice(row)" :disabled="busy" class="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand-2 disabled:opacity-50" aria-label="ثبت قیمت دستی"><x-icon name="check" class="size-4" /></button><button type="button" x-show="row.hasPrice" @click="removePrice(row)" :disabled="busy || row.manualOnly" class="grid size-11 place-items-center rounded-xl text-muted hover:bg-danger-soft hover:text-danger disabled:opacity-40" aria-label="حذف قیمت دستی"><x-icon name="trash" class="size-4" /></button></div><p class="num mt-2 text-xs text-muted"><span x-text="row.updatedDisplay"></span> · <span x-text="row.sourceHint ? name(row.sourceHint) : 'ثبت نشده'"></span> <span x-show="row.isAlarm" class="text-warn">کهنه</span></p></div>
+                            {{-- Halat e adi: backup khodkar por shode؛ faghat kholase. --}}
+                            <div x-show="!showManualInput(row)" data-manual-summary><p class="mb-1.5 text-sm font-medium">پشتیبان دستی (خودکار)</p><p class="num text-sm text-ink"><span x-text="row.display || '—'"></span> <span class="text-muted" x-text="row.unitLabel"></span></p><p class="num mt-1 text-xs text-muted"><span x-text="row.updatedDisplay"></span> · <span x-text="row.sourceHint ? name(row.sourceHint) : 'ثبت نشده'"></span> <span x-show="row.isAlarm" class="text-warn">کهنه</span></p></div>
+                            {{-- Faghat vaghti feed vaghe'an ru dasti-e: input e dasti. --}}
+                            <div x-show="showManualInput(row)" data-manual-input><label class="mb-1.5 block text-sm font-medium" :for="'price-' + row.symbol">قیمت دستی (<span x-text="row.unitLabel"></span>)</label><div class="flex items-center gap-2"><input type="text" inputmode="decimal" :id="'price-' + row.symbol" x-model="row.display" @keydown.enter.prevent="savePrice(row)" :aria-label="'قیمت ' + row.label" class="num ltr h-11 min-w-0 flex-1 rounded-xl border border-line-3 bg-surface px-3 text-sm focus:border-brand focus:outline-none"><button type="button" @click="savePrice(row)" :disabled="busy" class="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand-2 disabled:opacity-50" aria-label="ثبت قیمت دستی"><x-icon name="check" class="size-4" /></button><button type="button" x-show="row.hasPrice" @click="removePrice(row)" :disabled="busy || row.manualOnly" class="grid size-11 place-items-center rounded-xl text-muted hover:bg-danger-soft hover:text-danger disabled:opacity-40" aria-label="حذف قیمت دستی"><x-icon name="trash" class="size-4" /></button></div><p class="num mt-2 text-xs text-muted"><span x-text="row.updatedDisplay"></span> · <span x-text="row.sourceHint ? name(row.sourceHint) : 'ثبت نشده'"></span> <span x-show="row.isAlarm" class="text-warn">کهنه</span></p></div>
                             <div class="space-y-1"><label class="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" x-model="row.manualOnly" class="size-4 accent-brand" :disabled="busy" :aria-label="'فقط دستی ' + row.label">فقط قیمت دستی</label><label class="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" x-model="row.manualFallbackEnabled" class="size-4 accent-brand" :disabled="busy || row.manualOnly" :aria-label="'پشتیبان دستی ' + row.label">پشتیبان دستی هنگام قطع منابع</label></div>
                             <div><label class="mb-1.5 block text-sm font-medium" :for="'backup-' + row.symbol">به‌روزرسانی خودکار قیمت دستی</label><select x-model="row.manualAutoSource" :id="'backup-' + row.symbol" :disabled="busy || row.manualOnly" class="h-11 w-full rounded-xl border border-line-3 bg-surface px-3 text-sm disabled:opacity-50"><option value="none">خاموش؛ فقط ثبت دستی</option><option value="priority">اولین منبع تازه از اولویت‌ها</option><template x-for="(label, key) in autoNames" :key="key"><option :value="key" x-text="label"></option></template></select><button type="button" @click="savePolicy(row)" :disabled="busy" class="mt-2 h-11 rounded-xl bg-brand px-4 text-sm font-semibold text-on-brand disabled:opacity-50">ذخیره تنظیم قیمت</button></div>
                         </div>

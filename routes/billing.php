@@ -13,12 +13,16 @@ Route::middleware(['auth', EnsureAdmin::class])->prefix('dashboard')->name('pane
     Route::middleware('can:finance.view')->group(function (): void {
         Route::get('/finance', [FinanceController::class, 'index'])->name('finance.index');
         Route::get('/finance/export', [FinanceController::class, 'export'])->name('finance.export');
+        Route::get('/finance/monthly-export', [FinanceController::class, 'exportMonthly'])->name('finance.monthly-export');
+        Route::get('/finance/invoices/{invoice}', [FinanceController::class, 'invoice'])->whereNumber('invoice')->name('finance.invoice');
         Route::get('/finance/{transaction}', [FinanceController::class, 'show'])->whereNumber('transaction')->name('finance.show');
     });
     Route::middleware('can:finance.manage')->group(function (): void {
         Route::post('/finance/{transaction}/reverse', [FinanceController::class, 'reverse'])->whereNumber('transaction')->name('finance.reverse');
         Route::post('/finance/{transaction}/correct', [FinanceController::class, 'correct'])->whereNumber('transaction')->name('finance.correct');
         Route::post('/finance/payments/{payment}/settle', [FinanceController::class, 'settle'])->whereNumber('payment')->name('finance.settle');
+        Route::post('/finance/invoices/issue', [FinanceController::class, 'issueInvoice'])->name('finance.invoices.issue');
+        Route::post('/finance/wallet-adjust', [FinanceController::class, 'adjustWallet'])->name('finance.wallet-adjust');
     });
     Route::middleware('can:plans.view')->group(function (): void {
         Route::get('/plans', [ApiPlanController::class, 'index'])->name('plans.index');

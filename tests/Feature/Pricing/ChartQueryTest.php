@@ -128,4 +128,19 @@ final class ChartQueryTest extends TestCase
             ->assertSee('نمودار قیمت')
             ->assertViewHas('symbol', 'xag-925-g-irr');
     }
+
+    /** Legend e «منابع روی نمودار» faghat provider haye fa'al + `in_chart` (2026-10-06). */
+    public function test_only_active_in_chart_providers_get_an_overlay_line(): void
+    {
+        $this->provider('tgju', 10);
+        $this->provider('estjt', 20);
+        Provider::query()->where('key', 'estjt')->update(['in_chart' => false]);
+        Provider::query()->create(['key' => 'off', 'driver' => 'mock', 'name' => 'Off', 'name_fa' => 'خاموش', 'is_active' => false, 'sort' => 30]);
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->get(route('panel.charts'))
+            ->assertOk()
+            ->assertSee('data-chart-legend', false)
+            ->assertViewHas('chartProviders', static fn (array $providers): bool => array_keys($providers) === ['tgju']);
+    }
 }

@@ -123,7 +123,7 @@ test.describe('sakht + naghsh (P6-04)', () => {
         await expect(page.getByRole('heading', { level: 1, name: 'کاربر جدید' })).toBeVisible();
 
         await page.getByLabel('موبایل').fill(TEMP_PHONE);
-        await page.getByLabel('نام').fill('کاربر آزمایشی e2e');
+        await page.getByLabel('نام', { exact: true }).fill('کاربر آزمایشی e2e');
         await page.getByRole('button', { name: 'ساخت کاربر' }).click();
 
         await expect(page).toHaveURL(/\/dashboard\/users\/\d+$/);

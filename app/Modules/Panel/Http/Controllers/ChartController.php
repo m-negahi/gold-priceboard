@@ -6,6 +6,7 @@ namespace App\Modules\Panel\Http\Controllers;
 
 use App\Modules\Pricing\Application\Dto\CandleDto;
 use App\Modules\Pricing\Application\Queries\ChartQuery;
+use App\Modules\Pricing\Application\Queries\ProviderQuery;
 use App\Modules\Pricing\Application\Queries\SymbolPriorityQuery;
 use App\Modules\Pricing\Domain\Enums\ChartPeriod;
 use App\Modules\Pricing\Domain\Enums\Instrument;
@@ -25,6 +26,7 @@ final readonly class ChartController
     public function __construct(
         private ChartQuery $chart,
         private SymbolPriorityQuery $priorities,
+        private ProviderQuery $providers,
     ) {}
 
     public function show(Request $request): View
@@ -32,10 +34,21 @@ final readonly class ChartController
         $symbol = Instrument::tryFrom((string) $request->query('symbol', '')) ?? Instrument::Gold18Gram;
         $names = $this->priorities->providerNames();
 
+        // Provider hayi ke ru chart khat migiran: fa'al + «نمایش در نمودار».
+        // Khamoosh kardan e `in_chart` az panel e manba' = hazf az legend.
+        $chartProviders = [];
+
+        foreach ($this->providers->panelRows() as $provider) {
+            if ($provider['isActive'] && $provider['inChart'] && ! $provider['deleted'] && isset($names[$provider['key']])) {
+                $chartProviders[$provider['key']] = $names[$provider['key']];
+            }
+        }
+
         return view('panel::charts.index', [
             'symbol' => $symbol->value,
             'instruments' => Instrument::labels(),
             'providers' => $names,
+            'chartProviders' => $chartProviders,
             'periods' => ChartPeriod::labels(),
             // Daghighat e namayesh e har symbol (dollar 2 raghame ashar، rial 0).
             'precisions' => array_combine(

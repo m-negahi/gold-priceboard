@@ -3,6 +3,10 @@
  * bala/paeen/hazf/ezafe — save ba AJAX، hich reload/scroll (hamun olgu ye
  * safhe ye gheymat e dasti). `manual` hichvaght tu editor nist: hamishe
  * akhar-e va server ham radesh mikone.
+ *
+ * 2026-10-06: safhe shod «تنظیم قیمت نمادها» — backup e dasti KHODKAR az
+ * olaviat por mishe؛ input e dasti faghat tu halat e «فقط دستی»/ghat' e
+ * manba' neshun dade mishe va dokme ye «کپی از اولویت‌ها» hazf shod.
  */
 const MANUAL = 'manual';
 
@@ -24,6 +28,21 @@ export default ({ route, rows, names, routes = {}, effective = {}, manualActive 
 
     name(key) {
         return this.names[key] ?? key;
+    },
+
+    /**
+     * Vorudi ye gheymat e dasti faghat vaghti ma'ni dare ke feed e in symbol
+     * VAGHE'AN ru dasti bashe: «فقط دستی»، ya hich manba' e taze-i nist
+     * (pushtiban fa'al / bedun e gheymat). Dar halat e adi backup khodkar az
+     * olaviat por mishe va input faghat ja migire.
+     */
+    showManualInput(row) {
+        return Boolean(row.manualOnly || row.usingFallback || !row.selectedProvider);
+    },
+
+    /** Aya safhe hanuz be import e Excel niaz dare? faghat ba radif e «فقط دستی». */
+    get anyManualOnly() {
+        return this.rows.some((r) => r.manualOnly);
     },
 
     /** Provider haye fa'al ke tu draft nistan — baraye select e «افزودن». */
@@ -106,14 +125,6 @@ export default ({ route, rows, names, routes = {}, effective = {}, manualActive 
         if (this.busy) return;
         this.busy = true;
         const res = await window.panelRequest(this.routes.remove, { body: { symbol: row.symbol } });
-        this.busy = false;
-        if (res.ok) this.apply(res.data);
-    },
-
-    async seedPriority() {
-        if (this.busy) return;
-        this.busy = true;
-        const res = await window.panelRequest(this.routes.seedPriority);
         this.busy = false;
         if (res.ok) this.apply(res.data);
     },

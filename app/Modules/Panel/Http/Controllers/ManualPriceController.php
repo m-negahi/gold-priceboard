@@ -67,22 +67,6 @@ final readonly class ManualPriceController
      * Seed bar asas e OLAVIAT e per-symbol (P5-07): har symbol az avvalin
      * manba' e TAZE ye zanjire ye khodesh («aval tgju، age khata dad estjt»).
      */
-    public function seedByPriority(Request $request): JsonResponse
-    {
-        $rows = $this->effective->freshestByPriority();
-        $count = $this->action->seedFromRows($rows, $this->editor($request));
-        $missing = count(Instrument::cases()) - $count;
-
-        return $this->json(
-            match (true) {
-                $count === 0 => 'هیچ منبعی قیمت تازه ندارد — قیمت‌های دستی دست نخورد.',
-                $missing > 0 => "{$count} نماد بر اساس اولویت پر شد؛ {$missing} نماد منبع تازه نداشت و دست نخورد.",
-                default => "{$count} نماد بر اساس اولویت پر شد.",
-            },
-            $count > 0 ? 'success' : 'warning',
-        );
-    }
-
     public function remove(Request $request): JsonResponse
     {
         $instrument = Instrument::tryFrom((string) $request->string('symbol'));

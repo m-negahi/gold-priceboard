@@ -24,9 +24,17 @@ final readonly class SymbolPriceSettingsQuery
         return $map;
     }
 
-    /** @return array{manualOnly: bool, manualFallbackEnabled: bool, manualAutoSource: string} */
+    /**
+     * Default e symbol e bedun e radif.
+     *
+     * 🔴 `manualAutoSource = priority` (2026-10-06): backup e dasti bayad
+     * bedun e dast e admin por bemune — «akharin gheymat e taze be tartib e
+     * olaviat e HAMUN symbol». `none` faghat entekhab e sarih e admin ast.
+     *
+     * @return array{manualOnly: bool, manualFallbackEnabled: bool, manualAutoSource: string}
+     */
     public static function defaults(): array
     {
-        return ['manualOnly' => false, 'manualFallbackEnabled' => true, 'manualAutoSource' => 'none'];
+        return ['manualOnly' => false, 'manualFallbackEnabled' => true, 'manualAutoSource' => 'priority'];
     }
 }

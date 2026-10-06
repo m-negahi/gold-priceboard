@@ -6,7 +6,9 @@ namespace App\Modules\Pricing\Infrastructure\Persistence;
 
 use App\Modules\Pricing\Application\Dto\SnapshotDto;
 use App\Modules\Pricing\Application\Queries\ProviderQuery;
+use App\Modules\Pricing\Application\Queries\SymbolPriceSettingsQuery;
 use App\Modules\Pricing\Application\Queries\SymbolPriorityQuery;
+use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Pricing\Domain\Ports\ManualBackupPort;
 use App\Modules\Pricing\Domain\Services\ManualBackupSelector;
 use App\Modules\Pricing\Domain\Services\PriorityChain;
@@ -27,7 +29,11 @@ final readonly class EloquentManualBackup implements ManualBackupPort
         $global = array_map('strval', array_keys($configs));
         $count = 0;
 
-        foreach (SymbolPriceSetting::query()->where('manual_only', false)->where('manual_auto_source', '!=', 'none')->get() as $setting) {
+        foreach ($this->settingsForEverySymbol() as $setting) {
+            if ($setting->manual_only || $setting->manual_auto_source === 'none') {
+                continue;
+            }
+
             $keys = ManualBackupSelector::providerKeys($setting->manual_only, $setting->manual_auto_source,
                 PriorityChain::order($global, $custom[$setting->symbol] ?? []));
 
@@ -83,5 +89,37 @@ final readonly class EloquentManualBackup implements ManualBackupPort
         }
 
         return $count;
+    }
+
+    /**
+     * Yek radif e tanzim baraye HAR symbol.
+     *
+     * 🔴 Ghablan faghat radif haye mojud e `symbol_price_settings` gardesh
+     * mishodan؛ symbol-i ke admin hich vaght tanzim nakarde bud (ya'ni
+     * taghriban hame) HICH VAGHT backup nemigereft — va feed e moshtari ru
+     * gheymat e dasti ye kohne mioftad. Radif e nabude ba default e DB
+     * (`manual_auto_source = priority`) sakhte mishe ta lock e ba'di ham
+     * chizi baraye gereftan dashte bashe.
+     *
+     * @return list<SymbolPriceSetting>
+     */
+    private function settingsForEverySymbol(): array
+    {
+        $existing = SymbolPriceSetting::query()->get()->keyBy('symbol');
+        $defaults = SymbolPriceSettingsQuery::defaults();
+        $rows = [];
+
+        foreach (Instrument::cases() as $instrument) {
+            // Default ha SARIH pass mishan: `firstOrCreate` ba default e DB
+            // model-i bar migardune ke attribute hash tu hafeze null-and.
+            $rows[] = $existing[$instrument->value]
+                ?? SymbolPriceSetting::query()->firstOrCreate(['symbol' => $instrument->value], [
+                    'manual_only' => $defaults['manualOnly'],
+                    'manual_fallback_enabled' => $defaults['manualFallbackEnabled'],
+                    'manual_auto_source' => $defaults['manualAutoSource'],
+                ]);
+        }
+
+        return $rows;
     }
 }

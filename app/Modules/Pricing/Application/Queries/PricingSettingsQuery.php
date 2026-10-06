@@ -30,6 +30,7 @@ final readonly class PricingSettingsQuery
             $row['label'] = StringHelper::numbersToEnglish($row['label']);
             $row['selectedProvider'] = $chosen[$row['symbol']]['provider'] ?? null;
             $row['usingFallback'] = $chosen[$row['symbol']]['usingFallback'] ?? false;
+            $row['sourceCount'] = (int) ($chosen[$row['symbol']]['sourceCount'] ?? 0);
             $rows[] = $row;
         }
 

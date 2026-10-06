@@ -126,6 +126,41 @@ final class PricingSettingsRegressionTest extends TestCase
         $this->assertDatabaseHas('symbol_price_settings', ['manual_auto_source' => 'priority', 'manual_only' => true]);
     }
 
+    /**
+     * 🔴 Bug e vaghei (2026-10-06): backup faghat radif haye MOJUD e
+     * `symbol_price_settings` ro gardesh mikard؛ symbol-i ke admin hich
+     * vaght tanzim nakarde bud (ya'ni hame) hargez backup nemigereft.
+     * Hala har symbol bedun e radif ba default e `priority` por mishe.
+     */
+    public function test_a_symbol_without_a_settings_row_is_backed_up_by_priority(): void
+    {
+        $this->provider('tgju');
+        $this->provider('estjt', 20);
+        $this->assertDatabaseCount('symbol_price_settings', 0);
+
+        $fresh = $this->snapshot('tgju', 266_400_000);
+        $count = app(ManualBackupPort::class)->sync([$fresh->key() => $fresh], TickTime::fromCarbon(CarbonImmutable::now()));
+
+        self::assertSame(1, $count);
+        $this->assertDatabaseHas('manual_prices', ['symbol' => 'xau-18k-g-irr', 'minor' => 266_400_000, 'source_hint' => 'tgju', 'updated_by' => 'auto']);
+        // Radif e tanzim ba default e DB sakhte shode.
+        $this->assertDatabaseHas('symbol_price_settings', ['symbol' => 'xau-18k-g-irr', 'manual_auto_source' => 'priority', 'manual_only' => false]);
+        $this->assertDatabaseCount('symbol_price_settings', count(Instrument::cases()));
+    }
+
+    /** Provider-i ke symbol ro NADARE rad mishe va nobat e ba'di-e (per-symbol). */
+    public function test_priority_backup_skips_a_provider_that_lacks_the_symbol(): void
+    {
+        $this->provider('estjt');
+        $this->provider('tgju', 20);
+
+        // estjt avval e zanjire-ast vali copper nemide; tgju mide.
+        $copper = new SnapshotDto('tgju', Instrument::CopperPound, Side::Last, new Price(64_920, Instrument::CopperPound->quote()), CarbonImmutable::now());
+        app(ManualBackupPort::class)->sync([$copper->key() => $copper], TickTime::fromCarbon(CarbonImmutable::now()));
+
+        $this->assertDatabaseHas('manual_prices', ['symbol' => 'xcu-lb-usd', 'minor' => 64_920, 'source_hint' => 'tgju', 'updated_by' => 'auto']);
+    }
+
     public function test_backup_stage_ignores_previous_snapshots_when_current_fetch_failed(): void
     {
         $fake = new FakeManualBackup;

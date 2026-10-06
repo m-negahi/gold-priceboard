@@ -81,6 +81,9 @@ final readonly class EffectivePriceQuery
                 'usingFallback' => $usingFallback,
                 'manualOnly' => $policy['manualOnly'],
                 'quotedAt' => $chosen->quotedAt,
+                // Chand manba' e VAGHEI (gheyr e manual) in symbol ro midan —
+                // 0 ya 1 ya'ni ghat' e yek provider mostaghim mire ru backup.
+                'sourceCount' => count(array_filter($rows, static fn (BoardRowDto $row): bool => $row->providerKey !== ManualQuoteSource::KEY)),
             ];
         }
 

@@ -104,7 +104,6 @@ Route::middleware(['auth', EnsureAdmin::class])
         // ── Gheymat e dasti (fallback — Phase 4/5) ──────────────────
         Route::get('/manual', [ManualPriceController::class, 'index'])->name('manual.index');
         Route::post('/manual', [ManualPriceController::class, 'update'])->name('manual.update');
-        Route::post('/manual/seed-priority', [ManualPriceController::class, 'seedByPriority'])->name('manual.seed-priority');
         Route::post('/manual/remove', [ManualPriceController::class, 'remove'])->name('manual.remove');
 
         // ── Olaviat e per-symbol (P5-07) ────────────────────────────

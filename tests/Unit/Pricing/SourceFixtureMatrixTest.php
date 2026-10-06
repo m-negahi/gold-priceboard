@@ -14,6 +14,7 @@ use App\Modules\Pricing\Infrastructure\Sources\NerkhQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\TalaseaQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\TechnogoldQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\TgjuQuoteSource;
+use App\Modules\Pricing\Infrastructure\Sources\TlynQuoteSource;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -165,6 +166,30 @@ final class SourceFixtureMatrixTest extends TestCase
     }
 
     /**
+     * tlyn (طلایین): HEZAR toman → ×1000 ×10؛ jofte vaghei (`sell`=ask،
+     * `buy`=bid)؛ sekke ha buy=sell. `XAU` dollar.
+     *
+     * @return array<string, array{0: string, 1: int, 2: QuoteCurrency}>
+     */
+    public static function tlynMatrix(): array
+    {
+        return self::rows([
+            'xau-18k-g-irr:ask' => [268_910_000, QuoteCurrency::IRR],
+            'xau-18k-g-irr:bid' => [266_770_000, QuoteCurrency::IRR],
+            'xau-mesghal-irr:ask' => [1_164_890_000, QuoteCurrency::IRR],
+            'xau-mesghal-irr:bid' => [1_155_600_000, QuoteCurrency::IRR],
+            'xau-coin-emami-irr:ask' => [2_719_100_000, QuoteCurrency::IRR],
+            'xau-coin-emami-irr:bid' => [2_719_100_000, QuoteCurrency::IRR],
+            'xau-coin-half-irr:ask' => [1_434_600_000, QuoteCurrency::IRR],
+            'xau-coin-half-irr:bid' => [1_434_600_000, QuoteCurrency::IRR],
+            'xau-coin-quarter-irr:ask' => [772_300_000, QuoteCurrency::IRR],
+            'xau-coin-quarter-irr:bid' => [772_300_000, QuoteCurrency::IRR],
+            'xau-oz-usd:ask' => [41_740_000, QuoteCurrency::USD],
+            'xau-oz-usd:bid' => [41_740_000, QuoteCurrency::USD],
+        ]);
+    }
+
+    /**
      * @param  array<string, array{0: int, 1: QuoteCurrency}>  $matrix
      * @return array<string, array{0: string, 1: int, 2: QuoteCurrency}>
      */
@@ -238,6 +263,12 @@ final class SourceFixtureMatrixTest extends TestCase
         self::assertQuote('technogold', $key, $minor, $currency);
     }
 
+    #[DataProvider('tlynMatrix')]
+    public function test_tlyn_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
+    {
+        self::assertQuote('tlyn', $key, $minor, $currency);
+    }
+
     #[DataProvider('platformMatrices')]
     public function test_the_platform_matrix_is_exhaustive(string $source, array $matrix): void
     {
@@ -251,6 +282,7 @@ final class SourceFixtureMatrixTest extends TestCase
             'milli' => ['milli', self::milliMatrix()],
             'talasea' => ['talasea', self::talaseaMatrix()],
             'technogold' => ['technogold', self::technogoldMatrix()],
+            'tlyn' => ['tlyn', self::tlynMatrix()],
         ];
     }
 
@@ -327,21 +359,45 @@ final class SourceFixtureMatrixTest extends TestCase
     }
 
     /**
-     * technogold `last` nadare، pas moghayese ye bala un ro nemigire. Jofte
-     * bid/ask bayad ask > bid bashe (map e bar'aks = spread e manfi) va har
-     * do ta 3% az tgju fasele dashte bashan.
+     * Platform haye bid/ask `last` nadaran، pas moghayese ye bala un ha ro
+     * nemigire. Har jofte bayad ask >= bid bashe (map e bar-aks = spread e
+     * manfi) va har do ta 3% az `last` e tgju fasele dashte bashan.
      */
-    public function test_technogold_sides_bracket_the_reference_price(): void
+    #[DataProvider('twoSidedPlatforms')]
+    public function test_platform_sides_bracket_the_reference_price(string $source): void
     {
-        $tech = self::quotes('technogold');
-        $reference = self::quotes('tgju')['xau-18k-g-irr:last']->price->minor;
+        $quotes = self::quotes($source);
+        $tgju = self::quotes('tgju');
+        $checked = 0;
 
-        $ask = $tech['xau-18k-g-irr:ask']->price->minor;
-        $bid = $tech['xau-18k-g-irr:bid']->price->minor;
+        foreach ($quotes as $key => $quote) {
+            [$symbol, $side] = explode(':', $key);
 
-        self::assertGreaterThan($bid, $ask, 'ask bayad az bid bishtar bashe — `buy_price`/`sell_price` bar-aks map shodan?');
-        self::assertEqualsWithDelta($reference, $ask, $reference * 0.03);
-        self::assertEqualsWithDelta($reference, $bid, $reference * 0.03);
+            if ($side !== 'ask') {
+                continue;
+            }
+
+            $ask = $quote->price->minor;
+            $bid = $quotes["{$symbol}:bid"]->price->minor ?? null;
+            $reference = $tgju["{$symbol}:last"]->price->minor ?? null;
+
+            self::assertNotNull($bid, "{$source} / {$symbol}: bid nadare.");
+            self::assertGreaterThanOrEqual($bid, $ask, "{$source} / {$symbol}: ask bayad >= bid bashe — side ha bar-aks map shodan?");
+
+            if ($reference !== null) {
+                self::assertEqualsWithDelta($reference, $ask, $reference * 0.03, "{$source} / {$symbol}: ask dur az tgju.");
+                self::assertEqualsWithDelta($reference, $bid, $reference * 0.03, "{$source} / {$symbol}: bid dur az tgju.");
+                $checked++;
+            }
+        }
+
+        self::assertGreaterThan(0, $checked, "{$source}: hich symbol e moshtarak ba tgju nabud.");
+    }
+
+    /** @return array<string, array{0: string}> */
+    public static function twoSidedPlatforms(): array
+    {
+        return ['technogold' => ['technogold'], 'tlyn' => ['tlyn']];
     }
 
     // ── Helper ──────────────────────────────────────────────────
@@ -399,6 +455,7 @@ final class SourceFixtureMatrixTest extends TestCase
             'milli' => [new MilliQuoteSource, 'milli-price-external.json'],
             'talasea' => [new TalaseaQuoteSource, 'talasea-get-gold-price.json'],
             'technogold' => [new TechnogoldQuoteSource, 'technogold-only-price.json'],
+            'tlyn' => [new TlynQuoteSource, 'tlyn-price.json'],
             default => self::fail("source e nashenas: {$source}"),
         };
 
@@ -418,7 +475,7 @@ final class SourceFixtureMatrixTest extends TestCase
     /** Har kelid e jadval bayad be yek `Instrument` e vaghei eshare kone. */
     public function test_every_matrix_key_names_a_real_instrument(): void
     {
-        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix()), ...array_keys(self::nerkhMatrix()), ...array_keys(self::milliMatrix()), ...array_keys(self::talaseaMatrix()), ...array_keys(self::technogoldMatrix())] as $key) {
+        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix()), ...array_keys(self::nerkhMatrix()), ...array_keys(self::milliMatrix()), ...array_keys(self::talaseaMatrix()), ...array_keys(self::technogoldMatrix()), ...array_keys(self::tlynMatrix())] as $key) {
             $symbol = explode(':', $key)[0];
 
             self::assertNotNull(

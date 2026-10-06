@@ -39,7 +39,7 @@ final class Navigation
                 'items' => [
                     ['key' => 'dashboard', 'label' => 'میزکار', 'icon' => 'gauge', 'route' => 'panel.dashboard'],
                     ['key' => 'providers', 'label' => 'منابع قیمت', 'icon' => 'feed', 'route' => 'panel.providers.index'],
-                    ['key' => 'priorities', 'label' => 'اولویت و قیمت دستی', 'icon' => 'layers', 'route' => 'panel.priorities.index'],
+                    ['key' => 'priorities', 'label' => 'تنظیم قیمت نمادها', 'icon' => 'layers', 'route' => 'panel.priorities.index'],
                     [
                         'key' => 'monitor', 'label' => 'پایش', 'icon' => 'eye', 'route' => 'panel.monitor.ticks',
                         'children' => [

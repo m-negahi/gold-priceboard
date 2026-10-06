@@ -51,14 +51,24 @@ final readonly class ChartQuery
 
         $to = $this->clock->now()->getTimestamp();
 
-        $series = $this->candles->candles(CandleRequestDto::make(
+        $request = static fn (Side $side): CandleRequestDto => CandleRequestDto::make(
             providerKey: $providerKey,
             instrument: $instrument,
             interval: $period->base(),
             from: $to - $period->lookbackSeconds(),
             to: $to,
-            side: Side::Last,
-        ));
+            side: $side,
+        );
+
+        $series = $this->candles->candles($request(Side::Last));
+
+        // 🔴 Platform haye bid/ask (technogold، tlyn) `last` NADARAN — candle
+        // eshun faghat ru ask/bid neveshte mishe. Bedun e in fallback chart
+        // eshun khali bud va «ekhtelaf» ba platform ha dide nemishod. Ask =
+        // gheymati ke karbar mikhare = hamun side e namayande ye feed.
+        if ($series->candles === [] && ! $series->degraded) {
+            $series = $this->candles->candles($request(Side::Ask));
+        }
 
         $bars = array_values($series->candles);
         $unit = $period->calendar();

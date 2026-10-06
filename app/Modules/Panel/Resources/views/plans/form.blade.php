@@ -10,8 +10,8 @@
         <x-form.field name="duration_days" label="مدت (روز)" required><x-form.input name="duration_days" ltr inputmode="numeric" :value="old('duration_days', $plan['durationDays'] ?? 30)" /></x-form.field>
         <x-form.field name="calls_included" label="فراخوانی مشمول دوره" required><x-form.input name="calls_included" ltr inputmode="numeric" :value="old('calls_included', $plan['callsIncluded'] ?? 0)" /></x-form.field>
         <x-form.field name="calls_per_day" label="فراخوانی مشمول هر روز" required><x-form.input name="calls_per_day" ltr inputmode="numeric" :value="old('calls_per_day', $plan['callsPerDay'] ?? 0)" /></x-form.field>
-        <x-form.field name="price_rial" label="قیمت اشتراک (ریال)" required><x-form.input name="price_rial" ltr inputmode="numeric" :value="old('price_rial', $plan['priceMinor'] ?? 0)" /></x-form.field>
-        <x-form.field name="cost_per_call_rial" label="هزینه مازاد هر فراخوانی (ریال)" required><x-form.input name="cost_per_call_rial" ltr inputmode="numeric" :value="old('cost_per_call_rial', $plan['costPerCallMinor'] ?? 0)" /></x-form.field>
+        <x-form.field name="price_rial" label="قیمت اشتراک (ریال)" required><x-form.money name="price_rial" :value="old('price_rial', $plan['priceMinor'] ?? 0)" placeholder="1,200,000" /></x-form.field>
+        <x-form.field name="cost_per_call_rial" label="هزینه مازاد هر فراخوانی (ریال)" required><x-form.money name="cost_per_call_rial" :value="old('cost_per_call_rial', $plan['costPerCallMinor'] ?? 0)" placeholder="500" /></x-form.field>
         <x-form.field name="sort" label="ترتیب" required><x-form.input name="sort" ltr inputmode="numeric" :value="old('sort', $plan['sort'] ?? 0)" /></x-form.field>
         <label class="flex items-center gap-2 text-sm"><input type="hidden" name="is_active" value="0"><input type="checkbox" name="is_active" value="1" @checked(old('is_active', $plan['isActive'] ?? true))> فعال</label>
         <div class="sm:col-span-2"><button class="h-11 rounded-xl bg-brand px-5 font-semibold text-on-brand">ذخیره پلن</button></div>

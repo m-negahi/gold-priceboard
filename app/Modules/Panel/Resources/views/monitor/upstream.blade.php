@@ -78,38 +78,29 @@
             </section>
         @else
             {{-- ── Kholase ye per-provider ── --}}
-            <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {{-- Kart haye COMPACT (khaste ye sahebe proje، 2026-10-06): ba 8+ provider
+                 kart e bozorg nesf e safhe ro migereft. Yek radif e kam-ertefa' baraye
+                 har provider: esm + vaziat + nerkh + 3 adad + akharin khata (yek khat). --}}
+            <div class="mt-6 grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 @foreach ($summary as $key => $s)
                     @php $tone = $health($s['success_rate']); @endphp
-                    <section class="rounded-2xl bg-surface card-p shadow-xs" data-upstream-summary="{{ $key }}">
-                        <header class="flex items-center justify-between gap-2">
-                            <h2 class="truncate font-bold text-ink" title="driver: {{ $providerMeta[$key]['driver'] ?? '?' }}">{{ $name($key) }}</h2>
+                    <section class="rounded-xl bg-surface px-3 py-2.5 shadow-xs" data-upstream-summary="{{ $key }}">
+                        <header class="flex items-center gap-2">
+                            <h2 class="min-w-0 flex-1 truncate text-sm font-bold text-ink" title="driver: {{ $providerMeta[$key]['driver'] ?? '?' }}">{{ $name($key) }}</h2>
+                            <span class="num text-lg font-extrabold leading-none text-ink">{{ $s['success_rate'] }}٪</span>
                             <x-panel.pill :tone="$tone" dot>{{ $healthLabel[$tone] }}</x-panel.pill>
                         </header>
 
-                        <div class="mt-3 flex items-end gap-2">
-                            <span class="num text-3xl font-extrabold text-ink">{{ $s['success_rate'] }}٪</span>
-                            <span class="pb-1 text-xs text-muted"><span class="num">{{ $s['ok'] }}</span> از <span class="num">{{ $s['calls'] }}</span> موفق</span>
-                        </div>
-
-                        <dl class="mt-3 grid grid-cols-3 gap-2 text-xs">
-                            <div class="rounded-lg bg-surface-2 px-2.5 py-2">
-                                <dt class="text-muted-2">میانگین</dt>
-                                <dd class="num mt-0.5 font-semibold text-ink">{{ number_format($s['avg_latency_ms']) }}ms</dd>
-                            </div>
-                            <div class="rounded-lg bg-surface-2 px-2.5 py-2">
-                                <dt class="text-muted-2">بیشینه</dt>
-                                <dd @class(['num mt-0.5 font-semibold', 'text-warn' => $s['max_latency_ms'] > $slowMs, 'text-ink' => $s['max_latency_ms'] <= $slowMs])>{{ number_format($s['max_latency_ms']) }}ms</dd>
-                            </div>
-                            <div class="rounded-lg bg-surface-2 px-2.5 py-2">
-                                <dt class="text-muted-2">retry / کند</dt>
-                                <dd class="num mt-0.5 font-semibold text-ink">{{ $s['retries'] }} / {{ $s['slow'] }}</dd>
-                            </div>
+                        <dl class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
+                            <div class="flex items-baseline gap-1"><dt class="text-muted-2">موفق</dt><dd class="num font-semibold text-ink">{{ $s['ok'] }}/{{ $s['calls'] }}</dd></div>
+                            <div class="flex items-baseline gap-1"><dt class="text-muted-2">میانگین</dt><dd class="num font-semibold text-ink">{{ number_format($s['avg_latency_ms']) }}ms</dd></div>
+                            <div class="flex items-baseline gap-1"><dt class="text-muted-2">بیشینه</dt><dd @class(['num font-semibold', 'text-warn' => $s['max_latency_ms'] > $slowMs, 'text-ink' => $s['max_latency_ms'] <= $slowMs])>{{ number_format($s['max_latency_ms']) }}ms</dd></div>
+                            <div class="flex items-baseline gap-1"><dt class="text-muted-2">retry/کند</dt><dd class="num font-semibold text-ink">{{ $s['retries'] }}/{{ $s['slow'] }}</dd></div>
                         </dl>
 
                         @if ($s['last_error'] !== null)
-                            <p class="mt-3 line-clamp-2 text-xs text-down" title="{{ $s['last_error'] }}">
-                                <span class="font-semibold">آخرین خطا {{ $clock($s['last_error_at']) }}:</span>
+                            <p class="mt-1 truncate text-xs text-down" title="{{ $s['last_error'] }}">
+                                <span class="font-semibold">خطا {{ $clock($s['last_error_at']) }}:</span>
                                 <span class="ltr">{{ $s['last_error'] }}</span>
                             </p>
                         @endif

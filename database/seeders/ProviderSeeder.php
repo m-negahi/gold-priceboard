@@ -43,7 +43,7 @@ final class ProviderSeeder extends Seeder
             'name_fa' => 'تی‌جی‌جی‌یو',
             'website' => 'https://www.tgju.org',
             'kind' => 'reference',
-            'sort' => 10,
+            'sort' => 20,
             'timeout' => 15,
             // Gheymat haye IRR e in feed RIAL-and (bar khalaf e estjt).
             'upstream_unit' => 'rial',
@@ -95,13 +95,15 @@ final class ProviderSeeder extends Seeder
         ]);
 
         $this->provider([
+            // 🔴 Olaviat e 1 e hame ye symbol ha (khaste ye sahebe proje،
+            // 2026-10-06): اتحادیه aval، ba'd tgju.
             'key' => 'estjt',
             'driver' => 'estjt',
             'name' => 'Tehran Gold Union',
             'name_fa' => 'اتحادیه طلا و جواهر تهران',
             'website' => 'https://www.estjt.ir',
             'kind' => 'reference',
-            'sort' => 20,
+            'sort' => 10,
             // ~7-9 saniye javab mide — andaze-giri shode.
             'timeout' => 20,
             // ⚠️ Faghat DEFAULT. «انس طلا» ye hamin feed DOLLAR ast —
@@ -209,6 +211,29 @@ final class ProviderSeeder extends Seeder
             'upstream_unit' => 'toman',
             'options' => ['item' => 'GOLD18K_STOCK'],
         ], [Instrument::Gold18Gram->value => 345_600]);
+
+        $this->provider([
+            'key' => 'tlyn',
+            'driver' => 'tlyn',
+            'name' => 'Talayin',
+            'name_fa' => 'طلایین',
+            'website' => 'https://tlyn.ir',
+            'kind' => 'platform',
+            'sort' => 70,
+            'timeout' => 10,
+            // HEZAR toman (×1000 tu Source) → toman → rial؛ `XAU` dollar.
+            // Jofte vaghei: `sell` = ask، `buy` = bid.
+            'upstream_unit' => 'toman',
+        ], [
+            // Timestamp e UTC e daghigh mide؛ shab/ta'til yakh mizane — hamun
+            // override haye tgju.
+            Instrument::GoldOunce->value => 90_000,
+            Instrument::Gold18Gram->value => 345_600,
+            Instrument::GoldMesghal->value => 345_600,
+            Instrument::CoinEmami->value => 345_600,
+            Instrument::CoinHalf->value => 345_600,
+            Instrument::CoinQuarter->value => 345_600,
+        ]);
 
         /*
          * 🔴 Manual — fallback e dasti (khaste ye sahebe proje). `sort = 80`

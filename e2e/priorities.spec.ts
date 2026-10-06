@@ -48,7 +48,7 @@ test.describe('symbol priorities', () => {
     test('pish-farz: tartib e global، manual akhar', async () => {
         await page.goto('/dashboard/priorities');
 
-        await expect(page.getByRole('heading', { level: 1, name: 'اولویت و قیمت دستی' })).toBeVisible();
+        await expect(page.getByRole('heading', { level: 1, name: 'تنظیم قیمت نمادها' })).toBeVisible();
         await expect(badge()).toHaveText('پیش‌فرض');
         await expect(chips().last()).toContainText('دستی');
     });
@@ -87,9 +87,26 @@ test.describe('symbol priorities', () => {
         await page.goto('/dashboard/manual');
 
         await expect(page).toHaveURL(/\/dashboard\/priorities$/);
-        await expect(page.getByRole('button', { name: 'کپی قیمت‌های تازه از اولویت‌ها' })).toBeVisible();
+        // Dokme ye «کپی از اولویت‌ها» hazf shod — backup khodkar ast.
+        await expect(page.getByRole('button', { name: 'کپی قیمت‌های تازه از اولویت‌ها' })).toHaveCount(0);
         await expect(row().getByRole('checkbox', { name: /^فقط دستی/ })).toBeVisible();
-        await expect(page.getByRole('link', { name: 'نمونه اکسل' })).toBeVisible();
         await expect(page.getByText('پر کردن همه از یک منبع')).toHaveCount(0);
+    });
+
+    test('input e dasti faghat vaghti ke feed ru dasti bashe؛ badge e تک‌منبع', async () => {
+        await page.goto('/dashboard/priorities');
+
+        // 18 ayar ru dev 6 manba' e zende dare -> input penhan، kholase ye backup e khodkar namayan.
+        const gold = page.locator('[data-priority-row="xau-18k-g-irr"]');
+        await expect(gold.locator('[data-manual-summary]')).toBeVisible();
+        await expect(gold.locator('[data-manual-input]')).toBeHidden();
+        await expect(gold.locator('[data-source-badge]')).toBeHidden();
+
+        // Mes faghat az tgju miad -> badge.
+        const copper = page.locator('[data-priority-row="xcu-lb-usd"]');
+        await expect(copper.locator('[data-source-badge]')).toHaveText('تک‌منبع');
+
+        // Import e Excel bedun e radif e «فقط دستی» penhan ast.
+        await expect(page.getByRole('link', { name: 'نمونه اکسل' })).toBeHidden();
     });
 });

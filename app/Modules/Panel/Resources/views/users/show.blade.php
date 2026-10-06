@@ -124,7 +124,7 @@
                     <x-form.select name="direction" :options="['credit' => 'شارژ (+)', 'debit' => 'کسر (−)']" :value="old('direction', 'credit')" />
                 </x-form.field>
                 <x-form.field name="amount" label="مبلغ (ریال)" required>
-                    <x-form.input name="amount" ltr inputmode="decimal" autocomplete="off" :value="old('amount')" maxlength="32" placeholder="125,000" />
+                    <x-form.money name="amount" :value="old('amount')" maxlength="32" placeholder="125,000" />
                 </x-form.field>
                 <x-form.field name="note" label="دلیل" required>
                     <x-form.input name="note" :value="old('note')" maxlength="255" />

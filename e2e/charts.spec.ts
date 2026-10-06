@@ -57,6 +57,31 @@ test.describe('admin chart', () => {
         await expect.poll(() => active.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(`rgb(${r}, ${g}, ${b})`);
     });
 
+    test('legend e manba\' ha: har tik yek khat، bardashtan e tik khat ro hazf mikone', async () => {
+        await page.goto('/dashboard/charts?symbol=xau-18k-g-irr&period=d1');
+        await page.waitForResponse((r) => r.url().includes('/dashboard/charts/data'));
+
+        const legend = page.locator('[data-chart-legend]');
+        await expect(legend).toBeVisible();
+        const boxes = legend.getByRole('checkbox');
+        const total = await boxes.count();
+        test.skip(total < 2, 'kamtar az 2 provider e in_chart tu dev.');
+
+        // Hame default tik daran؛ manba' e asli e candle khat nemigire -> total-1 khat.
+        for (let i = 0; i < total; i++) await expect(boxes.nth(i)).toBeChecked();
+        await expect(page.locator('[data-overlay-count]')).toHaveText(`${total - 1} خط`);
+
+        // Bardashtan e yek tik (gheyr az manba' e asli ye candle) = yek khat kamtar.
+        const resolved = (await page.locator('[data-admin-chart]').getAttribute('data-resolved-provider')) ?? '';
+        const candidates = await legend.locator('[data-legend-provider]').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.legendProvider!));
+        const target = candidates.find((k) => k !== resolved) ?? candidates[candidates.length - 1];
+        await legend.locator(`[data-legend-provider="${target}"] input`).uncheck();
+        await expect(page.locator('[data-overlay-count]')).toHaveText(`${total - 2} خط`);
+
+        await legend.locator(`[data-legend-provider="${target}"] input`).check();
+        await expect(page.locator('[data-overlay-count]')).toHaveText(`${total - 1} خط`);
+    });
+
     test('taghir e manba\' dobare fetch mikone', async () => {
         await page.goto('/dashboard/charts?symbol=xau-18k-g-irr&period=d1');
         await page.waitForResponse((r) => r.url().includes('/dashboard/charts/data'));

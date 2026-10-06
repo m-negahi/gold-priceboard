@@ -15,7 +15,10 @@ use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
 
 /**
- * Safhe ye «اولویت منابع» + seed e dasti bar asas e olaviat (P5-07) az HTTP.
+ * Safhe ye «تنظیم قیمت نمادها» (P5-07 + 2026-10-06) az HTTP: zanjire ye
+ * olaviat + siasat e pushtiban e har symbol. Dokme ye «کپی از اولویت‌ها»
+ * hazf shod — backup KHODKAR az olaviat por mishe (`manual_auto_source`
+ * default `priority`).
  */
 final class PriorityPageTest extends TestCase
 {
@@ -54,7 +57,8 @@ final class PriorityPageTest extends TestCase
 
         $this->actingAs($this->admin())->get(route('panel.priorities.index'))
             ->assertOk()
-            ->assertSee('اولویت منابع')
+            ->assertSee('تنظیم قیمت نمادها')
+            ->assertDontSee('کپی قیمت‌های تازه از اولویت‌ها')
             ->assertSee('xau-18k-g-irr')
             ->assertViewHas('rows', fn (array $rows): bool => $rows[0]['chain'] === ['tgju', 'estjt']);
     }
@@ -104,20 +108,47 @@ final class PriorityPageTest extends TestCase
             ->assertStatus(422);
     }
 
-    public function test_the_manual_page_can_seed_by_priority(): void
+    /** Default e har symbol (bedun e radif e tanzim) = backup e khodkar az olaviat. */
+    public function test_every_symbol_defaults_to_automatic_backup_from_priorities(): void
+    {
+        $this->provider('tgju', 10);
+
+        $this->actingAs($this->admin())->get(route('panel.priorities.index'))
+            ->assertOk()
+            ->assertViewHas('rows', static fn (array $rows): bool => array_all(
+                $rows,
+                static fn (array $row): bool => $row['manualAutoSource'] === 'priority' && $row['manualFallbackEnabled'] === true && $row['manualOnly'] === false,
+            ));
+    }
+
+    /** `sourceCount` = chand manba' e VAGHEI in symbol ro midan — badge e «تک‌منبع» az in miad. */
+    public function test_rows_carry_the_real_source_count(): void
     {
         $tgju = $this->provider('tgju', 10);
-        PriceSnapshot::query()->create([
-            'provider_id' => $tgju->id, 'symbol' => 'xau-18k-g-irr', 'side' => 'last',
-            'quote_currency' => 'IRR', 'scale' => 0, 'raw_minor' => 266_400_000,
-            'change_pct' => 0, 'direction' => 'flat', 'quoted_at' => CarbonImmutable::now()->subSeconds(5),
-        ]);
+        $this->provider('estjt', 20);
+        $this->provider('manual', 80);
 
-        $this->actingAs($this->admin())
-            ->postJson(route('panel.manual.seed-priority'))
-            ->assertOk()
-            ->assertJsonPath('toast.kind', 'success');
+        foreach ([$tgju->id => 266_400_000] as $providerId => $minor) {
+            PriceSnapshot::query()->create([
+                'provider_id' => $providerId, 'symbol' => 'xau-18k-g-irr', 'side' => 'last',
+                'quote_currency' => 'IRR', 'scale' => 0, 'raw_minor' => $minor,
+                'change_pct' => 0, 'direction' => 'flat', 'quoted_at' => CarbonImmutable::now()->subSeconds(5),
+            ]);
+        }
+        ManualPrice::query()->create(['symbol' => 'xau-18k-g-irr', 'minor' => 266_000_000, 'scale' => 0, 'quote_currency' => 'IRR', 'source_hint' => 'manual']);
 
-        self::assertSame('tgju', ManualPrice::query()->where('symbol', 'xau-18k-g-irr')->value('source_hint'));
+        $rows = $this->actingAs($this->admin())->get(route('panel.priorities.index'))->assertOk()->viewData('rows');
+        $rows = array_column($rows, null, 'symbol');
+
+        // Manual hesab nemishe: faghat tgju in symbol ro mide.
+        self::assertSame(1, $rows['xau-18k-g-irr']['sourceCount']);
+        self::assertSame('tgju', $rows['xau-18k-g-irr']['selectedProvider']);
+        // Symbol-i ke hich kas nemide.
+        self::assertSame(0, $rows['xcu-lb-usd']['sourceCount']);
+    }
+
+    public function test_the_seed_by_priority_endpoint_is_gone(): void
+    {
+        $this->actingAs($this->admin())->postJson('/dashboard/manual/seed-priority')->assertNotFound();
     }
 }

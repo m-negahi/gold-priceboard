@@ -37,7 +37,7 @@ final class ProviderSeederTest extends TestCase
         $this->seedProviders();
 
         $this->assertSame(
-            ['estjt', 'manual', 'milli', 'mock', 'nerkh', 'nerkh-stock', 'talasea', 'technogold', 'tgju'],
+            ['estjt', 'manual', 'milli', 'mock', 'nerkh', 'nerkh-stock', 'talasea', 'technogold', 'tgju', 'tlyn'],
             Provider::query()->orderBy('key')->pluck('key')->all(),
         );
     }
@@ -92,11 +92,11 @@ final class ProviderSeederTest extends TestCase
     {
         $this->seedProviders();
 
-        $kinds = Provider::query()->whereIn('key', ['milli', 'talasea', 'technogold'])->pluck('kind', 'key')
+        $kinds = Provider::query()->whereIn('key', ['milli', 'talasea', 'technogold', 'tlyn'])->pluck('kind', 'key')
             ->map(static fn (ProviderKind $kind): string => $kind->value)->all();
         ksort($kinds);
 
-        $this->assertSame(['milli' => 'platform', 'talasea' => 'platform', 'technogold' => 'platform'], $kinds);
+        $this->assertSame(['milli' => 'platform', 'talasea' => 'platform', 'technogold' => 'platform', 'tlyn' => 'platform'], $kinds);
         $this->assertSame(ProviderKind::Reference, Provider::query()->where('key', 'nerkh')->firstOrFail()->kind);
     }
 

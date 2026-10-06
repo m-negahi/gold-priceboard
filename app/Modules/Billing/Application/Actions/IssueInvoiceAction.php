@@ -12,6 +12,7 @@ use App\Modules\Billing\Infrastructure\Persistence\Models\BillingInvoice;
 use App\Modules\Billing\Infrastructure\Persistence\Models\WalletTopupPayment;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 final readonly class IssueInvoiceAction
 {
@@ -37,6 +38,42 @@ final readonly class IssueInvoiceAction
                 'calls_included' => $subscription->calls_included,
             ]],
         );
+    }
+
+    /**
+     * Sodur e DASTI az panel e mali: `kind` + id e manba'. `null` ya'ni
+     * karbar `invoice_verified` nist (ya profile nadare) — hamun ghanun e
+     * sodur e khodkar.
+     *
+     * @throws InvalidArgumentException manba' peyda nashod ya topup verify nashode
+     */
+    public function forSource(string $kind, int $sourceId): ?BillingInvoice
+    {
+        if ($kind === 'wallet_topup') {
+            $payment = WalletTopupPayment::query()->find($sourceId);
+
+            if ($payment === null || $payment->status !== 'verified') {
+                throw new InvalidArgumentException('پرداخت تأییدشده‌ای با این شناسه پیدا نشد.');
+            }
+
+            return $this->forTopup($payment, User::query()->findOrFail($payment->user_id));
+        }
+
+        if ($kind === 'subscription') {
+            $subscription = SiteSubscription::query()->find($sourceId);
+
+            if ($subscription === null) {
+                throw new InvalidArgumentException('اشتراکی با این شناسه پیدا نشد.');
+            }
+
+            return $this->forSubscription(
+                $subscription,
+                ApiPlan::query()->findOrFail($subscription->api_plan_id),
+                User::query()->findOrFail($subscription->user_id),
+            );
+        }
+
+        throw new InvalidArgumentException('نوع سند ناشناخته است.');
     }
 
     /** @param array<int, array<string, mixed>> $lines */
