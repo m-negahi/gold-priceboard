@@ -7,7 +7,6 @@ namespace App\Modules\Panel\Http\Controllers;
 use App\Modules\Pricing\Application\Actions\SymbolPriceSettingsAction;
 use App\Modules\Pricing\Application\Actions\SymbolPriorityAction;
 use App\Modules\Pricing\Application\Queries\PricingSettingsQuery;
-use App\Modules\Pricing\Application\Queries\SymbolPriorityQuery;
 use App\Modules\Pricing\Domain\Enums\Instrument;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,7 +22,6 @@ use InvalidArgumentException;
 final readonly class PriorityController
 {
     public function __construct(
-        private SymbolPriorityQuery $priorities,
         private SymbolPriorityAction $action,
         private PricingSettingsQuery $settings,
         private SymbolPriceSettingsAction $settingsAction,

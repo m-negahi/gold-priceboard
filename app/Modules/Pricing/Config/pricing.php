@@ -19,6 +19,21 @@ return [
      */
     'tick_seconds' => (int) env('PRICING_TICK_SECONDS', 15),
 
+    /*
+     * Saghf e darkhast e har IP ru endpoint haye OMUMI (`throttle:board` …).
+     *
+     * 🔴 `/board.json` bedun e auth hamun data-i ro mide ke `/api/v1/*` ba
+     * HMAC + charge mide. Bedun e saghf، API e majani-e. Poll e tablo har
+     * 15s = 4/min per tab؛ 120/min ya'ni ~30 tab e hamzaman az yek IP.
+     * Chart e panel/site chand request e hamzaman mizane (har provider yek
+     * fetch)، pas candles bala-tar.
+     */
+    'throttle' => [
+        'board_per_minute' => (int) env('PRICING_THROTTLE_BOARD', 120),
+        'candles_per_minute' => (int) env('PRICING_THROTTLE_CANDLES', 180),
+        'tv_per_minute' => (int) env('PRICING_THROTTLE_TV', 120),
+    ],
+
     'timeout' => (int) env('PRICING_TIMEOUT', 10),
 
     /*

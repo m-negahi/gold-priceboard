@@ -502,3 +502,9 @@ Ghabl az e2e: `npm run build` + `octane:reload`؛ `public/hot` (Vite dev) nabaya
 ### Mutation check — ghanun e kar
 
 Test e sabz hichi sabet nemikone ta vaghti ba kharab kardan e code ghermez nashe. Baraye har mekanism e mohem (bind e container، `×10` e toman، zanjire ye olaviat، consume e atomic e OTP، refund e wallet، `ltrim` e log) yek bar amdan code ro beshkan، fail ro bebin، bargardun — bargasht ba `cp` e backup، **na `git checkout --`**. Natije ye mutation check tu entry e task tu `docs/TASKS.md` sabt mishe.
+
+### 20.1 Typecheck va ghanun haye me'mari (2026-10-06)
+
+- **Larastan level 6**: `composer typecheck` (ya `php vendor/bin/phpstan analyse` az host). `phpstan-baseline.neon` khata haye mojud e rooz e nasb ast — code e jadid bayad bedun e khata bashe؛ baseline faghat kam mishe.
+- **`tests/Architecture/LayerRulesTest.php`** (testsuite e `Architecture`): ghanun haye `app/Modules/CLAUDE.md` ru source check mishan — Domain bedun e Laravel، Eloquent faghat tu Action/Query/Infrastructure (+ Jobs/Middleware ba dalil e sabt-shode)، model faghat tu `Infrastructure/Persistence/Models`، controller ba constructor-injection، Blade bedun e model.
+- **Throttle e omumi**: `throttle:board|candles|tv` (`pricing.throttle`) va `throttle:login` (`otp.login_requests_per_minute`) — per IP، lazy tu ServiceProvider e module.

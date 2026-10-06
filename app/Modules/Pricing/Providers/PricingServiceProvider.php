@@ -36,7 +36,11 @@ use App\Modules\Pricing\Infrastructure\Sources\SourceManager;
 use App\Modules\Pricing\Infrastructure\Time\SystemClock;
 use App\Modules\Pricing\Infrastructure\TimeSeries\InfluxSpool;
 use App\Modules\Pricing\Infrastructure\TimeSeries\InfluxTimeSeries;
+use Illuminate\Cache\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Cache\Factory as CacheFactory;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Psr\Log\LoggerInterface;
@@ -184,6 +188,8 @@ final class PricingServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->registerPublicThrottles();
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 PricingTickCommand::class,
@@ -192,5 +198,24 @@ final class PricingServiceProvider extends ServiceProvider
                 PricingInfluxHealthCommand::class,
             ]);
         }
+    }
+
+    /**
+     * `throttle:board` / `throttle:candles` / `throttle:tv` — per IP، adad az
+     * config e `pricing.throttle`. Lazy (afterResolving) ta boot e app sabok
+     * bemune؛ config tu zaman e request khunde mishe pas test mitune kam esh
+     * kone.
+     */
+    private function registerPublicThrottles(): void
+    {
+        $this->callAfterResolving(RateLimiter::class, static function (RateLimiter $limiter, Application $app): void {
+            foreach (['board' => 'board_per_minute', 'candles' => 'candles_per_minute', 'tv' => 'tv_per_minute'] as $name => $key) {
+                $limiter->for($name, static function (Request $request) use ($app, $key, $name): Limit {
+                    $perMinute = (int) $app['config']->get("pricing.throttle.{$key}", 120);
+
+                    return Limit::perMinute(max(1, $perMinute))->by($name.'|'.(string) ($request->ip() ?? 'unknown'));
+                });
+            }
+        });
     }
 }

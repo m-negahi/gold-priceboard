@@ -3,7 +3,12 @@
     "name": "priceboard/priceboard",
     "type": "project",
     "description": "PriceBoard — moghayese ye gheymat e tala, noghre va mes beyn e provider haye Irani.",
-    "keywords": ["laravel", "gold", "price", "iran"],
+    "keywords": [
+        "laravel",
+        "gold",
+        "price",
+        "iran"
+    ],
     "license": "proprietary",
     "require": {
         "php": "^8.3",
@@ -23,6 +28,7 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.0",
         "laravel/boost": "^2.10",
         "laravel/pail": "^1.2.5",
         "laravel/pint": "^1.27",
@@ -54,7 +60,8 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
-        ]
+        ],
+        "typecheck": "phpstan analyse --no-progress --memory-limit=1G"
     },
     "extra": {
         "laravel": {

@@ -50,6 +50,7 @@ Port ha amdan shift shodan ta ba projeh haye dige conflict nakhoran — avazeshu
 
 ```sh
 $dc php artisan test --compact        # PHPUnit: SQLite in-memory + Redis DB13/14/15 (dev dast nemikhore)
+php vendor/bin/phpstan analyse            # Larastan L6 (`composer typecheck`)
 npx playwright test                   # e2e az HOST؛ stack bayad bala bashe؛ 1 worker
 $dc vendor/bin/pint --dirty
 ```

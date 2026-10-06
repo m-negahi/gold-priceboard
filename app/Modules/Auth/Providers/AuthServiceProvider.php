@@ -15,6 +15,9 @@ use App\Modules\Auth\Infrastructure\Sms\FakeSms;
 use App\Modules\Auth\Infrastructure\Sms\SmsManager;
 use App\Modules\Auth\Support\OtpThrottle;
 use Illuminate\Cache\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
 use Psr\Log\LoggerInterface;
 
@@ -27,6 +30,15 @@ final class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadViewsFrom(__DIR__.'/../Resources/views', 'auth');
+
+        // `throttle:login` — saghf e kham e per-IP ru `/login/*` (config e otp).
+        $this->callAfterResolving(RateLimiter::class, static function (RateLimiter $limiter, Application $app): void {
+            $limiter->for('login', static function (Request $request) use ($app): Limit {
+                $perMinute = (int) $app['config']->get('otp.login_requests_per_minute', 60);
+
+                return Limit::perMinute(max(1, $perMinute))->by('login|'.(string) ($request->ip() ?? 'unknown'));
+            });
+        });
 
         if ($this->app->runningInConsole()) {
             $this->commands([

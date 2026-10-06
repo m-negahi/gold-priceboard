@@ -1,0 +1,20 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    # Khata haye MOJUD e rooz e nasb (2026-10-06). Kam esh kon، ezafe nakon.
+    - phpstan-baseline.neon
+
+# Larastan level 6 (hamun sath e proje ye ghabli). Baseline faghat baraye
+# khata haye MOJUD e rooz e nasb; code e jadid bayad tamiz bashe.
+parameters:
+    level: 6
+    paths:
+        - app
+        - database
+        - routes
+        - tests
+    excludePaths:
+        - bootstrap/cache
+        - storage
+        # Config e module ha `env()` daran — mesle config/ e khod e Laravel.
+        - app/Modules/*/Config/*
+    treatPhpDocTypesAsCertain: false

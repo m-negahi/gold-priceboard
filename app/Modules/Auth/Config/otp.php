@@ -50,6 +50,13 @@ return [
      * Rate limit — PHONE **va** IP، jodagane (dalil tu `OtpThrottle`).
      * ⚠️ Limit e IP faghat ba `TrustProxies` e salem ma'ni dare.
      */
+    /*
+     * Saghf e route-level e `/login/*` per IP (`throttle:login`) — laye ye
+     * biruni va arzan ghabl az Action. Limit haye daghigh e phone/IP e OTP
+     * (paeen) sar e jashun-and؛ in faghat jolo ye flood e kham ro migire.
+     */
+    'login_requests_per_minute' => (int) env('OTP_LOGIN_REQUESTS_PER_MINUTE', 60),
+
     'limits' => [
         'send_per_phone' => 3,
         'send_per_ip' => 10,

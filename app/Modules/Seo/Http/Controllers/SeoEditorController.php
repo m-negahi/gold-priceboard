@@ -12,14 +12,20 @@ use Illuminate\Http\Request;
 
 final readonly class SeoEditorController
 {
-    public function index(SeoEditorQuery $query): View
+    // Constructor-injection (ghanun e CLAUDE.md؛ `LayerRulesTest` check mikone).
+    public function __construct(
+        private SeoEditorQuery $query,
+        private SaveSeoMetaAction $action,
+    ) {}
+
+    public function index(): View
     {
-        return view('panel::seo.index', ['pages' => $query->pages()]);
+        return view('panel::seo.index', ['pages' => $this->query->pages()]);
     }
 
-    public function update(Request $request, string $page, SaveSeoMetaAction $action): RedirectResponse
+    public function update(Request $request, string $page): RedirectResponse
     {
-        $action->execute($page, $request->only('title', 'description', 'canonical_url', 'robots', 'og_image'));
+        $this->action->execute($page, $request->only('title', 'description', 'canonical_url', 'robots', 'og_image'));
 
         return back()->with('success', 'تنظیمات سئو ذخیره شد.');
     }

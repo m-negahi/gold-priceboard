@@ -7,7 +7,6 @@ namespace App\Modules\Ticket\Http\Controllers;
 use App\Modules\Auth\Http\Support\UserProfileRules;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Ticket\Application\Actions\CreateTicketRequestAction;
-use App\Modules\Ticket\Application\Actions\OpenTicketAction;
 use App\Modules\Ticket\Application\Actions\ReplyTicketAction;
 use App\Modules\Ticket\Application\Queries\TicketQuery;
 use App\Modules\Ticket\Domain\Enums\TicketType;
@@ -31,7 +30,6 @@ final readonly class AccountTicketController
     public function __construct(
         private CreateTicketRequestAction $createTicket,
         private TicketQuery $tickets,
-        private OpenTicketAction $open,
         private ReplyTicketAction $reply,
     ) {}
 

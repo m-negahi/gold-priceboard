@@ -31,11 +31,12 @@ use Illuminate\Support\Facades\Route;
  * 15 saniye-i ye Alpine (OMUMI، bedun e auth — bar khalaf e `/api/v1/*`).
  */
 Route::get('/', [PublicBoardController::class, 'home'])->name('home');
-Route::get('/board.json', [PublicBoardController::class, 'boardJson'])->name('board.json');
-Route::get('/candles.json', [PublicBoardController::class, 'candlesJson'])->name('candles.json');
+// Throttle e per-IP (P10-11): feed e omumi bedun e saghf = API e majani.
+Route::get('/board.json', [PublicBoardController::class, 'boardJson'])->middleware('throttle:board')->name('board.json');
+Route::get('/candles.json', [PublicBoardController::class, 'candlesJson'])->middleware('throttle:candles')->name('candles.json');
 // Board e TV (P5-03) — full-screen baraye namayeshgar e maghaze؛ OMUMI.
 Route::get('/tv', [PublicBoardController::class, 'tv'])->name('tv');
-Route::get('/tv.json', [PublicBoardController::class, 'tvJson'])->name('tv.json');
+Route::get('/tv.json', [PublicBoardController::class, 'tvJson'])->middleware('throttle:tv')->name('tv.json');
 
 // SEO (P5-05) — `robots.txt` DYNAMIC (file e static e `public/` hazf shod:
 // ghabl az route serve mishod) + sitemap index.
@@ -50,10 +51,13 @@ Route::get('/sitemaps/pages.xml', [SeoController::class, 'sitemapPages'])->name(
  */
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [LoginController::class, 'show'])->name('login');
-    Route::post('/login/code', [LoginController::class, 'requestCode'])->name('login.code');
-    Route::post('/login/cooldown', [LoginController::class, 'cooldown'])->name('login.cooldown');
-    Route::post('/login/reset', [LoginController::class, 'reset'])->name('login.reset');
-    Route::post('/login/verify', [LoginController::class, 'verify'])->name('login.verify');
+    // `throttle:login`: saghf e kham e per-IP ru hame ye POST ha (limit haye OTP tu Action-and).
+    Route::middleware('throttle:login')->group(function (): void {
+        Route::post('/login/code', [LoginController::class, 'requestCode'])->name('login.code');
+        Route::post('/login/cooldown', [LoginController::class, 'cooldown'])->name('login.cooldown');
+        Route::post('/login/reset', [LoginController::class, 'reset'])->name('login.reset');
+        Route::post('/login/verify', [LoginController::class, 'verify'])->name('login.verify');
+    });
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])

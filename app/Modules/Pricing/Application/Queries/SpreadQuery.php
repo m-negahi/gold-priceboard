@@ -11,7 +11,6 @@ use App\Modules\Pricing\Domain\Enums\ProviderKind;
 use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
 use App\Modules\Pricing\Domain\Enums\Side;
 use App\Modules\Pricing\Domain\Ports\HotCachePort;
-use App\Modules\Pricing\Domain\Ports\SnapshotStorePort;
 use App\Modules\Pricing\Domain\Services\SpreadPricer;
 use App\Modules\Pricing\Domain\ValueObjects\Price;
 use App\Modules\Pricing\Domain\ValueObjects\SpreadPair;
@@ -34,7 +33,6 @@ final readonly class SpreadQuery
 {
     public function __construct(
         private ?HotCachePort $cache = null,
-        private ?SnapshotStorePort $store = null,
     ) {}
 
     /**

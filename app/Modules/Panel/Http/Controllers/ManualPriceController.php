@@ -7,7 +7,6 @@ namespace App\Modules\Panel\Http\Controllers;
 use App\Modules\Pricing\Application\Actions\ExportManualPricesAction;
 use App\Modules\Pricing\Application\Actions\ImportManualPricesAction;
 use App\Modules\Pricing\Application\Actions\ManualPriceAction;
-use App\Modules\Pricing\Application\Queries\EffectivePriceQuery;
 use App\Modules\Pricing\Application\Queries\ManualPriceImportQuery;
 use App\Modules\Pricing\Application\Queries\ManualPriceQuery;
 use App\Modules\Pricing\Application\Queries\PricingSettingsQuery;
@@ -29,7 +28,6 @@ final readonly class ManualPriceController
     public function __construct(
         private ManualPriceQuery $manual,
         private ManualPriceAction $action,
-        private EffectivePriceQuery $effective,
         private ManualPriceImportQuery $import,
         private ImportManualPricesAction $importAction,
         private ExportManualPricesAction $export,

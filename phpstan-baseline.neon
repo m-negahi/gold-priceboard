@@ -1,0 +1,1045 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method App\\Modules\\Access\\Application\\Actions\\ManageAccessAction\:\:assign\(\) has parameter \$roleIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Access/Application/Actions/ManageAccessAction.php
+
+		-
+			message: '#^Method App\\Modules\\Access\\Application\\Actions\\ManageAccessAction\:\:audit\(\) has parameter \$after with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Access/Application/Actions/ManageAccessAction.php
+
+		-
+			message: '#^Method App\\Modules\\Access\\Application\\Actions\\ManageAccessAction\:\:audit\(\) has parameter \$before with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Access/Application/Actions/ManageAccessAction.php
+
+		-
+			message: '#^Method App\\Modules\\Access\\Application\\Actions\\ManageAccessAction\:\:requireManager\(\) has parameter \$admins with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Access/Application/Actions/ManageAccessAction.php
+
+		-
+			message: '#^Method App\\Modules\\Access\\Application\\Actions\\ManageAccessAction\:\:saveRole\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Access/Application/Actions/ManageAccessAction.php
+
+		-
+			message: '#^Method App\\Modules\\Access\\Application\\Queries\\AccessQuery\:\:page\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Access/Application/Queries/AccessQuery.php
+
+		-
+			message: '#^Method App\\Modules\\Access\\Application\\Queries\\AccessQuery\:\:permissions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Access/Application/Queries/AccessQuery.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$cost_per_call_minor\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Api/Application/Actions/ChargeApiCallAction.php
+
+		-
+			message: '#^Method Redis\:\:eval\(\) invoked with 4 parameters, 1\-3 required\.$#'
+			identifier: arguments.count
+			count: 3
+			path: app/Modules/Api/Application/Actions/ChargeApiCallAction.php
+
+		-
+			message: '#^Method Redis\:\:set\(\) invoked with 5 parameters, 2\-3 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Modules/Api/Application/Actions/ChargeApiCallAction.php
+
+		-
+			message: '#^Parameter \#2 \$args of method Redis\:\:eval\(\) expects array, int given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Modules/Api/Application/Actions/ChargeApiCallAction.php
+
+		-
+			message: '#^Parameter \#3 \$num_keys of method Redis\:\:eval\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Modules/Api/Application/Actions/ChargeApiCallAction.php
+
+		-
+			message: '#^Parameter \#3 \$options of method Redis\:\:set\(\) expects array, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Api/Application/Actions/ChargeApiCallAction.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>cost_per_call_minor" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Api/Application/Actions/ChargeApiCallAction.php
+
+		-
+			message: '#^Anonymous function with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: app/Modules/Api/Application/Actions/PurchasePlanAction.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Api/Application/Queries/SiteApprovalQuery.php
+
+		-
+			message: '#^Cannot call method diffInSeconds\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Modules/Api/Http/Middleware/ApiHmacAuth.php
+
+		-
+			message: '#^Method Redis\:\:pipeline\(\) invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Modules/Api/Infrastructure/Monitoring/ApiRequestLog.php
+
+		-
+			message: '#^Method App\\Modules\\Api\\Infrastructure\\Persistence\\Models\\ApiClient\:\:plan\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Modules/Api/Infrastructure/Persistence/Models/ApiClient.php
+
+		-
+			message: '#^Method App\\Modules\\Api\\Infrastructure\\Persistence\\Models\\ApiClient\:\:priceGroup\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Modules/Api/Infrastructure/Persistence/Models/ApiClient.php
+
+		-
+			message: '#^Method App\\Modules\\Api\\Infrastructure\\Persistence\\Models\\SiteSubscription\:\:plan\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Modules/Api/Infrastructure/Persistence/Models/SiteSubscription.php
+
+		-
+			message: '#^Method App\\Modules\\Auth\\Application\\Queries\\UserQuery\:\:panelList\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Modules/Auth/Application/Queries/UserQuery.php
+
+		-
+			message: '#^Method App\\Modules\\Auth\\Application\\Queries\\UserQuery\:\:profile\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Auth/Application/Queries/UserQuery.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>resendInSeconds" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Auth/Http/Controllers/LoginController.php
+
+		-
+			message: '#^Method Redis\:\:eval\(\) invoked with 5 parameters, 1\-3 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Modules/Auth/Infrastructure/Otp/RedisOtpStore.php
+
+		-
+			message: '#^Parameter \#2 \$args of method Redis\:\:eval\(\) expects array, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Modules/Auth/Infrastructure/Otp/RedisOtpStore.php
+
+		-
+			message: '#^Parameter \#3 \$num_keys of method Redis\:\:eval\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Modules/Auth/Infrastructure/Otp/RedisOtpStore.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Modules/Billing/Application/Actions/IssueInvoiceAction.php
+
+		-
+			message: '#^Anonymous function with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: app/Modules/Billing/Application/Actions/TopupPaymentAction.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Billing/Application/Queries/CustomerBillingQuery.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 5
+			path: app/Modules/Billing/Application/Queries/CustomerBillingQuery.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Modules\\Api\\Infrastructure\\Persistence\\Models\\ApiClient\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Billing/Application/Queries/CustomerBillingQuery.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Modules\\Api\\Infrastructure\\Persistence\\Models\\SiteSubscription\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Billing/Application/Queries/CustomerBillingQuery.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Modules\\Billing\\Infrastructure\\Persistence\\Models\\BillingInvoice\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Billing/Application/Queries/CustomerBillingQuery.php
+
+		-
+			message: '#^Parameter \#2 \$array of function array_map expects array, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Billing/Application/Queries/CustomerBillingQuery.php
+
+		-
+			message: '#^Return type of call to method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Modules\\Api\\Infrastructure\\Persistence\\Models\\ApiClient\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: method.unresolvableReturnType
+			count: 1
+			path: app/Modules/Billing/Application/Queries/CustomerBillingQuery.php
+
+		-
+			message: '#^Return type of call to method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Modules\\Api\\Infrastructure\\Persistence\\Models\\SiteSubscription\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: method.unresolvableReturnType
+			count: 1
+			path: app/Modules/Billing/Application/Queries/CustomerBillingQuery.php
+
+		-
+			message: '#^Return type of call to method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Modules\\Billing\\Infrastructure\\Persistence\\Models\\BillingInvoice\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: method.unresolvableReturnType
+			count: 1
+			path: app/Modules/Billing/Application/Queries/CustomerBillingQuery.php
+
+		-
+			message: '#^Return type of call to method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:all\(\) contains unresolvable type\.$#'
+			identifier: method.unresolvableReturnType
+			count: 3
+			path: app/Modules/Billing/Application/Queries/CustomerBillingQuery.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>balance_minor" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Billing/Application/Queries/CustomerBillingQuery.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Billing/Application/Queries/CustomerBillingQuery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<TModel of Illuminate\\Database\\Eloquent\\Model\>\:\:onlyTrashed\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Modules/Common/Actions/BaseAction.php
+
+		-
+			message: '#^Call to an undefined static method TModel of Illuminate\\Database\\Eloquent\\Model\:\:withTrashed\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Modules/Common/Actions/BaseAction.php
+
+		-
+			message: '#^Unable to resolve the template type TCallbackReturnType in call to static method Illuminate\\Database\\Connection\:\:transaction\(\)$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Modules/Common/Actions/BaseAction.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<TModel of Illuminate\\Database\\Eloquent\\Model\>\:\:onlyTrashed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/Common/Queries/BaseQuery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<TModel of Illuminate\\Database\\Eloquent\\Model\>\:\:withTrashed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/Common/Queries/BaseQuery.php
+
+		-
+			message: '#^Method App\\Modules\\Common\\Queries\\BaseQuery\:\:paginate\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Modules/Common/Queries/BaseQuery.php
+
+		-
+			message: '#^Cannot access property \$amount_minor on array\<mixed\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceInvoiceQuery.php
+
+		-
+			message: '#^Cannot access property \$buyer_snapshot on array\<mixed\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceInvoiceQuery.php
+
+		-
+			message: '#^Cannot access property \$id on array\<mixed\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceInvoiceQuery.php
+
+		-
+			message: '#^Cannot access property \$issued_at on array\<mixed\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceInvoiceQuery.php
+
+		-
+			message: '#^Cannot access property \$kind on array\<mixed\>\|object\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Modules/Finance/Application/Queries/FinanceInvoiceQuery.php
+
+		-
+			message: '#^Cannot access property \$lines_snapshot on array\<mixed\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceInvoiceQuery.php
+
+		-
+			message: '#^Cannot access property \$number on array\<mixed\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceInvoiceQuery.php
+
+		-
+			message: '#^Cannot access property \$user_id on array\<mixed\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceInvoiceQuery.php
+
+		-
+			message: '#^Method App\\Modules\\Finance\\Application\\Queries\\FinanceInvoiceQuery\:\:list\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceInvoiceQuery.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<\(int\|string\),mixed\>\:\:through\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceInvoiceQuery.php
+
+		-
+			message: '#^Return type of call to method Illuminate\\Pagination\\AbstractPaginator\<\(int\|string\),mixed\>\:\:through\(\) contains unresolvable type\.$#'
+			identifier: method.unresolvableReturnType
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceInvoiceQuery.php
+
+		-
+			message: '#^Method App\\Modules\\Finance\\Application\\Queries\\FinanceLedgerQuery\:\:exportRows\(\) return type has no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceLedgerQuery.php
+
+		-
+			message: '#^Method App\\Modules\\Finance\\Application\\Queries\\FinanceLedgerQuery\:\:generalLedger\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceLedgerQuery.php
+
+		-
+			message: '#^Method App\\Modules\\Finance\\Application\\Queries\\FinanceLedgerQuery\:\:ledger\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceLedgerQuery.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<\(int\|string\),mixed\>\:\:through\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceLedgerQuery.php
+
+		-
+			message: '#^Return type of call to method Illuminate\\Pagination\\AbstractPaginator\<\(int\|string\),mixed\>\:\:through\(\) contains unresolvable type\.$#'
+			identifier: method.unresolvableReturnType
+			count: 1
+			path: app/Modules/Finance/Application/Queries/FinanceLedgerQuery.php
+
+		-
+			message: '#^Cannot access property \$input on array\<mixed\>\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Modules/Kyc/Application/Actions/RunIdentityChecksAction.php
+
+		-
+			message: '#^Parameter \#2 \$default of function old expects array\|Illuminate\\Database\\Eloquent\\Model\|string\|null, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Panel/Http/Controllers/ProviderController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$calls_per_day\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Panel/Queries/UserDetailQuery.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$cost_per_call_minor\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Panel/Queries/UserDetailQuery.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Panel/Queries/UserDetailQuery.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between array\{array\{key\: ''access'', label\: ''نقش و دسترسی'', icon\: ''cog'', route\: ''panel\.access\.index''\}\}\|array\{array\{key\: ''customers'', label\: ''مشتریان'', icon\: ''users'', route\: ''panel\.users\.index''\}, array\{key\: ''finance'', label\: ''دفتر حساب و مالی'', icon\: ''wallet'', route\: ''panel\.finance\.index''\}, array\{key\: ''plans'', label\: ''پلن‌ها'', icon\: ''layers'', route\: ''panel\.plans\.index''\}, array\{key\: ''sites'', label\: ''سایت‌ها'', icon\: ''world'', route\: ''panel\.sites\.index''\}\}\|array\{array\{key\: ''dashboard'', label\: ''میزکار'', icon\: ''gauge'', route\: ''panel\.dashboard''\}, array\{key\: ''providers'', label\: ''منابع قیمت'', icon\: ''feed'', route\: ''panel\.providers…''\}, array\{key\: ''priorities'', label\: ''تنظیم قیمت نمادها'', icon\: ''layers'', route\: ''panel\.priorities…''\}, array\{key\: ''monitor'', label\: ''پایش'', icon\: ''eye'', route\: ''panel\.monitor\.ticks'', children\: array\{array\{key\: ''monitor\.ticks'', label\: ''پایش tick'', route\: ''panel\.monitor\.ticks''\}, array\{key\: ''monitor\.upstream'', label\: ''پایش منابع'', route\: ''panel\.monitor…''\}, array\{key\: ''monitor\.api'', label\: ''پایش API'', route\: ''panel\.monitor\.api''\}\}\}, array\{key\: ''matrix'', label\: ''ماتریس نمادها'', icon\: ''coins'', route\: ''panel\.matrix''\}, array\{key\: ''charts'', label\: ''نمودار قیمت'', icon\: ''chart'', route\: ''panel\.charts''\}\}\|array\{array\{key\: ''media'', label\: ''رسانه'', icon\: ''image'', route\: ''panel\.media\.index''\}, array\{key\: ''seo'', label\: ''سئو'', icon\: ''search'', route\: ''panel\.seo\.index''\}\}\|array\{array\{key\: ''tickets'', label\: ''تیکت‌ها'', icon\: ''ticket'', route\: ''panel\.tickets\.index''\}\} and array\{\} will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Modules/Panel/Support/Navigation.php
+
+		-
+			message: '#^Method App\\Modules\\Pricing\\Application\\Actions\\ProviderAction\:\:persist\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Pricing/Application/Actions/ProviderAction.php
+
+		-
+			message: '#^Method App\\Modules\\Pricing\\Application\\Pipeline\\Stages\\FetchStage\:\:logCall\(\) has parameter \$responseHeaders with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Pricing/Application/Pipeline/Stages/FetchStage.php
+
+		-
+			message: '#^Method App\\Modules\\Pricing\\Application\\Pipeline\\Stages\\PersistStage\:\:wholeBoard\(\) has invalid return type App\\Modules\\Pricing\\Application\\Pipeline\\Stages\\SnapshotDto\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Pricing/Application/Pipeline/Stages/PersistStage.php
+
+		-
+			message: '#^Method App\\Modules\\Pricing\\Application\\Pipeline\\Stages\\PersistStage\:\:wholeBoard\(\) should return array\<int, App\\Modules\\Pricing\\Application\\Pipeline\\Stages\\SnapshotDto\> but returns list\<App\\Modules\\Pricing\\Application\\Dto\\SnapshotDto\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/Pricing/Application/Pipeline/Stages/PersistStage.php
+
+		-
+			message: '#^Parameter \#1 \$snapshots of method App\\Modules\\Pricing\\Domain\\Ports\\HotCachePort\:\:putBoard\(\) expects array\<int, App\\Modules\\Pricing\\Application\\Dto\\SnapshotDto\>, array\<int, App\\Modules\\Pricing\\Application\\Pipeline\\Stages\\SnapshotDto\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Pricing/Application/Pipeline/Stages/PersistStage.php
+
+		-
+			message: '#^Method App\\Modules\\Pricing\\Application\\Pipeline\\Stages\\ValidateStage\:\:referenceIndex\(\) has parameter \$anchors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Pricing/Application/Pipeline/Stages/ValidateStage.php
+
+		-
+			message: '#^Method App\\Modules\\Pricing\\Application\\Queries\\EffectivePriceQuery\:\:choose\(\) has parameter \$policy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Pricing/Application/Queries/EffectivePriceQuery.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>attempts" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Pricing/Application/Queries/ProviderHealthQuery.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>latencyMs" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Pricing/Application/Queries/ProviderHealthQuery.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>rejectedCount" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Pricing/Application/Queries/ProviderHealthQuery.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>symbolCount" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Pricing/Application/Queries/ProviderHealthQuery.php
+
+		-
+			message: '#^Access to an undefined property App\\Modules\\Pricing\\Infrastructure\\Persistence\\Models\\ProviderSpread\:\:\$provider_key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pricing/Application/Queries/SpreadQuery.php
+
+		-
+			message: '#^Access to an undefined property App\\Modules\\Pricing\\Infrastructure\\Persistence\\Models\\SymbolProviderPriority\:\:\$key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pricing/Application/Queries/SymbolPriorityQuery.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Modules/Pricing/Application/Queries/TickReportQuery.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Modules/Pricing/Console/Commands/PricingInfluxHealthCommand.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Modules/Pricing/Console/Commands/PricingInfluxProvisionCommand.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Pricing/Domain/Enums/Instrument.php
+
+		-
+			message: '#^Method Redis\:\:pipeline\(\) invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Modules/Pricing/Infrastructure/Monitoring/RedisUpstreamCallLog.php
+
+		-
+			message: '#^Access to an undefined property App\\Modules\\Pricing\\Infrastructure\\Persistence\\Models\\PriceSnapshot\:\:\$provider_key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pricing/Infrastructure/Persistence/EloquentSnapshotStore.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nodeValue" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Pricing/Infrastructure/Support/ManualPriceWorkbook.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>textContent" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Pricing/Infrastructure/Support/ManualPriceWorkbook.php
+
+		-
+			message: '#^Method Redis\:\:pipeline\(\) invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Modules/Pricing/Infrastructure/TimeSeries/InfluxSpool.php
+
+		-
+			message: '#^Method App\\Modules\\Seo\\Application\\Actions\\SaveSeoMetaAction\:\:execute\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Seo/Application/Actions/SaveSeoMetaAction.php
+
+		-
+			message: '#^Method App\\Modules\\Seo\\Application\\Queries\\SeoEditorQuery\:\:pages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Modules/Seo/Application/Queries/SeoEditorQuery.php
+
+		-
+			message: '#^Method App\\Modules\\Ticket\\Application\\Queries\\TicketQuery\:\:adminInbox\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Modules/Ticket/Application/Queries/TicketQuery.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Ticket/Application/Queries/TicketQuery.php
+
+		-
+			message: '#^Anonymous function with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: app/Modules/Wallet/Application/Actions/WalletAction.php
+
+		-
+			message: '#^Method App\\Modules\\Wallet\\Infrastructure\\Persistence\\Models\\Wallet\:\:transactions\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Modules/Wallet/Infrastructure/Persistence/Models/Wallet.php
+
+		-
+			message: '#^Method Tests\\Feature\\Api\\ApiChargeTest\:\:signed\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Api/ApiChargeTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Api\\ApiEffectiveEtagTest\:\:requestFeed\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Api/ApiEffectiveEtagTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\Api\\ApiEffectiveEtagTest\:\:\$credentials type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Api/ApiEffectiveEtagTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Api\\ApiHmacAuthTest\:\:signedGet\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Api/ApiHmacAuthTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Api\\ApiPlanTest\:\:signed\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Api/ApiPlanTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Api\\ApiUsageRollupTest\:\:signedPrices\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Api/ApiUsageRollupTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Api\\SiteApprovalTest\:\:signed\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Api/SiteApprovalTest.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: tests/Feature/Api/SubscriptionBillingTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Api\\SubscriptionBillingTest\:\:signed\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Api/SubscriptionBillingTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Auth\\AdminMutationAccessTest\:\:restrict\(\) has parameter \$permissions with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Auth/AdminMutationAccessTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Auth\\OtpHttpHardeningTest\:\:sendFor\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Auth/OtpHttpHardeningTest.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Modules\\Auth\\Application\\Dto\\OtpEntryDto\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: tests/Feature/Auth/OtpStoreContractTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Auth\\UserDisableTest\:\:disableVia\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Auth/UserDisableTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Auth\\UserDisableTest\:\:signedInstruments\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Auth/UserDisableTest.php
+
+		-
+			message: '#^Parameter \#1 \$store of class App\\Modules\\Auth\\Application\\Actions\\VerifyOtpAction constructor expects App\\Modules\\Auth\\Domain\\Ports\\OtpStorePort, Mockery\\MockInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/Auth/VerifyOtpActionTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Kyc\\OnboardingTest\:\:legalForm\(\) has parameter \$overrides with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Kyc/OnboardingTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Kyc\\OnboardingTest\:\:test_invalid_legal_fields_are_rejected\(\) has parameter \$override with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Kyc/OnboardingTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Kyc\\OnboardingTest\:\:verifyLogin\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Kyc/OnboardingTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with ''warning'' and ''warning'' will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 2
+			path: tests/Feature/Kyc/ZohalVerificationTest.php
+
+		-
+			message: '#^Parameter \#1 \$filesystem of class App\\Modules\\Media\\Application\\Actions\\UploadMediaAction constructor expects Illuminate\\Contracts\\Filesystem\\Factory, Mockery\\MockInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/Media/MediaLibraryTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Panel\\ProviderCrudTest\:\:payload\(\) has parameter \$overrides with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Panel/ProviderCrudTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Panel\\ProviderSpreadPageTest\:\:row\(\) has parameter \$overrides with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Panel/ProviderSpreadPageTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Panel\\WalletAdjustTest\:\:postAdjust\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Panel/WalletAdjustTest.php
+
+		-
+			message: '#^Access to an undefined property Tests\\Feature\\Pricing\\BoardChartAgreementTest\:\:\$cache\.$#'
+			identifier: property.notFound
+			count: 2
+			path: tests/Feature/Pricing/BoardChartAgreementTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with float and float will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Feature/Pricing/BoardChartAgreementTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Pricing\\BoardChartAgreementTest\:\:warmBoard\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: tests/Feature/Pricing/BoardChartAgreementTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Pricing\\BoardQueryTest\:\:config\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Pricing/BoardQueryTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Feature/Pricing/InfluxCommandsTest.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: tests/Feature/Pricing/InfluxCommandsTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true and ''nabayad exception…'' will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Feature/Pricing/InfluxTimeSeriesTest.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: tests/Feature/Pricing/ManualFallbackTest.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: tests/Feature/Pricing/ManualFallbackTest.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\HttpFoundation\\Response\:\:getFile\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Feature/Pricing/ManualPriceWorkbookImportTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Pricing\\ManualPriceWorkbookImportTest\:\:workbook\(\) has parameter \$rows with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Pricing/ManualPriceWorkbookImportTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\Pricing\\ManualPriceWorkbookImportTest\:\:\$paths type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Pricing/ManualPriceWorkbookImportTest.php
+
+		-
+			message: '#^Parameter \#2 \$flags of method App\\Modules\\Pricing\\Application\\Actions\\ProviderAction\:\:setFlags\(\) expects array\<string, bool\>, array\<string, int\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/Pricing/ProviderActionTest.php
+
+		-
+			message: '#^Parameter \#2 \$flags of method App\\Modules\\Pricing\\Application\\Actions\\ProviderAction\:\:setFlags\(\) expects array\<string, bool\>, array\<string, int\|string\|false\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/Pricing/ProviderActionTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Pricing\\ProviderHealthQueryTest\:\:provider\(\) has parameter \$overrides with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Pricing/ProviderHealthQueryTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Pricing\\SchemaTest\:\:snapshotRow\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Pricing/SchemaTest.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: tests/Feature/Public/PublicBoardTest.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: tests/Feature/Public/PublicBoardTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Public\\SeoTest\:\:jsonLdOf\(\) has parameter \$response with generic class Illuminate\\Testing\\TestResponse but does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Public/SeoTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Public\\SeoTest\:\:nodesOfType\(\) has parameter \$ld with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Public/SeoTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Ticket\\TicketAttachmentTest\:\:uploadAs\(\) has parameter \$files with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/Ticket/TicketAttachmentTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\Ticket\\TicketAttachmentTest\:\:uploadAs\(\) return type with generic class Illuminate\\Testing\\TestResponse does not specify its types\: TResponse$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Feature/Ticket/TicketAttachmentTest.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Pagination\\LengthAwarePaginator\:\:first\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Feature/Wallet/FinanceLedgerTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/FinancePostgresTest.php
+
+		-
+			message: '#^Property Tests\\Support\\Fakes\\FakeManualBackup\:\:\$snapshots type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Support/Fakes/FakeManualBackup.php
+
+		-
+			message: '#^Method Tests\\Support\\Fakes\\FakeTimeSeries\:\:writtenTimestamps\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Support/Fakes/FakeTimeSeries.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: tests/TestCase.php
+
+		-
+			message: '#^Call to method App\\Modules\\Pricing\\Domain\\Enums\\Instrument\:\:freshnessSeconds\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 1
+			path: tests/Unit/Pricing/InstrumentTest.php
+
+		-
+			message: '#^Call to method App\\Modules\\Pricing\\Domain\\Enums\\Instrument\:\:group\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 1
+			path: tests/Unit/Pricing/InstrumentTest.php
+
+		-
+			message: '#^Call to method App\\Modules\\Pricing\\Domain\\Enums\\Instrument\:\:icon\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 1
+			path: tests/Unit/Pricing/InstrumentTest.php
+
+		-
+			message: '#^Call to method App\\Modules\\Pricing\\Domain\\Enums\\Instrument\:\:metal\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 1
+			path: tests/Unit/Pricing/InstrumentTest.php
+
+		-
+			message: '#^Call to method App\\Modules\\Pricing\\Domain\\Enums\\Instrument\:\:purity\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 1
+			path: tests/Unit/Pricing/InstrumentTest.php
+
+		-
+			message: '#^Call to method App\\Modules\\Pricing\\Domain\\Enums\\Instrument\:\:quote\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 1
+			path: tests/Unit/Pricing/InstrumentTest.php
+
+		-
+			message: '#^Call to method App\\Modules\\Pricing\\Domain\\Enums\\Instrument\:\:sanityBand\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 1
+			path: tests/Unit/Pricing/InstrumentTest.php
+
+		-
+			message: '#^Call to method App\\Modules\\Pricing\\Domain\\Enums\\Instrument\:\:unit\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 1
+			path: tests/Unit/Pricing/InstrumentTest.php
+
+		-
+			message: '#^Call to method App\\Modules\\Pricing\\Domain\\Enums\\Instrument\:\:weightGrams\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 1
+			path: tests/Unit/Pricing/InstrumentTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true and ''hame ye case ha…'' will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Pricing/InstrumentTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\MonitorQueriesTest\:\:failedProvider\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/MonitorQueriesTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\MonitorQueriesTest\:\:okProvider\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/MonitorQueriesTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\MonitorQueriesTest\:\:rejection\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/MonitorQueriesTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\MonitorQueriesTest\:\:report\(\) has parameter \$providers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/MonitorQueriesTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\MonitorQueriesTest\:\:report\(\) has parameter \$unmapped with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/MonitorQueriesTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\MonitorQueriesTest\:\:report\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/MonitorQueriesTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\NerkhQuoteSourceTest\:\:fallbackItems\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/NerkhQuoteSourceTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\NerkhQuoteSourceTest\:\:quotes\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/NerkhQuoteSourceTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\NumberParserTest\:\:parse\(\) has parameter \$policy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/NumberParserTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Pricing/PortContractTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\PriceSanityTest\:\:check\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/Pricing/PriceSanityTest.php
+
+		-
+			message: '#^Call to function method_exists\(\) with ''App\\\\Modules\\\\Pricing\\\\Domain\\\\ValueObjects\\\\Price'' and ''multipliedBy'' will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: tests/Unit/Pricing/PriceTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\RealPayloadTest\:\:parse\(\) has parameter \$policy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/RealPayloadTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\SourceFixtureMatrixTest\:\:test_the_platform_matrix_is_exhaustive\(\) has parameter \$matrix with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/SourceFixtureMatrixTest.php
+
+		-
+			message: '#^PHPDoc tag @var with type App\\Modules\\Pricing\\Domain\\Ports\\QuoteSourcePort is not subtype of native type App\\Modules\\Pricing\\Infrastructure\\Sources\\EstjtQuoteSource\|App\\Modules\\Pricing\\Infrastructure\\Sources\\MilliQuoteSource\|App\\Modules\\Pricing\\Infrastructure\\Sources\\NerkhQuoteSource\|App\\Modules\\Pricing\\Infrastructure\\Sources\\TalaseaQuoteSource\|App\\Modules\\Pricing\\Infrastructure\\Sources\\TechnogoldQuoteSource\|App\\Modules\\Pricing\\Infrastructure\\Sources\\TgjuQuoteSource\|App\\Modules\\Pricing\\Infrastructure\\Sources\\TlynQuoteSource\.$#'
+			identifier: varTag.nativeType
+			count: 1
+			path: tests/Unit/Pricing/SourceFixtureMatrixTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\SpreadPricerTest\:\:candles\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/SpreadPricerTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\Pricing\\TlynQuoteSourceTest\:\:quotes\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/Pricing/TlynQuoteSourceTest.php
