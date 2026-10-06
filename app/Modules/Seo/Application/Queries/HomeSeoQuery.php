@@ -7,6 +7,7 @@ namespace App\Modules\Seo\Application\Queries;
 use App\Modules\Pricing\Application\Dto\SymbolOfferDto;
 use App\Modules\Pricing\Application\Queries\BoardOfferQuery;
 use App\Modules\Seo\Application\Dto\SeoMetaDto;
+use App\Modules\Seo\Application\Support\PublicUrl;
 use App\Modules\Seo\Domain\Services\JsonLd;
 
 /**
@@ -25,6 +26,7 @@ final readonly class HomeSeoQuery
     public function __construct(
         private SeoResolver $resolver,
         private BoardOfferQuery $offers,
+        private PublicUrl $urls,
         private string $siteName,
         private string $title,
         private string $description,
@@ -36,7 +38,7 @@ final readonly class HomeSeoQuery
      */
     public function present(): array
     {
-        $url = route('home');
+        $url = $this->urls->route('home');
 
         $seo = $this->resolver->resolve('page', 'home', new SeoMetaDto(
             title: $this->title.' — '.$this->siteName,

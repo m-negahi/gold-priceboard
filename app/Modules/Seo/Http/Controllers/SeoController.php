@@ -22,7 +22,7 @@ final readonly class SeoController
         $body = RobotsTxt::render(
             (bool) config('seo.indexable', false),
             array_values((array) config('seo.disallow', [])),
-            route('sitemap.index'),
+            $this->sitemap->indexUrl(),
         );
 
         return new Response($body, 200, [

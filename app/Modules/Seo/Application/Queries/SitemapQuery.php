@@ -6,6 +6,7 @@ namespace App\Modules\Seo\Application\Queries;
 
 use App\Modules\Pricing\Application\Queries\PublicBoardQuery;
 use App\Modules\Seo\Application\Dto\SeoMetaDto;
+use App\Modules\Seo\Application\Support\PublicUrl;
 use Carbon\CarbonImmutable;
 
 /**
@@ -27,8 +28,15 @@ final readonly class SitemapQuery
     public function __construct(
         private SeoResolver $resolver,
         private PublicBoardQuery $board,
+        private PublicUrl $urls,
         private array $pages,
     ) {}
+
+    /** URL e motlagh e index baraye khat e `Sitemap:` e robots.txt (root az `app.url`). */
+    public function indexUrl(): string
+    {
+        return $this->urls->route('sitemap.index');
+    }
 
     /** @return list<array{loc: string, lastmod: string|null}> */
     public function index(): array
@@ -36,7 +44,7 @@ final readonly class SitemapQuery
         $lastmods = array_filter(array_column($this->pages(), 'lastmod'));
 
         return [[
-            'loc' => route('sitemap.pages'),
+            'loc' => $this->urls->route('sitemap.pages'),
             'lastmod' => $lastmods === [] ? null : max($lastmods),
         ]];
     }
@@ -48,7 +56,7 @@ final readonly class SitemapQuery
         $entries = [];
 
         foreach ($this->pages as $page) {
-            $loc = route($page['route']);
+            $loc = $this->urls->route($page['route']);
             $seo = $this->resolver->resolve('page', $page['route'], new SeoMetaDto(title: '', description: '', canonical: $loc));
 
             if (! $seo->isIndexable()) {

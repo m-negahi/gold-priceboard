@@ -260,6 +260,43 @@ final class SeoTest extends TestCase
         self::assertFileDoesNotExist(public_path('robots.txt'));
     }
 
+    /**
+     * 🔴 Host-header injection: canonical/og:url/JSON-LD/sitemap/robots az
+     * `app.url` sakhte mishan، na az header e `Host` e request — vagarna har
+     * client (va cache e `public` e CDN) URL e attacker ro be crawler mide.
+     */
+    public function test_absolute_seo_urls_ignore_a_spoofed_host_header(): void
+    {
+        config(['app.url' => 'https://tablo.example', 'seo.indexable' => true]);
+        $tgju = $this->seoProvider('tgju', 10);
+        $this->seoSnapshot($tgju, 'xau-18k-g-irr', 266_400_000);
+
+        $home = $this->get('http://evil.example/')->assertOk();
+        $home->assertSee('<link rel="canonical" href="https://tablo.example">', false)
+            ->assertSee('<meta property="og:url" content="https://tablo.example">', false);
+        $site = $this->nodesOfType($this->jsonLdOf($home), 'WebSite')[0];
+        self::assertSame('https://tablo.example', $site['url']);
+        $product = $this->nodesOfType($this->jsonLdOf($home), 'Product')[0];
+        self::assertSame('https://tablo.example#xau-18k-g-irr', $product['offers']['url'] ?? $product['url']);
+
+        $index = (string) $this->get('http://evil.example/sitemap.xml')->assertOk()->getContent();
+        $pages = (string) $this->get('http://evil.example/sitemaps/pages.xml')->assertOk()->getContent();
+        $robots = (string) $this->get('http://evil.example/robots.txt')->assertOk()->getContent();
+
+        self::assertStringContainsString('<loc>https://tablo.example/sitemaps/pages.xml</loc>', $index);
+        self::assertStringContainsString('<loc>https://tablo.example</loc>', $pages);
+        self::assertStringContainsString("Sitemap: https://tablo.example/sitemap.xml\n", $robots);
+
+        // Kol e `<head>` (meta + JSON-LD) va kol e sitemap/robots. Link haye
+        // navbar e `<body>` amdan check nemishan: faghat be hamun client e
+        // jaal bar migardan va safhe `Cache-Control: private` ast.
+        self::assertSame(1, preg_match('#<head>.*</head>#s', (string) $home->getContent(), $head));
+
+        foreach ([$head[0], $index, $pages, $robots] as $body) {
+            self::assertStringNotContainsString('evil.example', (string) $body);
+        }
+    }
+
     public function test_the_tv_page_is_noindex(): void
     {
         $this->get('/tv')->assertSee('<meta name="robots" content="noindex, nofollow">', false);

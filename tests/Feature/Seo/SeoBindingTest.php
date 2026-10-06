@@ -6,6 +6,7 @@ namespace Tests\Feature\Seo;
 
 use App\Modules\Seo\Application\Queries\HomeSeoQuery;
 use App\Modules\Seo\Application\Queries\SitemapQuery;
+use App\Modules\Seo\Application\Support\PublicUrl;
 use Tests\TestCase;
 
 /**
@@ -28,5 +29,22 @@ final class SeoBindingTest extends TestCase
 
         // `bind` (na singleton): har resolve config e LAHZE ro mibine.
         self::assertNotSame($this->app->make(SitemapQuery::class), $this->app->make(SitemapQuery::class));
+    }
+
+    /**
+     * Root e URL haye SEO az `app.url` e LAHZE (bind، na singleton) — `/` e
+     * akhar e config URL e dobl-slash nemisaze va safhe ye asli bedun e `/`
+     * e akhar ast (hamun shekl e `route()` e ghabli).
+     */
+    public function test_public_url_is_rooted_at_app_url_not_the_request_host(): void
+    {
+        config(['app.url' => 'https://tablo.example/']);
+        $urls = $this->app->make(PublicUrl::class);
+
+        self::assertSame('https://tablo.example', $urls->route('home'));
+        self::assertSame('https://tablo.example/sitemap.xml', $urls->route('sitemap.index'));
+
+        config(['app.url' => 'https://other.example']);
+        self::assertSame('https://other.example/sitemaps/pages.xml', $this->app->make(PublicUrl::class)->route('sitemap.pages'));
     }
 }

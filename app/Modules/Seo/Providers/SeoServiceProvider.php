@@ -9,6 +9,7 @@ use App\Modules\Pricing\Application\Queries\PublicBoardQuery;
 use App\Modules\Seo\Application\Queries\HomeSeoQuery;
 use App\Modules\Seo\Application\Queries\SeoResolver;
 use App\Modules\Seo\Application\Queries\SitemapQuery;
+use App\Modules\Seo\Application\Support\PublicUrl;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
@@ -24,9 +25,13 @@ final class SeoServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../Config/seo.php', 'seo');
 
+        // Root e URL haye SEO az `app.url` — hargez az header e `Host` (PublicUrl).
+        $this->app->bind(PublicUrl::class, static fn (): PublicUrl => new PublicUrl((string) config('app.url')));
+
         $this->app->bind(HomeSeoQuery::class, static fn (Application $app): HomeSeoQuery => new HomeSeoQuery(
             resolver: $app->make(SeoResolver::class),
             offers: $app->make(BoardOfferQuery::class),
+            urls: $app->make(PublicUrl::class),
             siteName: (string) config('seo.site_name'),
             title: (string) config('seo.home.title'),
             description: (string) config('seo.home.description'),
@@ -36,6 +41,7 @@ final class SeoServiceProvider extends ServiceProvider
         $this->app->bind(SitemapQuery::class, static fn (Application $app): SitemapQuery => new SitemapQuery(
             resolver: $app->make(SeoResolver::class),
             board: $app->make(PublicBoardQuery::class),
+            urls: $app->make(PublicUrl::class),
             pages: array_values((array) config('seo.pages', [])),
         ));
     }
