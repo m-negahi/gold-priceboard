@@ -76,9 +76,12 @@ test.describe('panel', () => {
         await page.goto('/dashboard/monitor');
 
         await expect(page.getByRole('heading', { level: 1, name: 'پایش زنده' })).toBeVisible();
-        // Worker zende-ast pas hadeaghal yek gozaresh hast؛ pill e provider
-        // e tgju tush dide mishe.
-        await expect(page.getByText('tgju').first()).toBeVisible();
+        // Worker zende-ast pas hadeaghal yek gozaresh hast. P4-12: card ha
+        // esm e MAFHOOMI ye provider ro neshun midan (na key e kham) — pas
+        // donbal e «تی‌جی‌جی‌یو» migardim، na «tgju». Link e payesh API ham
+        // bayad bashe.
+        await expect(page.getByText('تی‌جی‌جی‌یو').first()).toBeVisible();
+        await expect(page.getByRole('link', { name: 'پایش API' })).toBeVisible();
     });
 
     test('salamat + matrix bala miyan', async () => {

@@ -55,6 +55,10 @@ final class ChargeApiCall
             return new JsonResponse(['message' => 'اعتبار کافی نیست. کیف پول را شارژ کنید.'], 402);
         }
 
+        if ($charge['status'] === 'over_quota') {
+            return new JsonResponse(['message' => 'سقف روزانه پلن شما پر شده است.'], 429);
+        }
+
         if ($charge['status'] === 'unavailable') {
             // 🔴 Fail-CLOSED.
             return new JsonResponse(['message' => 'سرویس موقتا در دسترس نیست.'], 503);

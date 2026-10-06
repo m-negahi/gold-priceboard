@@ -63,6 +63,7 @@ Route::middleware(['auth', EnsureAdmin::class])
         // ── Monitoring (P3-08/09/10) ────────────────────────────────
         Route::get('/health', [MonitorController::class, 'health'])->name('health');
         Route::get('/monitor', [MonitorController::class, 'ticks'])->name('monitor.ticks');
+        Route::get('/monitor/api', [MonitorController::class, 'api'])->name('monitor.api');
         Route::get('/matrix', [MatrixController::class, 'show'])->name('matrix');
     });
 

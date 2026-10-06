@@ -9,6 +9,7 @@ use App\Modules\Api\Infrastructure\Persistence\Models\ApiPriceGroup;
 use App\Modules\Wallet\Application\Actions\WalletAction;
 use App\Modules\Wallet\Application\Queries\WalletQuery;
 use App\Modules\Wallet\Infrastructure\Persistence\Models\Wallet;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Redis;
 use Throwable;
 
@@ -54,11 +55,27 @@ final readonly class ChargeApiCallAction
     ) {}
 
     /**
-     * @return array{status: 'ok'|'free'|'insufficient'|'blocked'|'unavailable', cost: int, balance: int|null}
+     * @return array{status: 'ok'|'free'|'insufficient'|'blocked'|'unavailable'|'over_quota', cost: int, balance: int|null}
      */
     public function charge(ApiClient $client, string $reference): array
     {
         $cost = $this->costFor($client);
+
+        // ── Saghf e ruzane ye plan (P4-09) ──────────────────────────
+        // GHABL az reserve: call-i ke saghf esh por e aslan nabayad be
+        // wallet berese. Rooz be vaght e TEHRAN hesab mishe (bazaar e
+        // moshtari Irani-e). Fail-closed: Redis ghat' -> unavailable.
+        $plan = $client->plan_id !== null ? $client->plan : null;
+
+        if ($plan !== null && $plan->calls_per_day > 0) {
+            try {
+                if ($this->quotaExceeded($client, $plan->calls_per_day)) {
+                    return ['status' => 'over_quota', 'cost' => $cost, 'balance' => null];
+                }
+            } catch (Throwable) {
+                return ['status' => 'unavailable', 'cost' => $cost, 'balance' => null];
+            }
+        }
 
         if ($cost === 0) {
             return ['status' => 'free', 'cost' => 0, 'balance' => null];
@@ -173,8 +190,34 @@ final readonly class ChargeApiCallAction
         }
     }
 
+    /**
+     * Shomaresh e call e emruz (Tehran) — INCR e atomic.
+     *
+     * Call e rad-shode/refund-shode ham HESAB mishe: saghf e plan saghf e
+     * ZARFIAT ast، na saghf e pul (pul ro refund modiriat mikone).
+     */
+    private function quotaExceeded(ApiClient $client, int $callsPerDay): bool
+    {
+        $key = 'api:quota:'.$client->client_id.':'
+            .CarbonImmutable::now('Asia/Tehran')->format('Y-m-d');
+
+        $count = (int) Redis::connection()->incr($key);
+
+        if ($count === 1) {
+            // 2 rooz: kelid e emruz farda-shab khodesh mire.
+            Redis::connection()->expire($key, 2 * 86_400);
+        }
+
+        return $count > $callsPerDay;
+    }
+
     private function costFor(ApiClient $client): int
     {
+        // Olaviat: nerkh e PLAN (model e jadid) > group > default group.
+        if ($client->plan_id !== null && $client->plan !== null) {
+            return max(0, (int) $client->plan->cost_per_call_minor);
+        }
+
         $group = $client->price_group_id !== null
             ? $client->priceGroup
             : ApiPriceGroup::query()->where('is_default', true)->first();

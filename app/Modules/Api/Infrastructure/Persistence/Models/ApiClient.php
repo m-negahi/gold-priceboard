@@ -30,6 +30,7 @@ class ApiClient extends Model
         'user_id',
         'price_group_id',
         'name',
+        'website_url',
         'client_id',
         'secret_encrypted',
     ];
@@ -50,5 +51,10 @@ class ApiClient extends Model
     public function priceGroup(): BelongsTo
     {
         return $this->belongsTo(ApiPriceGroup::class, 'price_group_id');
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(ApiPlan::class, 'plan_id');
     }
 }

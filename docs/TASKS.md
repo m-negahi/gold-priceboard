@@ -426,8 +426,15 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 - [ ] **P4-04** — HMAC auth middleware (+ decoy-HMAC، nonce، skew)
 - [ ] **P4-05** — Debit e atomic ba Lua + refund ru error/304 — **fail-CLOSED**
 - [ ] **P4-06** — Endpoint ha + `ETag` ru snapshot
-- [ ] **P4-07** — `CustomerList` + `WalletLedger` tu panel
-- [ ] **P4-08** — Test: debit e dobare mamnu'، refund، fail-closed vaghti Redis down ast
+- [ ] **P4-07** — `CustomerList` + `WalletLedger` tu panel e ADMIN
+- [x] **P4-08** — Test: debit e dobare mamnu'، refund، fail-closed vaghti Redis down ast
+  → Tu `ApiChargeTest`/`ApiHmacAuthTest`/`WalletLedgerTest` (bala).
+
+**Darkhast haye sahebe proje (2026-10-06، vasat e session):**
+- [ ] **P4-09** — Model e karbari: **website + plan** — karbar website ezafe mikone (masalan tala.ir)، baraye HAR website yek client_id/secret migire، bad **plan** mikhare (masalan 1200 call/rooz): kharid e plan wallet ro be andaze ye gheymat e plan SHARJ mikone va masraf pay-as-you-go kasr mishe. Saghf e ruzane ye plan tu `ChargeApiCall` e'mal mishe (429).
+- [ ] **P4-10** — Panel e CUSTOMER (self-serve): lista ye website ha، sakht e website (credential yek bar namayesh)، kharid e plan، mande/ledger e wallet.
+- [ ] **P4-11** — **API inspector** (mini-Telescope): har call e API ba request/response/payload/khata/hazine/duration sabt she va tu panel dide she.
+- [ ] **P4-12** — UX e behtar e `/dashboard/monitor`: tozihat e tick mafhoomi-tar (provider/symbol/zaman/driver/dalil e daghigh e har rad ba MEGHDAR)، + tozih e saghf haye enheraf tu rahnama (5% USD / 10% IRR / ta'eed e do-tayi / 20% e cross-provider).
 
 ---
 

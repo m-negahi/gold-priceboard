@@ -8,6 +8,7 @@ use App\Modules\Api\Http\Controllers\PricesController;
 use App\Modules\Api\Http\Controllers\WalletController;
 use App\Modules\Api\Http\Middleware\ApiHmacAuth;
 use App\Modules\Api\Http\Middleware\ChargeApiCall;
+use App\Modules\Api\Http\Middleware\LogApiRequest;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,7 +20,8 @@ use Illuminate\Support\Facades\Route;
  * API ghararad e sarih dare؛ vorudi ye kaj 422 migire، bazneveshte
  * nemishe.
  */
-Route::prefix('v1')->middleware(ApiHmacAuth::class)->group(function (): void {
+// `LogApiRequest` BIRUNI tarin ast ta 401 haye auth ham sabt shan (P4-11).
+Route::prefix('v1')->middleware([LogApiRequest::class, ApiHmacAuth::class])->group(function (): void {
     // Majani — ghablan pul e call e data dade.
     Route::get('/instruments', [MetaController::class, 'instruments'])->name('api.instruments');
     Route::get('/providers', [MetaController::class, 'providers'])->name('api.providers');
