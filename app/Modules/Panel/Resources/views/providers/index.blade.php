@@ -76,11 +76,18 @@
                             </td>
                             <td class="px-5 py-3 text-end">
                                 @unless ($row['deleted'])
-                                    <a href="{{ route('panel.providers.edit', $row['key']) }}"
-                                       class="inline-flex size-9 items-center justify-center rounded-lg text-muted hover:bg-surface-3 hover:text-ink"
-                                       aria-label="ویرایش {{ $row['name'] }}">
-                                        <x-icon name="pencil" class="size-4" />
-                                    </a>
+                                    <div class="inline-flex items-center gap-1">
+                                        <a href="{{ route('panel.providers.spreads', $row['key']) }}"
+                                           class="inline-flex size-9 items-center justify-center rounded-lg text-muted hover:bg-surface-3 hover:text-ink"
+                                           aria-label="اسپرد {{ $row['name'] }}" title="اسپرد">
+                                            <x-icon name="tag" class="size-4" />
+                                        </a>
+                                        <a href="{{ route('panel.providers.edit', $row['key']) }}"
+                                           class="inline-flex size-9 items-center justify-center rounded-lg text-muted hover:bg-surface-3 hover:text-ink"
+                                           aria-label="ویرایش {{ $row['name'] }}" title="ویرایش">
+                                            <x-icon name="pencil" class="size-4" />
+                                        </a>
+                                    </div>
                                 @endunless
                             </td>
                         </tr>

@@ -7,6 +7,7 @@ use App\Modules\Auth\Http\Middleware\EnsureAdmin;
 use App\Modules\Panel\Http\Controllers\DashboardController;
 use App\Modules\Panel\Http\Controllers\KitController;
 use App\Modules\Panel\Http\Controllers\ProviderController;
+use App\Modules\Panel\Http\Controllers\ProviderSpreadController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -48,6 +49,14 @@ Route::middleware(['auth', EnsureAdmin::class])
         Route::get('/providers/{key}/edit', [ProviderController::class, 'edit'])->name('providers.edit');
         Route::put('/providers/{key}', [ProviderController::class, 'update'])->name('providers.update');
         Route::post('/providers/{key}/flags', [ProviderController::class, 'flags'])->name('providers.flags');
+
+        // ── Spread (P3-07) ──────────────────────────────────────────
+        Route::get('/providers/{key}/spreads', [ProviderSpreadController::class, 'edit'])->name('providers.spreads');
+        Route::put('/providers/{key}/spreads', [ProviderSpreadController::class, 'update'])->name('providers.spreads.update');
+        // PUT chun dokme ye hazf DAKHEL e form e asli-e (formaction) va un
+        // form `@method('PUT')` dare.
+        Route::put('/providers/{key}/spreads/{symbol}/remove', [ProviderSpreadController::class, 'remove'])->name('providers.spreads.remove');
+        Route::post('/providers/{key}/spreads/preview', [ProviderSpreadController::class, 'preview'])->name('providers.spreads.preview');
     });
 
 /*
