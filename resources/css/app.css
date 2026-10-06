@@ -359,6 +359,24 @@
     display: none !important;
 }
 
+/* Flash-e gheymat-e zende (Phase 5): sabz age bala raft, ghermez age paeen.
+   Faghat background-e gozara, na jump-e layout. `prefers-reduced-motion`
+   khod-be-khod ba animation-e kutah ehteram mishe. */
+@keyframes pb-flash-up {
+    0% { background-color: var(--color-up-soft); }
+    100% { background-color: transparent; }
+}
+@keyframes pb-flash-down {
+    0% { background-color: var(--color-down-soft); }
+    100% { background-color: transparent; }
+}
+.flash-up { animation: pb-flash-up 0.9s var(--ease); }
+.flash-down { animation: pb-flash-down 0.9s var(--ease); }
+
+@media (prefers-reduced-motion: reduce) {
+    .flash-up, .flash-down { animation: none; }
+}
+
 @layer components {
     /* Matn-e rahnama: chand tag-e sade ba fasele-ye khandani. */
     .prose-help h3 { @apply mt-2 text-sm font-bold text-ink; }

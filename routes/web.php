@@ -10,13 +10,16 @@ use App\Modules\Panel\Http\Controllers\MatrixController;
 use App\Modules\Panel\Http\Controllers\MonitorController;
 use App\Modules\Panel\Http\Controllers\ProviderController;
 use App\Modules\Panel\Http\Controllers\ProviderSpreadController;
+use App\Modules\Pricing\Http\Controllers\PublicBoardController;
 use Illuminate\Support\Facades\Route;
 
 /*
- * ⚠️ Route e `home` fe'lan placeholder e matn ast — site e omumi Phase 5 e.
- * Esm esh az alan hast chun login/logout behesh redirect mikonan.
+ * ── Site e omumi (Phase 5) ───────────────────────────────────────────
+ * Tablo ye moghayese ye gheymat — SSR (SEO) + `/board.json` baraye poll e
+ * 15 saniye-i ye Alpine (OMUMI، bedun e auth — bar khalaf e `/api/v1/*`).
  */
-Route::get('/', static fn (): string => 'PriceBoard — be zudi.')->name('home');
+Route::get('/', [PublicBoardController::class, 'home'])->name('home');
+Route::get('/board.json', [PublicBoardController::class, 'boardJson'])->name('board.json');
 
 /*
  * ── Login ba OTP ─────────────────────────────────────────────────────
