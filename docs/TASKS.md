@@ -395,7 +395,10 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → Test: `DashboardPageTest` (2) + `ProviderHealthQueryTest` (3). e2e be h1 e «میزکار» update shod. **784 test (3309 assertion) sabz، e2e 6/6.**
   → Ru mohit e zende: tgju+estjt ba ravesh e skill roshan shodan (`--force` tick: tgju 16 symbol/2 ghabul e pish-az-bazaar، estjt 9 symbol — 11 radif ru tablo، gauge 100%، jadval ba adad e vaghei).
   🔴 **Mohit e dev: token haye Influx e `.env` BI-E'TEBAR-and (401)** — volume e Influx yek ja reset shode va faghat token e admin munde؛ tick ha be spool miran (emn). Hall (faghat sahebe proje — `.env`): `dc exec octane php scripts/reset-influx-tokens.php` → `dc exec octane php artisan pricing:influx:provision --tokens` → do token e chap-shode ro tu `.env` bezar → `dc up -d --force-recreate` → `pricing:influx:drain`.
-- [ ] **P3-06** — `ProviderList` + `ProviderForm`
+- [x] **P3-06** — `ProviderList` + `ProviderForm`
+  → `ProviderController` e nazok (index/create/store/edit/update/flags) + `ProviderSaveRequest` (shape؛ invariant ha hamun `ProviderAction`) + `ProviderQuery::panelRows()/findByKeyOrFail()/formValues()` (Blade array migire، na Model). View ha: `panel::providers.index` (jadval e server-rendered + toggle e roshan/khamush ba POST — datatable e AJAX baraye ~6 radif overkill) va `panel::providers.form` (3 bakhsh: shenase/zamanbandi/namayesh؛ key tu edit readonly va az ROUTE miad pas form nemitune avazesh kone). `x-form.select` prop e `value` gereft (kit pre-select nadasht). Nav e «منابع قیمت» roshan shod.
+  → 6 test e HTTP (`ProviderCrudTest`): sakht (khamush-e-default)، driver e nashenas rad، **key e ghofl** (form e `key` e avazi ta'sir nadare)، flags faghat 4 flag (timeout e ersal-shode asar nakard)، lista، 404 e gheyr-admin. **790 test sabz، e2e 6/6.** Screenshot: `screenshots/providers.png` + `provider-form.png`.
+  ⚠️ **Logo be P3-00b mokul shod** — media-picker be module ye Media niaz dare.
 - [ ] **P3-07** — `ProviderSpreadForm` (har `Instrument::cases()` + preview e **server-side** ba hamun `SpreadPricer`)
 - [ ] **P3-08** — `ProviderHealth`
 - [ ] **P3-09** — `TickMonitor` (chi rad shod va chera) — safhe ye asli ye debug

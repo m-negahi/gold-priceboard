@@ -30,8 +30,7 @@ final class Navigation
                 'label' => 'قیمت‌گذاری',
                 'items' => [
                     ['key' => 'dashboard', 'label' => 'میزکار', 'icon' => 'gauge', 'route' => 'panel.dashboard'],
-                    // P3-06/P3-07 — provider ha + spread.
-                    ['key' => 'providers', 'label' => 'منابع قیمت', 'icon' => 'feed', 'route' => null],
+                    ['key' => 'providers', 'label' => 'منابع قیمت', 'icon' => 'feed', 'route' => 'panel.providers.index'],
                     // P3-08/P3-09 — salamat + payesh e tick.
                     ['key' => 'health', 'label' => 'سلامت منابع', 'icon' => 'pulse', 'route' => null],
                     ['key' => 'monitor', 'label' => 'پایش زنده', 'icon' => 'eye', 'route' => null],

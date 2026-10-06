@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Pricing\Application\Queries;
 
 use App\Modules\Pricing\Application\Dto\ProviderConfigDto;
+use App\Modules\Pricing\Domain\Enums\ProviderKind;
+use App\Modules\Pricing\Domain\Enums\UpstreamUnit;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\Provider;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\ProviderSpread;
 use DateTimeInterface;
@@ -81,6 +83,82 @@ final readonly class ProviderQuery
         }
 
         return $configs;
+    }
+
+    /**
+     * Radif haye safhe ye lista ye panel — hame ye provider ha (hatta
+     * khamoosh/hazf-shode)، faghat soton haye TANZIMI + state.
+     *
+     * Khoruji array e sade ast (na Model) ta Blade be Eloquent dast nazane.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function panelRows(): array
+    {
+        $rows = [];
+
+        foreach (Provider::withTrashed()->orderBy('sort')->get() as $provider) {
+            $rows[] = [
+                'key' => $provider->key,
+                'name' => $provider->name_fa ?: $provider->name,
+                'driver' => $provider->driver,
+                'kind' => $provider->kind,
+                'website' => $provider->website,
+                'isActive' => (bool) $provider->is_active,
+                'inComparison' => (bool) $provider->in_comparison,
+                'onBoard' => (bool) $provider->on_board,
+                'inChart' => (bool) $provider->in_chart,
+                'timeout' => (int) $provider->timeout,
+                'pollIntervalSeconds' => (int) $provider->poll_interval_seconds,
+                'healthState' => $provider->health_state,
+                'sort' => (int) $provider->sort,
+                'deleted' => $provider->trashed(),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Model baraye pass dadan be `ProviderAction` (olgu ye CLAUDE.md:
+     * controller Query ro seda mizane، Model faghat dast-be-dast mishe).
+     */
+    public function findByKeyOrFail(string $key): Provider
+    {
+        return Provider::query()->where('key', $key)->firstOrFail();
+    }
+
+    /**
+     * Meghdar haye form e virayesh — array، na Model (Blade Eloquent nemibine).
+     *
+     * @return array<string, mixed>
+     */
+    public function formValues(string $key): array
+    {
+        $provider = $this->findByKeyOrFail($key);
+
+        return [
+            'key' => $provider->key,
+            'driver' => $provider->driver,
+            'name' => $provider->name,
+            'name_fa' => $provider->name_fa,
+            'kind' => $provider->kind instanceof ProviderKind
+                ? $provider->kind->value
+                : (string) $provider->kind,
+            'website' => $provider->website,
+            'is_active' => (bool) $provider->is_active,
+            'in_comparison' => (bool) $provider->in_comparison,
+            'on_board' => (bool) $provider->on_board,
+            'in_chart' => (bool) $provider->in_chart,
+            'timeout' => (int) $provider->timeout,
+            'poll_interval_seconds' => (int) $provider->poll_interval_seconds,
+            'freshness_seconds' => (int) $provider->freshness_seconds,
+            'hide_after_seconds' => (int) $provider->hide_after_seconds,
+            'upstream_unit' => $provider->upstream_unit instanceof UpstreamUnit
+                ? $provider->upstream_unit->value
+                : (string) $provider->upstream_unit,
+            'sort' => (int) $provider->sort,
+        ];
     }
 
     /**

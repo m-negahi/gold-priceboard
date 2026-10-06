@@ -6,6 +6,7 @@ use App\Modules\Auth\Http\Controllers\LoginController;
 use App\Modules\Auth\Http\Middleware\EnsureAdmin;
 use App\Modules\Panel\Http\Controllers\DashboardController;
 use App\Modules\Panel\Http\Controllers\KitController;
+use App\Modules\Panel\Http\Controllers\ProviderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -39,6 +40,14 @@ Route::middleware(['auth', EnsureAdmin::class])
     ->name('panel.')
     ->group(function (): void {
         Route::get('/', [DashboardController::class, 'show'])->name('dashboard');
+
+        // ── Manba' ha (P3-06) ───────────────────────────────────────
+        Route::get('/providers', [ProviderController::class, 'index'])->name('providers.index');
+        Route::get('/providers/create', [ProviderController::class, 'create'])->name('providers.create');
+        Route::post('/providers', [ProviderController::class, 'store'])->name('providers.store');
+        Route::get('/providers/{key}/edit', [ProviderController::class, 'edit'])->name('providers.edit');
+        Route::put('/providers/{key}', [ProviderController::class, 'update'])->name('providers.update');
+        Route::post('/providers/{key}/flags', [ProviderController::class, 'flags'])->name('providers.flags');
     });
 
 /*

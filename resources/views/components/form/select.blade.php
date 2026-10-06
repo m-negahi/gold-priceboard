@@ -4,6 +4,9 @@
     'options' => [],
     'placeholder' => null,
     'size' => 'md',
+    // Meghdar e entekhab-shode (form e virayesh / old()). Ba x-model lazem
+    // nist — Alpine khodesh entekhab ro dast migire.
+    'value' => null,
 ])
 @use('App\Modules\Panel\Support\FormControl')
 
@@ -19,10 +22,10 @@
             :aria-describedby="{{ FormControl::ARIA_DESCRIBED_BY }}"
             {{ $attributes->merge(['class' => FormControl::classes($size).' appearance-none pe-10']) }}>
         @if ($placeholder !== null)
-            <option value="" disabled @if (! $attributes->has('x-model')) selected @endif>{{ $placeholder }}</option>
+            <option value="" disabled @if (! $attributes->has('x-model') && ($value === null || $value === '')) selected @endif>{{ $placeholder }}</option>
         @endif
-        @foreach ($options as $value => $label)
-            <option value="{{ $value }}">{{ $label }}</option>
+        @foreach ($options as $optionValue => $label)
+            <option value="{{ $optionValue }}" @if ($value !== null && (string) $optionValue === (string) $value) selected @endif>{{ $label }}</option>
         @endforeach
         {{ $slot }}
     </select>
