@@ -18,9 +18,32 @@
 `resources/views/components/**` (form kit: input/select/jalali-date/otp-input/media-picker/…، panel kit: sidebar/modal/datatable/toasts/…، captcha، layout e panel)، `resources/js/alpine/**` (11 component: login، datatable، jalali-date، media-upload، …)، `resources/views/kit/**` (safhe haye namayesh e kit)، module e **Media** (upload + ketabkhane، 21 file) va **Panel** (dashboard + navigation، 12 file).
 🔴 **Hich kodum REGISTER NASHODAN** (provider hashun tu `bootstrap/providers.php` nist، js ha import nashodan) — bi-asar-and ta Phase 3. Tu P3 bayad: review + register + test + hamahangi ba memari (Livewire e ma vs controller e una) + token haye theme. `HtmlSanitizer` (baraye rich-text) amdan nayamade — age lazem shod az Desktop biad.
 
-**Phase**: 2 ✓، 3 ✓ (joz P3-00b Media)، **4 — core kamel** → mande: P4-07/P4-10 (panel ha)
-**Akharin session (2026-10-06)**: Phase 2 review + Phase 3 KAMEL (panel، provider/spread، monitoring، matrix) + Phase 4 core (wallet، HMAC API، billing، plan، inspector) + darkhast haye vasat e session.
-**Vaziat e test**: **831 test (3500 assertion) sabz**، **e2e 12/12** (login 6 + panel 6).
+**Phase**: 2 ✓، 3 ✓ (joz P3-00b Media)، 4 core ✓، 5 dar hal e kar (board+chart ✓)
+**Vaziat e test (2026-10-06)**: **~851 test sabz**، **e2e 15/15** (login 6 + panel 6 + public 3).
+
+### 📋 Darkhast haye in session (chat ha) — vaziat
+- [x] Dolar e tgju ru tablo (freshness override).
+- [x] Hame symbol az hame provider (freshness override — rishe: asymmetry e timestamp، na map).
+- [x] UX e mafhoomi ye `/dashboard/monitor` (tick).
+- [x] API inspector (hala HAME ye call ro log mikone — vali bebin ⬇️ clarification).
+- [x] Model e karbari: website + plan + wallet + saghf e ruzane (P4-09).
+- [x] Logout-e-refresh (cookie e yekta `pb8300_session` + lifetime 24h + rebuild e image).
+- [x] Mahdude ye 5% (az qabl tu PriceSanity bud + rahnama).
+- [x] Esm e estjt → «اتحادیه طلا و جواهر تهران».
+- [x] Matrix e moghayese-i (gheymat + taghir + arzun/geran + ekhtelaf).
+- [x] Influx token ha dorost shodan (401 → hall).
+- [x] Manba' e DASTI (fallback) + feed e mo'asser + alarm (P4-13).
+- [x] Chart e KLineCharts ru board e omumi (P5-04).
+- [x] Manual page AJAX (bi-reload/scroll).
+- [x] Login e dev (driver fake) bi-rate-limit (`otp.throttle`).
+- [ ] 🔴 **`P4-14`** — **CLARIFICATION**: `/dashboard/monitor/api` bayad call-hayi ke MA be PROVIDER ha (tgju/estjt) mizanim ro neshun bede (baraye debug e khata ye provider)، NA call-e customer be ma. Yani yek «upstream call inspector». (Call e customer ham mimune vali hadaf e debug e provider-e.)
+- [ ] 🔴 **`P4-15`** — **Telescope** rah biofte (dev).
+- [ ] 🔴 **`P4-16`** — **Horizon** rah biofte + dashboard.
+- [ ] 🔴 **`P4-17`** — **Enum e Queue tu `Common`**: hame ye queue ha (Horizon config + har ja tu tick/job queue estefade mishe) yekparche az yek enum beran.
+- [ ] 🔴 **`P5-07`** — Olaviat e PER-SYMBOL baraye feed e mo'asser (masalan abshode: aval tgju، bad estjt، …، akhar manual). Config e qabel e tanzim tu panel. (Fe'lan olaviat GLOBAL ba `sort`-e.)
+- [ ] 🔴 **`P5-08`** — Chart/candle tu ADMIN ham namayesh (fe'lan faghat board e omumi). Ezafe be matrix ya safhe ye joda.
+- [ ] `P4-07`/`P4-10` — panel haye admin/customer (customer «felan vel»).
+- [ ] `P5-03` (board TV)، `P5-05` (SEO) — mande.
 
 🔴 **Mande ye Phase 4**:
 - `P4-07` — admin: CustomerList + WalletLedger (model/Query amade، faghat UI mande)
