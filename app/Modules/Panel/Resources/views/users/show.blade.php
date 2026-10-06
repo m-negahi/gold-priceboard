@@ -131,7 +131,7 @@
                 <p class="mt-4 rounded-xl bg-surface-3 px-4 py-6 text-center text-sm text-muted">هنوز کیف پولی ساخته نشده است.</p>
             @else
                 <div class="relative mt-4 overflow-x-auto">
-                    <table class="w-full min-w-[40rem] text-sm">
+                    <table class="w-full min-w-[34rem] text-sm">
                         <thead>
                             <tr class="border-b border-line text-xs font-semibold text-muted">
                                 <th class="px-3 py-2 text-start font-semibold">زمان</th>
@@ -159,7 +159,7 @@
                                         <span class="ltr num">{{ $tx['credit'] ? '+' : '−' }}{{ $tx['amountToman'] }}</span>
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-2 text-muted"><span class="ltr num">{{ $tx['balanceAfterToman'] }}</span></td>
-                                    <td class="max-w-40 px-3 py-2 text-xs text-muted-3"><span class="ltr block truncate" title="{{ $tx['reference'] }}">{{ $tx['reference'] }}</span></td>
+                                    <td class="px-3 py-2 text-xs text-muted-3"><span class="ltr block max-w-32 truncate" title="{{ $tx['reference'] }}">{{ $tx['reference'] }}</span></td>
                                 </tr>
                             @empty
                                 <tr>
