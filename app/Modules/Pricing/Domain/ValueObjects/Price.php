@@ -65,6 +65,34 @@ final readonly class Price
         return $this->minor / (10 ** $this->quote->scale());
     }
 
+    /**
+     * Matn e NAMAYESHI (rial -> toman، dollar ba 2 ragham) — ba bcmath، na float.
+     *
+     * Chera na `number_format($this->toFloat() / 10)`: bala ye 2^53 raghame
+     * akhar saket gom mishe va gerd kardan e `round()` ru float gahi
+     * (x.5 -> paeen) eshtebah mikone. Gerd kardan nim-be-bala (az sefr dur).
+     */
+    public function display(): string
+    {
+        $precision = $this->quote->displayPrecision();
+        $divisor = bcmul(bcpow('10', (string) $this->quote->scale()), (string) $this->quote->displayDivisor());
+
+        $negative = $this->minor < 0;
+        $abs = ltrim((string) $this->minor, '-');
+
+        // round(abs × 10^p / divisor) = floor((2·abs·10^p + divisor) / (2·divisor))
+        $scaled = bcmul($abs, bcpow('10', (string) $precision));
+        $rounded = bcdiv(bcadd(bcmul($scaled, '2'), $divisor), bcmul($divisor, '2'), 0);
+
+        $rounded = str_pad($rounded, $precision + 1, '0', STR_PAD_LEFT);
+        $int = $precision > 0 ? substr($rounded, 0, -$precision) : $rounded;
+        $fraction = $precision > 0 ? '.'.substr($rounded, -$precision) : '';
+
+        $grouped = strrev(implode(',', str_split(strrev($int), 3)));
+
+        return ($negative && $rounded !== str_repeat('0', strlen($rounded)) ? '-' : '').$grouped.$fraction;
+    }
+
     public function isPositive(): bool
     {
         return $this->minor > 0;

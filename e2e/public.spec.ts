@@ -38,6 +38,39 @@ test.describe('public board', () => {
         expect(res.second).toBe(304);
     });
 
+    /**
+     * 🔴 Flash e tablo VAGHE'AN animate mishe: ghablan `.flash-up` ba
+     * `var(--ease)` e ta'rif-nashode `animation: none` mishod va hichvaght
+     * dide nemishod (P5-03). Fagat khundan — hich data-i avaz nemishe.
+     */
+    test('poll e board flash e sabz mizane (animation zende)', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForFunction(() => {
+            const root = document.querySelector('[x-data^="board("]');
+            const alpine = (window as never as { Alpine?: { $data(el: Element): { lastSell?: object } } }).Alpine;
+            return Boolean(root && alpine && alpine.$data(root).lastSell);
+        });
+
+        const cell = page.locator('[data-cell]').first();
+        const key = await cell.getAttribute('data-cell');
+
+        await page.evaluate(async (k) => {
+            type Board = { etag: string | null; lastSell: Record<string, number>; refresh(): Promise<void> };
+            const root = document.querySelector('[x-data^="board("]')!;
+            const c = (window as never as { Alpine: { $data(el: Element): Board } }).Alpine.$data(root);
+            const r = await fetch('/board.json');
+            const data = await r.json();
+            const [symbol, provider] = (k as string).split(':');
+            const row = data.rows.find((x: { symbol: string }) => x.symbol === symbol);
+            c.lastSell[k as string] = row.cells[provider].sell - 1;
+            c.etag = null;
+            await c.refresh();
+        }, key);
+
+        await expect(cell).toHaveClass(/flash-up/);
+        expect(await cell.evaluate((el) => getComputedStyle(el).animationName)).toBe('pb-flash-up');
+    });
+
     test('🔴 sefr request e biruni (hich CDN/font/analytics)', async ({ page }) => {
         const external: string[] = [];
 

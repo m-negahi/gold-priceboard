@@ -40,6 +40,12 @@ enum QuoteCurrency: string
         return $this === self::IRR ? 10 : 1;
     }
 
+    /** Vahed e NAMAYESHI (ba'd az `displayDivisor`) — rial tu UI toman ast. */
+    public function displayLabel(): string
+    {
+        return $this === self::IRR ? 'تومان' : 'دلار';
+    }
+
     /** Chand raghame ashar tu UI neshun dade she. */
     public function displayPrecision(): int
     {

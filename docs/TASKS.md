@@ -61,7 +61,7 @@
   **Pishnahad (chat 2026-10-06)**: safhe ye joda `/dashboard/charts` (sidebar e «نمودارها») + link e mostaghim az har radif e matrix. Reuse e `price-chart.js` + `/candles.json` (interval haye mojud: m1/m5/m15/h1/h4/d1). Baraye haftegi/mahane/salane: tajmi' az `candles_1d` dar lahze ye query (Flux `aggregateWindow` ru d1)، na bucket e jadid. Toggle e khat (area) / candle — KLineCharts har do ro dare.
   → **Anjam shod (2026-10-06)**: safhe ye `/dashboard/charts` («نمودار قیمت» tu sidebar) + icon e chart ru har radif e matrix (deep-link `?symbol=&period=&provider=`، URL ba `replaceState` share-pazir). Baze ha: 5د/15د/1س/4س/روزانه mostaghim az bucket e Influx؛ **هفتگی/ماهانه/سالانه az `candles_1d` ba taghvim e JALALI** (hafte az shanbe، mah/sal e shamsi) — `Application\Support\{CandleAggregator,JalaliBucket}` (mahz). 🔴 Tale: bar e ruzane az 00:00 e Tehran = `20:30Z` e rooz e ghabl — bucket e UTC 1 Mehr ro tu Shahrivar mindaze (test + mutation: UTC -> 6 fail). `ChartPeriod` (allowlist، lookback zir e `MAX_LIMIT` e 5000 ba test). Provider e pish-farz = avvalin e zanjire ye olaviat e hamun symbol (P5-07). Khati = area ba rang e BRAND (na up/down) — `--color-brand-soft` `var(...)`-e va tu canvas resolve nemishe، va `transparent` tu gradient siah mishe → rgba az hex e brand. Test: 9 unit + 5 feature + `e2e/charts.spec.ts` 5/5 + responsive. Kol: 949 PHP + 52/52 e2e.
 - [ ] `P4-07`/`P4-10` — panel haye admin/customer (customer «felan vel»).
-- [ ] `P5-03` (board TV)، `P5-05` (SEO) — mande.
+- [x] `P5-03` (board TV) — anjam shod (paeen)؛ `P5-05` (SEO) — mande.
 
 🔴 **Mande ye Phase 4**:
 - `P4-07` — admin: CustomerList + WalletLedger (model/Query amade، faghat UI mande)
@@ -489,7 +489,8 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → `ManualQuoteSource` (upstreamAt null — hargez stale rad nemishe) + `manual_prices` + provider e `manual` (sort 80، khamoosh). `ManualPriceAction` (set/seedFromProvider) + `ManualPriceQuery` (alarm e >24h). `EffectivePriceQuery`: har symbol → avvalin provider e taze be tartib e `sort`؛ hame stale → manual؛ `usingFallback`+alarm. Panel «قیمت دستی» (seed + virayesh + alarm). `GET /api/v1/effective` (+ `X-Pb-Fallback`).
 - [x] **P5-01/02/06** — Site e omumi: tablo ye moghayese (SSR + `/board.json` + poll e 15s + flash)، chrome، **sefr request e biruni** (e2e).
 - [x] **P5-04** — Chart e KLineCharts 10 (modal ru board، `/candles.json`، lazy-import، rang az token).
-- [ ] **P5-03** — Board e TV (full-screen، font e bozorg، flash) — MANDE.
+- [x] **P5-03** — Board e TV (full-screen، font e bozorg، flash).
+  → **Anjam shod (2026-10-06)**: `/tv` + `/tv.json` (omumi، bedun e chrome، `noindex`) — har kashi YEK gheymat = gheymat e MO'ASSER (`EffectivePriceQuery` + zanjire ye P5-07)، na miangin (`TvBoardQuery`). Zamine ye tire (`surface-dark`)، font be arz e KASHI (`--text-tv-price` ba `cqi`، `@container`)، `up-on-dark`/`down-on-dark` baraye contrast ru tire، saat/tarikh e shamsi (Intl، raghame Latin)، dokme ye full-screen، Wake Lock، poll e 15s ba ETag e MOHTAVA-yi (taghir e olaviat bedun e tick ham 200 mide — mutation: ETag e version -> 1 fail) + flash e sabz/ghermez. Adad ba `Price::display()` (bcmath، gerd e half-up، bedun e float — mutation: hazf e gerd -> fail). 🔴 Do bug e mojud fix shod: (1) `.flash-up/.flash-down` e tablo ba `var(--ease)` e ta'rif-nashode `animation: none` mishod — flash HICHVAGHT dide nemishod (e2e `animationName` + mutation ta'eed); (2) icon haye `Instrument::icon()` (`coin`/`world`/…) tu `<x-icon>` nabudan va hame noghte budan (`InstrumentIconTest`). Test: 7 feature + 2 unit + 1 icon + `e2e/tv.spec.ts` 5/5 + flash e `public.spec`. Kol: 961 PHP (4022 assertion) + 58/58 e2e.
 - [ ] **P5-05** — SEO (JSON-LD، sitemap، robots.txt) — MANDE.
 - ✅ **Login hall shod** (2026-10-06): cookie e yekta `pb8300_session` + lifetime 24h + rebuild e image. Ta'eed: 6 refresh → 0 drop.
 
@@ -499,7 +500,7 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 
 - [ ] **P5-01** — Layout e site e omumi + token haye moshtarak
 - [ ] **P5-02** — Jadval e moghayese (SSR + `/api/board.json` ba ETag)
-- [ ] **P5-03** — Board e TV (full-screen، font e bozorg، flash)
+- [x] **P5-03** — Board e TV (full-screen، font e bozorg، flash) → bala (Darkhast haye sahebe proje).
 - [ ] **P5-04** — KLineCharts + toolbar e Alpine + `Interval::availableFrom()`
   + Interval e `1w`/`1M` (haftegi/mahane): bucket e joda NEMIKHAD — az `candles_1d` (retention ∞) ba `aggregateWindow(every: 1w|1mo)` dar lahze ye query sakhte mishan (~365 radif dar sal، arzun). Range e delkhah (`from`/`to`) alan tu `CandleRequestDto` hast.
   + Chart e KHATI: hamun data ye OHLC، faghat style e KLineCharts (`area`/`line` — `close` ha ro vasl mikone). Hich storage e jadid nemikhad.
@@ -591,6 +592,7 @@ Phase 5 (baghi: `P5-08` chart e admin، `P5-03` TV، `P5-05` SEO) → **Phase 6*
 | 2026-10-06 | Seed bar asas e olaviat gheymat e KHAM (ghabl az spread) ro zakhire mikone va symbol e bedun e manba' e TAZE ro dast nemizane | spread ru read e'mal mishe؛ jaygozin kardan e gheymat e dasti ba adad e bayat hadaf e fallback ro az bein mibare |
 | 2026-10-06 | Chart e haftegi/mahane/salane ba taghvim e JALALI dar PHP (na `aggregateWindow` e Flux) | Flux faghat mah/sal e miladi va hafte az panjshanbe (epoch) mifahme؛ karbar e Irani mah e shamsi va hafte az shanbe entezar dare. `candles_1d` bi-nahayat negah dashte mishe va 13 sal = ~4700 bar — arzun |
 | 2026-10-06 | Safhe ye «اولویت منابع» AJAX (Alpine + JSON) na Livewire | hamun olgu ye safhe ye gheymat e dasti ke sahebe proje sarih khast (bedun e reload/scroll) — `resources/views/CLAUDE.md` mige «hich fetch e Alpine-only»; in estesna sabt shod ta ba'dan yekdast tasmim gerefte she |
+| 2026-10-06 | Board e TV (P5-03) gheymat e MO'ASSER (yek adad/symbol) neshun mide na miangin/moghayese؛ ETag e `/tv.json` az MOHTAVA na `boardVersion`؛ poll ba fetch e Alpine (hamun estesna ye `board.js`) | maghaze yek adad mikhad ke ba feed e API yeki bashe؛ taghir e olaviat bedun e tick adad ro avaz mikone؛ payload baraye hame byte-identical ast |
 
 ---
 

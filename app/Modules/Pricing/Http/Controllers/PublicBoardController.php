@@ -9,6 +9,7 @@ use App\Modules\Pricing\Application\Dto\CandleRequestDto;
 use App\Modules\Pricing\Application\Queries\CandleQuery;
 use App\Modules\Pricing\Application\Queries\ProviderQuery;
 use App\Modules\Pricing\Application\Queries\PublicBoardQuery;
+use App\Modules\Pricing\Application\Queries\TvBoardQuery;
 use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Pricing\Domain\Enums\Interval;
 use App\Modules\Pricing\Domain\Enums\Side;
@@ -32,11 +33,36 @@ final readonly class PublicBoardController
         private PublicBoardQuery $board,
         private CandleQuery $candles,
         private ProviderQuery $providers,
+        private TvBoardQuery $tvBoard,
     ) {}
 
     public function home(): View
     {
         return view('public.board', ['board' => $this->board->present()]);
+    }
+
+    /**
+     * Board e TV (P5-03): full-screen، font e bozorg — bedun e chrome e site.
+     * SSR baraye first paint؛ ba'd `tvJson` har 15s poll mishe.
+     */
+    public function tv(): View
+    {
+        return view('public.tv', ['tv' => $this->tvBoard->present()]);
+    }
+
+    public function tvJson(Request $request): JsonResponse
+    {
+        $tv = $this->tvBoard->present();
+        $etag = 'W/'.$tv['etag'];
+
+        if ($request->headers->get('If-None-Match') === $etag) {
+            return new JsonResponse(null, 304, ['ETag' => $etag]);
+        }
+
+        return new JsonResponse($tv, 200, [
+            'ETag' => $etag,
+            'Cache-Control' => 'public, max-age=5',
+        ]);
     }
 
     public function boardJson(Request $request): JsonResponse

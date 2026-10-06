@@ -83,6 +83,24 @@
     --color-stale-strong: #ffe69f;
     --color-stale-soft: #fff6e0;
 
+    /* ── Board e TV (P5-03) — up/down RU zamine ye TIRE ──────────────────
+       `up`/`down` e mamuli baraye matn ru SEFID tanzim shodan (ru
+       surface-dark-2 `down` faghat ~2.4:1). Inja: up = hamun fill e doc
+       (5.2:1 ru surface-dark-2)، down roshan tar (5.7:1). Faghat jahat e
+       gheymat — hamun ghanun e «brand ≠ up/down». */
+    --color-up-on-dark: var(--color-up-strong);
+    --color-down-on-dark: #ff7a7f;
+
+    /* Font e TV: andaze ye gheymat be ARZ E KASHI (`cqi`) baste-ast، na
+       viewport — 4 sotun ru 1920 va 1 sotun ru mobile har do ja mishan va
+       «171,950,000» hichvaght az kashi birun nemizane. */
+    --text-tv-price: clamp(1.75rem, 12.5cqi, 5.5rem);
+    --text-tv-price--line-height: 1.15;
+    --text-tv-label: clamp(1.05rem, 1.5vw, 2rem);
+    --text-tv-label--line-height: 1.5;
+    --text-tv-meta: clamp(0.875rem, 1.05vw, 1.375rem);
+    --text-tv-meta--line-height: 1.5;
+
     /* ── Metals ─────────────────────────────────────────────────────────────
        Hoviat e instrument (disc e icon، chip). FAGHAT icon/chip، hich vaght
        tone e matn. `metal-*` esm haye dashboard-design.md §2-and؛ `gold`/… e
@@ -370,11 +388,28 @@
     0% { background-color: var(--color-down-soft); }
     100% { background-color: transparent; }
 }
-.flash-up { animation: pb-flash-up 0.9s var(--ease); }
-.flash-down { animation: pb-flash-down 0.9s var(--ease); }
+/* 🔴 Ghablan `var(--ease)` bud ke HICH JA ta'rif nashode — shorthand e
+   `animation` ba var e namojud «invalid at computed-value time» mishe va
+   kol e animation `none` mishod: flash e tablo hichvaght dide nemishod.
+   e2e (`tv.spec`/`public.spec`) `animationName` ro check mikone. */
+.flash-up { animation: pb-flash-up 0.9s var(--bp-ease-out); }
+.flash-down { animation: pb-flash-down 0.9s var(--bp-ease-out); }
+
+/* Flash e TV (P5-03): rang e por-rang tar va toolani tar (az fasele ye
+   chand metri dide beshe) — ru zamine ye tire ye kashi. */
+@keyframes pb-tv-flash-up {
+    0% { background-color: color-mix(in oklab, var(--color-up-strong) 45%, var(--color-surface-dark-2)); }
+    100% { background-color: var(--color-surface-dark-2); }
+}
+@keyframes pb-tv-flash-down {
+    0% { background-color: color-mix(in oklab, var(--color-down-strong) 45%, var(--color-surface-dark-2)); }
+    100% { background-color: var(--color-surface-dark-2); }
+}
+.tv-flash-up { animation: pb-tv-flash-up 1.6s var(--bp-ease-out); }
+.tv-flash-down { animation: pb-tv-flash-down 1.6s var(--bp-ease-out); }
 
 @media (prefers-reduced-motion: reduce) {
-    .flash-up, .flash-down { animation: none; }
+    .flash-up, .flash-down, .tv-flash-up, .tv-flash-down { animation: none; }
 }
 
 @layer components {

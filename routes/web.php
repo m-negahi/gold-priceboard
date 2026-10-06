@@ -24,6 +24,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PublicBoardController::class, 'home'])->name('home');
 Route::get('/board.json', [PublicBoardController::class, 'boardJson'])->name('board.json');
 Route::get('/candles.json', [PublicBoardController::class, 'candlesJson'])->name('candles.json');
+// Board e TV (P5-03) — full-screen baraye namayeshgar e maghaze؛ OMUMI.
+Route::get('/tv', [PublicBoardController::class, 'tv'])->name('tv');
+Route::get('/tv.json', [PublicBoardController::class, 'tvJson'])->name('tv.json');
 
 /*
  * ── Login ba OTP ─────────────────────────────────────────────────────

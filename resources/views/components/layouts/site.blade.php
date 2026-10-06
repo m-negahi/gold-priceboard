@@ -4,6 +4,8 @@
     'wide' => false,
     // `chrome` header/ticker/footer ro dor-e slot mizare; login va safhe-haye "bedoone menu" false midan.
     'chrome' => true,
+    // Zamine ye body — TV (P5-03) tire ast (`bg-surface-dark`)؛ baghi canvas.
+    'bodyClass' => 'bg-canvas text-ink',
 ])
 
 <!DOCTYPE html>
@@ -23,7 +25,7 @@
 
     @stack('head')
 </head>
-<body class="flex min-h-dvh flex-col bg-canvas text-ink antialiased">
+<body class="flex min-h-dvh flex-col antialiased {{ $bodyClass }}">
     @if ($chrome)
         {{-- Header e site e omumi (Phase 5). --}}
         <header class="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur">
@@ -60,6 +62,7 @@
             <div class="container-wide flex flex-col gap-3 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
                 <p>© تابلو قیمت — قیمت لحظه‌ای طلا، سکه و نقره از چند منبع.</p>
                 <nav class="flex items-center gap-4">
+                    <a href="{{ route('tv') }}" class="hover:text-ink">تابلوی تلویزیونی</a>
                     <a href="#terms" class="hover:text-ink">قوانین</a>
                     <a href="#privacy" class="hover:text-ink">حریم خصوصی</a>
                     <a href="#support" class="hover:text-ink">پشتیبانی</a>
