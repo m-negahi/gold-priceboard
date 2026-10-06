@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Support\Str;
-
 return [
 
     /*
@@ -127,10 +125,20 @@ return [
     |
     */
 
-    'cookie' => env(
-        'SESSION_COOKIE',
-        Str::slug((string) env('APP_NAME', 'laravel')).'-session'
-    ),
+    /*
+     * 🔴 Esm e cookie bayad YEKTA bashe، na `Str::slug(APP_NAME)` e default.
+     *
+     * Cookie ha ru `localhost` BEDUN e port moshtarak-and (port jozy e
+     * cookie nist). Proje ye ghabli (`~/Projects/priceboard`) ham esmesh
+     * «priceboard» ast، pas default e Laravel baraye HAR DO mishod
+     * `priceboard-session` — yek slot ru localhost ba DO APP_KEY e
+     * motefavet. Natije: har refresh، cookie e un yeki miumad، in app
+     * decrypt esh nemikard، session drop mishod va admin logout.
+     * (Ba `hg_*`/`b2b_*`/`livewire_learn_*` ham hamin — hame ru localhost.)
+     *
+     * `pb8300` = port e yekta ye in proje، pas hichvaght collision nemide.
+     */
+    'cookie' => env('SESSION_COOKIE', 'pb8300_session'),
 
     /*
     |--------------------------------------------------------------------------
