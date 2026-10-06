@@ -25,6 +25,7 @@ const PAGES: Array<{ path: string; heading: RegExp }> = [
     { path: '/dashboard/matrix', heading: /ماتریس/ },
     { path: '/dashboard/charts', heading: /نمودار قیمت/ },
     { path: '/dashboard/users', heading: /مشتریان/ },
+    { path: '/dashboard/users/create', heading: /کاربر جدید/ },
     // Admin e dev (seeder) id 1 ast.
     { path: '/dashboard/users/1', heading: /./ },
 ];

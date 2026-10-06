@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Panel\Http\Controllers;
 
+use App\Modules\Auth\Application\Actions\UserAdminAction;
 use App\Modules\Auth\Application\Queries\UserQuery;
+use App\Modules\Auth\Domain\Enums\CustomerType;
 use App\Modules\Auth\Domain\Enums\UserLevel;
 use App\Modules\Auth\Domain\Enums\UserStatus;
+use App\Modules\Auth\Domain\Exceptions\UserAdminException;
+use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Panel\Queries\UserDetailQuery;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -22,6 +27,7 @@ final readonly class UserController
     public function __construct(
         private UserQuery $users,
         private UserDetailQuery $detail,
+        private UserAdminAction $admin,
     ) {}
 
     public function index(Request $request): View
@@ -50,5 +56,67 @@ final readonly class UserController
     public function show(int $user): View
     {
         return view('panel::users.show', $this->detail->show($user));
+    }
+
+    public function create(): View
+    {
+        return view('panel::users.create', [
+            'customerTypes' => CustomerType::labels(),
+        ]);
+    }
+
+    /**
+     * 🔴 Faghat field haye `validated()` be Action miran — `is_admin`/
+     * `status`/`level` e dast-kari-shode tu request hich ja masraf nemishan.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'phone' => ['required', 'string', 'max:32'],
+            'name' => ['nullable', 'string', 'max:120'],
+            'role' => ['required', Rule::in(['admin', 'customer'])],
+            'customer_type' => ['required', Rule::in(CustomerType::values())],
+        ]);
+
+        try {
+            $user = $this->admin->create(
+                $data['phone'],
+                $data['name'] ?? null,
+                $data['role'] === 'admin',
+                CustomerType::from($data['customer_type']),
+            );
+        } catch (UserAdminException $e) {
+            return back()->withErrors([$e->field => $e->getMessage()])->withInput();
+        }
+
+        return redirect()->route('panel.users.show', $user->id)->with('toast', [
+            'kind' => 'success',
+            'title' => 'کاربر ساخته شد',
+            'message' => 'با اولین ورود OTP شماره‌اش تأیید می‌شود.',
+        ]);
+    }
+
+    public function role(Request $request, int $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'role' => ['required', Rule::in(['admin', 'customer'])],
+        ]);
+
+        /** @var User $target */
+        $target = $this->users->findOrFail($user);
+        /** @var User $actor */
+        $actor = $request->user();
+
+        try {
+            $this->admin->setRole($target, $data['role'] === 'admin', $actor);
+        } catch (UserAdminException $e) {
+            return back()->withErrors([$e->field => $e->getMessage()]);
+        }
+
+        return redirect()->route('panel.users.show', $target->id)->with('toast', [
+            'kind' => 'success',
+            'title' => 'نقش تغییر کرد',
+            'message' => $data['role'] === 'admin' ? 'کاربر اکنون ادمین است.' : 'کاربر اکنون مشتری است.',
+        ]);
     }
 }

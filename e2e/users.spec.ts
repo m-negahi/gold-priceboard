@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { ADMIN, signInAsAdmin } from './helpers/auth';
+import { ADMIN, artisan, signInAsAdmin } from './helpers/auth';
 
 /**
  * Karbaran e panel (Phase 6) tu browser e vaghei.
@@ -11,12 +11,20 @@ test.describe.configure({ mode: 'serial' });
 
 let page: Page;
 
+/** Karbar e MOVAGHAT e e2e — ghabl/ba'd az suite pak mishe (DB e dev). */
+const TEMP_PHONE = '09990001234';
+
+const removeTempUser = () =>
+    artisan('tinker', `--execute=App\\Modules\\Auth\\Infrastructure\\Persistence\\Models\\User::where('phone', '+989990001234')->delete(); echo 'DONE';`);
+
 test.beforeAll(async ({ browser }) => {
+    removeTempUser();
     page = await browser.newPage();
     await signInAsAdmin(page);
 });
 
 test.afterAll(async () => {
+    removeTempUser();
     await page.close();
 });
 
@@ -105,6 +113,52 @@ test.describe('safhe ye karbar (P6-03)', () => {
         const card = page.locator('[data-wallet]');
         const expected = await tokenRgb('--color-surface');
         expect(await card.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(expected);
+    });
+});
+
+test.describe('sakht + naghsh (P6-04)', () => {
+    test('sakht e moshtari az form -> safhe ye karbar', async () => {
+        await page.goto('/dashboard/users');
+        await page.locator('[data-user-create]').click();
+        await expect(page.getByRole('heading', { level: 1, name: 'کاربر جدید' })).toBeVisible();
+
+        await page.getByLabel('موبایل').fill(TEMP_PHONE);
+        await page.getByLabel('نام').fill('کاربر آزمایشی e2e');
+        await page.getByRole('button', { name: 'ساخت کاربر' }).click();
+
+        await expect(page).toHaveURL(/\/dashboard\/users\/\d+$/);
+        await expect(page.getByRole('heading', { level: 1, name: 'کاربر آزمایشی e2e' })).toBeVisible();
+        await expect(page.getByText(TEMP_PHONE).first()).toBeVisible();
+    });
+
+    test('shomare ye tekrari khata mide', async () => {
+        await page.goto('/dashboard/users/create');
+        await page.getByLabel('موبایل').fill(TEMP_PHONE);
+        await page.getByRole('button', { name: 'ساخت کاربر' }).click();
+
+        await expect(page.getByText('کاربری با این شمارهٔ موبایل از قبل وجود دارد.')).toBeVisible();
+    });
+
+    test('ertegha be admin va bargasht', async () => {
+        await page.goto('/dashboard/users?q=' + TEMP_PHONE);
+        await rows().first().getByRole('link', { name: /^جزئیات/ }).click();
+
+        await page.getByRole('button', { name: 'ارتقا به ادمین' }).click();
+        await expect(page.getByRole('button', { name: 'تبدیل به مشتری' })).toBeVisible();
+
+        await page.getByRole('button', { name: 'تبدیل به مشتری' }).click();
+        await expect(page.getByRole('button', { name: 'ارتقا به ادمین' })).toBeVisible();
+    });
+
+    test('admin naghsh e khodesh ro nemigire', async () => {
+        await page.goto('/dashboard/users?q=0' + ADMIN);
+        await rows().first().getByRole('link', { name: /^جزئیات/ }).click();
+
+        await page.getByRole('button', { name: 'تبدیل به مشتری' }).click();
+        await expect(page.locator('[data-user-error]')).toHaveText('نمی‌توانید نقش ادمین را از خودتان بگیرید.');
+        // Error box ba token e down-soft.
+        const expected = await tokenRgb('--color-down-soft');
+        expect(await page.locator('[data-user-error]').evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(expected);
     });
 });
 

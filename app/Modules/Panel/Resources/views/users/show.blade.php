@@ -16,7 +16,22 @@
                 <x-panel.pill tone="flat">{{ $profile['level']->label() }}</x-panel.pill>
             </div>
         </div>
+
+        {{-- Taghir e naghsh (P6-04) — POST e sade؛ mohafez e lockout tu Action. --}}
+        <form method="POST" action="{{ route('panel.users.role', $profile['id']) }}" data-role-form>
+            @csrf
+            <input type="hidden" name="role" value="{{ $profile['isAdmin'] ? 'customer' : 'admin' }}">
+            <button type="submit"
+                    class="inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-ink ring-1 ring-line hover:bg-surface-3">
+                <x-icon name="shield" class="size-4" />
+                {{ $profile['isAdmin'] ? 'تبدیل به مشتری' : 'ارتقا به ادمین' }}
+            </button>
+        </form>
     </div>
+
+    @if ($errors->any())
+        <p class="mt-3 rounded-xl bg-down-soft px-4 py-2 text-sm text-down" role="alert" data-user-error>{{ $errors->first() }}</p>
+    @endif
 
     <div class="mt-6 grid gap-4 xl:grid-cols-3">
         {{-- ── Profile ─────────────────────────────────────────────── --}}

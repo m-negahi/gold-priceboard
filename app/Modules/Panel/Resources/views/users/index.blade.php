@@ -8,6 +8,12 @@
             <p class="mt-1 text-sm text-muted">همه کاربران — مشتری و ادمین — با کیف پول، سایت‌ها و وضعیت.</p>
         </div>
 
+        <a href="{{ route('panel.users.create') }}" data-user-create
+           class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-brand shadow-(--bp-elev-brand) hover:bg-brand-2">
+            <x-icon name="plus" class="size-4" />
+            کاربر جدید
+        </a>
+
     </div>
 
     <form method="GET" action="{{ route('panel.users.index') }}" data-user-filters
