@@ -7,6 +7,7 @@ namespace Tests;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Facade;
 
 /**
  * 🔴 Mohafez e database e dev — kamarband E DOVOM.
@@ -95,10 +96,11 @@ abstract class TestCase extends BaseTestCase
         // mikone، na config.
         $app->forgetInstance('redis');
         $app->forgetInstance('redis.connection');
-        \Illuminate\Support\Facades\Facade::clearResolvedInstance('redis');
+        Facade::clearResolvedInstance('redis');
 
         // ── Abzar haye dev ─────────────────────────────────────
         $config->set('telescope.enabled', false);
+        $config->set('telescope.storage.database.connection', 'sqlite');
         $config->set('pulse.enabled', false);
 
         // ── SMS: driver e fake — hich IO ───────────────────────

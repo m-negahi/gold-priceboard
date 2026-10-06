@@ -54,6 +54,7 @@ services:
       - ./routes:/var/www/html/routes:cached
       - ./lang:/var/www/html/lang:cached
       - ./storage:/var/www/html/storage:cached
+      - ./phpunit.xml:/var/www/html/phpunit.xml:ro
       - ./tests:/var/www/html/tests
       # Script haye yek-bare ye dev (tamrin e ghat'i, migration e dasti, …).
       - ./scripts:/var/www/html/scripts:cached

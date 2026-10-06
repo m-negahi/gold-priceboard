@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -70,12 +71,18 @@ final class GuardsTest extends TestCase
         ];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('isolatedRedisConnections')]
+    #[DataProvider('isolatedRedisConnections')]
     public function test_the_live_redis_connection_is_on_the_test_database(string $name, int $db): void
     {
         /** @var \Redis $client phpredis */
         $client = \Illuminate\Support\Facades\Redis::connection($name)->client();
 
         $this->assertSame($db, $client->getDbNum(), "connection e «{$name}» ru db e ZENDE ye ghalat ast — flushdb e test data ye dev ro pak mikone.");
+    }
+
+    public function test_telescope_storage_uses_only_the_isolated_test_database(): void
+    {
+        self::assertSame('sqlite', config('telescope.storage.database.connection'));
+        self::assertSame(':memory:', DB::connection(config('telescope.storage.database.connection'))->getDatabaseName());
     }
 }
