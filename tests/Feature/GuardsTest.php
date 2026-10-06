@@ -49,4 +49,33 @@ final class GuardsTest extends TestCase
     {
         $this->assertSame('15', (string) config('database.redis.prices.database'));
     }
+
+    /**
+     * 🔴 DB e ZENDE ye connection — na config.
+     *
+     * Test e bala faghat CONFIG ro check mikard va sabz mimund dar hali ke
+     * `flushdb()` e test ha Redis e DEV (db 0) ro pak mikard — session e
+     * admin har ejra ye suite az bein mirafet (logout e mokarrar، 2026-10-06،
+     * ba canary ta'eed shod). Dalil: `RedisManager` yek COPY az config ro
+     * mozghe sakhtan migire va connection ro cache mikone، pas avaz kardan e
+     * config ba'd az bootstrap ru connection e sakhte-shode asar nadasht.
+     *
+     * @return array<string, array{0: string, 1: int}>
+     */
+    public static function isolatedRedisConnections(): array
+    {
+        return [
+            'default (OTP، log ha، session e dev)' => ['default', 13],
+            'prices (tablo)' => ['prices', 15],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('isolatedRedisConnections')]
+    public function test_the_live_redis_connection_is_on_the_test_database(string $name, int $db): void
+    {
+        /** @var \Redis $client phpredis */
+        $client = \Illuminate\Support\Facades\Redis::connection($name)->client();
+
+        $this->assertSame($db, $client->getDbNum(), "connection e «{$name}» ru db e ZENDE ye ghalat ast — flushdb e test data ye dev ro pak mikone.");
+    }
 }

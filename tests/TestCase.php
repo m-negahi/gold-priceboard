@@ -86,6 +86,17 @@ abstract class TestCase extends BaseTestCase
         // dev ro pak mikone.
         $config->set('database.redis.prices.database', '15');
 
+        // 🔴 `RedisManager` TU BOOTSTRAP sakhte shode va yek COPY az config e
+        // UN lahze (db 0) dare؛ do khat e bala ru un hich asari nadashtan.
+        // Natije: `flushdb()` e test ha Redis e DEV ro pak mikard va session
+        // e admin ba har ejra ye suite mipparid (logout e mokarrar — ba canary
+        // ta'eed shod، 2026-10-06). Manager az no ba config e jadid sakhte
+        // mishe. Negahban: `GuardsTest` DB e ZENDE ye connection ro check
+        // mikone، na config.
+        $app->forgetInstance('redis');
+        $app->forgetInstance('redis.connection');
+        \Illuminate\Support\Facades\Facade::clearResolvedInstance('redis');
+
         // ── Abzar haye dev ─────────────────────────────────────
         $config->set('telescope.enabled', false);
         $config->set('pulse.enabled', false);
