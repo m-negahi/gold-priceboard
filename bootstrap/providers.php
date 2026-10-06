@@ -7,6 +7,7 @@ use App\Modules\Auth\Providers\AuthServiceProvider;
 use App\Modules\Panel\Providers\PanelServiceProvider;
 use App\Modules\Pricing\Providers\PricingServiceProvider;
 use App\Modules\Seo\Providers\SeoServiceProvider;
+use App\Modules\Ticket\Providers\TicketServiceProvider;
 use App\Providers\AppServiceProvider;
 
 /*
@@ -23,4 +24,5 @@ return [
     PricingServiceProvider::class,
     PanelServiceProvider::class,
     SeoServiceProvider::class,
+    TicketServiceProvider::class,
 ];

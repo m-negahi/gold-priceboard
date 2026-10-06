@@ -75,9 +75,9 @@
                                 <x-panel.pill :tone="$user['status']->value === 'active' ? 'ok' : 'down'" dot>{{ $user['status']->label() }}</x-panel.pill>
                             </td>
                             <td class="px-5 py-3 text-xs text-muted">{{ $user['level']->label() }}</td>
-                            <td class="num px-5 py-3 text-ink">{{ $user['balanceToman'] ?? '—' }}</td>
+                            <td class="px-5 py-3 text-ink"><span class="ltr num">{{ $user['balanceToman'] ?? '—' }}</span></td>
                             <td class="num px-5 py-3 text-muted" data-sites="{{ $user['sitesCount'] }}">{{ $user['sitesCount'] }}</td>
-                            <td class="num px-5 py-3 text-xs text-muted">{{ $user['lastLoginAt'] ?? '—' }}</td>
+                            <td class="px-5 py-3 text-xs text-muted"><span class="ltr num">{{ $user['lastLoginAt'] ?? '—' }}</span></td>
                             <td class="px-5 py-3 text-end">
                                 <a href="{{ route('panel.users.show', $user['id']) }}"
                                    class="inline-flex size-9 items-center justify-center rounded-lg text-muted hover:bg-surface-3 hover:text-ink"

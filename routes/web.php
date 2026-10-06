@@ -13,9 +13,11 @@ use App\Modules\Panel\Http\Controllers\MonitorController;
 use App\Modules\Panel\Http\Controllers\PriorityController;
 use App\Modules\Panel\Http\Controllers\ProviderController;
 use App\Modules\Panel\Http\Controllers\ProviderSpreadController;
+use App\Modules\Panel\Http\Controllers\TicketController;
 use App\Modules\Panel\Http\Controllers\UserController;
 use App\Modules\Pricing\Http\Controllers\PublicBoardController;
 use App\Modules\Seo\Http\Controllers\SeoController;
+use App\Modules\Ticket\Http\Controllers\AccountTicketController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -112,6 +114,28 @@ Route::middleware(['auth', EnsureAdmin::class])
         Route::post('/users/{user}/enable', [UserController::class, 'enable'])->whereNumber('user')->name('users.enable');
         Route::post('/users/{user}/wallet', [UserController::class, 'adjustWallet'])->whereNumber('user')->name('users.wallet.adjust');
         Route::get('/users/{user}', [UserController::class, 'show'])->whereNumber('user')->name('users.show');
+
+        // ── Ticket ha (Phase 7) ─────────────────────────────────────
+        Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
+        Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->whereNumber('ticket')->name('tickets.show');
+        Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply'])->whereNumber('ticket')->name('tickets.reply');
+        Route::post('/tickets/{ticket}/status', [TicketController::class, 'status'])->whereNumber('ticket')->name('tickets.status');
+    });
+
+/*
+ * ── Hesab e karbar (Phase 7) ─────────────────────────────────────────
+ * Ticket haye KHOD e karbar (har naghsh). Malekiat tu `TicketQuery::
+ * findForOwnerOrFail` — ticket e digari 404.
+ */
+Route::middleware('auth')
+    ->prefix('account')
+    ->name('account.')
+    ->group(function (): void {
+        Route::get('/tickets', [AccountTicketController::class, 'index'])->name('tickets.index');
+        Route::get('/tickets/create', [AccountTicketController::class, 'create'])->name('tickets.create');
+        Route::post('/tickets', [AccountTicketController::class, 'store'])->name('tickets.store');
+        Route::get('/tickets/{ticket}', [AccountTicketController::class, 'show'])->whereNumber('ticket')->name('tickets.show');
+        Route::post('/tickets/{ticket}/reply', [AccountTicketController::class, 'reply'])->whereNumber('ticket')->name('tickets.reply');
     });
 
 /*

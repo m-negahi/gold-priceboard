@@ -39,22 +39,23 @@
             <h2 id="profile-title" class="text-base font-bold text-ink">مشخصات</h2>
             <dl class="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-sm">
                 <dt class="text-muted">موبایل</dt>
-                <dd class="ltr num text-end text-ink">{{ $profile['phone'] }}</dd>
+                <dd class="text-end text-ink"><span class="ltr num">{{ $profile['phone'] }}</span></dd>
                 <dt class="text-muted">ایمیل</dt>
-                <dd class="ltr truncate text-end text-ink">{{ $profile['email'] ?? '—' }}</dd>
+                {{-- truncate ru span e LTR — ru dd e RTL ebteda ye email boride mishod. --}}
+                <dd class="min-w-0 text-end text-ink"><span class="ltr block truncate" title="{{ $profile['email'] }}">{{ $profile['email'] ?? '—' }}</span></dd>
                 <dt class="text-muted">نوع مشتری</dt>
                 <dd class="text-end text-ink">{{ $profile['customerType']->label() }}</dd>
                 <dt class="text-muted">کد/شناسه ملی</dt>
-                <dd class="ltr num text-end text-ink">{{ $profile['nationalCode'] ?? '—' }}</dd>
+                <dd class="text-end text-ink"><span class="ltr num">{{ $profile['nationalCode'] ?? '—' }}</span></dd>
                 <dt class="text-muted">سطح</dt>
                 <dd class="text-end text-ink">{{ $profile['level']->label() }}</dd>
                 <dt class="text-muted">عضویت</dt>
-                <dd class="num text-end text-ink">{{ $profile['createdAt'] ?? '—' }}</dd>
+                <dd class="text-end text-ink"><span class="ltr num">{{ $profile['createdAt'] ?? '—' }}</span></dd>
                 <dt class="text-muted">آخرین ورود</dt>
-                <dd class="num text-end text-ink">{{ $profile['lastLoginAt'] ?? '—' }}</dd>
+                <dd class="text-end text-ink"><span class="ltr num">{{ $profile['lastLoginAt'] ?? '—' }}</span></dd>
                 @if ($profile['status']->value === 'disabled')
                     <dt class="text-muted">غیرفعال از</dt>
-                    <dd class="num text-end text-down">{{ $profile['disabledAt'] ?? '—' }}</dd>
+                    <dd class="text-end text-down"><span class="ltr num">{{ $profile['disabledAt'] ?? '—' }}</span></dd>
                     <dt class="text-muted">دلیل</dt>
                     <dd class="text-end text-down">{{ $profile['disabledReason'] ?? '—' }}</dd>
                 @endif
@@ -143,7 +144,7 @@
                         <tbody class="divide-y divide-line-2">
                             @forelse ($wallet['ledger'] as $tx)
                                 <tr data-ledger-row>
-                                    <td class="num whitespace-nowrap px-3 py-2 text-xs text-muted">{{ $tx['at'] ?? '—' }}</td>
+                                    <td class="whitespace-nowrap px-3 py-2 text-xs text-muted"><span class="ltr num">{{ $tx['at'] ?? '—' }}</span></td>
                                     <td class="px-3 py-2 text-ink">
                                         {{ $tx['reason'] }}
                                         @if ($tx['note'])
@@ -154,10 +155,11 @@
                                         @endif
                                     </td>
                                     <td @class(['num whitespace-nowrap px-3 py-2 font-semibold', 'text-ok' => $tx['credit'], 'text-down' => ! $tx['credit']])>
-                                        {{ $tx['credit'] ? '+' : '−' }}{{ $tx['amountToman'] }}
+                                        {{-- `ltr`: vagarna alamat e −/+ tu RTL be TAH e adad mipare. --}}
+                                        <span class="ltr num">{{ $tx['credit'] ? '+' : '−' }}{{ $tx['amountToman'] }}</span>
                                     </td>
-                                    <td class="num whitespace-nowrap px-3 py-2 text-muted">{{ $tx['balanceAfterToman'] }}</td>
-                                    <td class="ltr max-w-40 truncate px-3 py-2 text-xs text-muted-3" title="{{ $tx['reference'] }}">{{ $tx['reference'] }}</td>
+                                    <td class="whitespace-nowrap px-3 py-2 text-muted"><span class="ltr num">{{ $tx['balanceAfterToman'] }}</span></td>
+                                    <td class="max-w-40 px-3 py-2 text-xs text-muted-3"><span class="ltr block truncate" title="{{ $tx['reference'] }}">{{ $tx['reference'] }}</span></td>
                                 </tr>
                             @empty
                                 <tr>
@@ -216,7 +218,7 @@
                                     <p class="ltr mt-0.5 text-xs text-muted-3">{{ $site['websiteUrl'] }}</p>
                                 @endif
                             </td>
-                            <td class="ltr px-5 py-3 text-xs text-muted">{{ $site['clientId'] }}</td>
+                            <td class="px-5 py-3 text-xs text-muted"><span class="ltr">{{ $site['clientId'] }}</span></td>
                             <td class="px-5 py-3">
                                 @if ($site['plan'])
                                     <p class="text-ink">{{ $site['plan']['name'] }}</p>
@@ -234,7 +236,7 @@
                                     <x-panel.pill tone="flat" dot>غیرفعال</x-panel.pill>
                                 @endif
                             </td>
-                            <td class="num px-5 py-3 text-xs text-muted">{{ $site['lastUsedAt'] ?? '—' }}</td>
+                            <td class="px-5 py-3 text-xs text-muted"><span class="ltr num">{{ $site['lastUsedAt'] ?? '—' }}</span></td>
                         </tr>
                     @empty
                         <tr>
@@ -249,6 +251,20 @@
     {{-- ── Ticket ha (Phase 7) ─────────────────────────────────────── --}}
     <section class="mt-4 rounded-2xl bg-surface card-p shadow-xs" aria-labelledby="tickets-title">
         <h2 id="tickets-title" class="text-base font-bold text-ink">تیکت‌ها</h2>
-        <p class="mt-3 rounded-xl bg-surface-3 px-4 py-6 text-center text-sm text-muted">سامانه تیکت به‌زودی (فاز ۷) فعال می‌شود.</p>
+        <ul class="mt-3 divide-y divide-line-2">
+            @forelse ($tickets as $ticket)
+                <li data-user-ticket>
+                    <a href="{{ route('panel.tickets.show', $ticket['id']) }}" class="flex flex-wrap items-center justify-between gap-3 py-3 hover:text-brand-700">
+                        <div class="min-w-0">
+                            <p class="truncate font-medium text-ink">{{ $ticket['subject'] }}</p>
+                            <p class="num mt-0.5 text-xs text-muted"><span class="ltr">#{{ $ticket['id'] }}</span> · {{ $ticket['type']->label() }} · <span class="ltr">{{ $ticket['lastActivityAt'] }}</span></p>
+                        </div>
+                        <x-panel.pill :tone="$ticket['status']->tone()" dot>{{ $ticket['status']->label() }}</x-panel.pill>
+                    </a>
+                </li>
+            @empty
+                <li class="rounded-xl bg-surface-3 px-4 py-6 text-center text-sm text-muted">این کاربر تیکتی ندارد.</li>
+            @endforelse
+        </ul>
     </section>
 </x-layouts.panel>

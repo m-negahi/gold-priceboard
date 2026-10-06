@@ -55,6 +55,7 @@ final class Navigation
                 'label' => 'مشتریان و مالی', // Phase 4
                 'items' => [
                     ['key' => 'customers', 'label' => 'مشتریان', 'icon' => 'users', 'route' => 'panel.users.index'],
+                    ['key' => 'tickets', 'label' => 'تیکت‌ها', 'icon' => 'ticket', 'route' => 'panel.tickets.index'],
                     ['key' => 'wallets', 'label' => 'کیف پول', 'icon' => 'wallet', 'route' => null],
                 ],
             ],

@@ -12,6 +12,7 @@ use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Common\Helpers\Jalali;
 use App\Modules\Common\Helpers\Money;
 use App\Modules\Common\Helpers\PhoneHelper;
+use App\Modules\Ticket\Application\Queries\TicketQuery;
 use App\Modules\Wallet\Application\Queries\WalletQuery;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
@@ -44,6 +45,7 @@ final readonly class UserDetailQuery
         private WalletQuery $wallets,
         private ApiClientQuery $clients,
         private ApiUsageQuery $usage,
+        private TicketQuery $tickets,
     ) {}
 
     /** @return array<string, mixed> */
@@ -63,6 +65,7 @@ final readonly class UserDetailQuery
             'sites' => $this->clients->forUser($user->id)
                 ->map(fn (ApiClient $client): array => $this->site($client))
                 ->all(),
+            'tickets' => $this->tickets->listForOwner($user->id),
         ];
     }
 

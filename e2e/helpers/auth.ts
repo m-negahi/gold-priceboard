@@ -50,3 +50,44 @@ export async function signInAsAdmin(page: Page): Promise<void> {
     await page.getByRole('button', { name: 'پر کردن خودکار' }).click();
     await page.waitForURL('**/dashboard');
 }
+
+/**
+ * Vorud e yek moshtari ba OTP e bypass (`local` = `09…`). Maghsad e ba'd az
+ * login ro check nemikone (home ya onboarding — P7-03)، faghat inke az
+ * `/login` birun rafte bashe.
+ */
+export async function signInAsCustomer(page: Page, local: string): Promise<void> {
+    resetOtp(local.slice(1));
+    await page.goto('/login');
+    await page.getByLabel('شماره موبایل').fill(local);
+    await page.getByRole('button', { name: 'دریافت کد ورود' }).click();
+    await expect(page.getByRole('heading', { name: 'کد ورود' })).toBeVisible();
+    await page.getByRole('button', { name: 'پر کردن خودکار' }).click();
+    await page.waitForURL((url) => url.pathname !== '/login');
+}
+
+/**
+ * Rang e yek token e `@theme` -> `rgb(...)` ke browser khodesh resolve
+ * karde (probe element). Token e nabude = transparent -> throw.
+ */
+export async function tokenRgb(page: Page, name: string, property: 'backgroundColor' | 'color' = 'backgroundColor'): Promise<string> {
+    const rgb = await page.evaluate(([n, prop]) => {
+        const probe = document.createElement('div');
+        probe.style[prop as 'color'] = `var(${n})`;
+        document.body.appendChild(probe);
+        const value = getComputedStyle(probe)[prop as 'color'];
+        probe.remove();
+
+        return value;
+    }, [name, property]);
+
+    expect(rgb, `token e ${name} resolve nashod`).not.toBe('rgba(0, 0, 0, 0)');
+
+    return rgb;
+}
+
+/** Hich overflow e ofoghi ye PAGE (375px — P4-19). */
+export async function expectNoPageOverflow(page: Page): Promise<void> {
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow, 'safhe overflow e ofoghi dare').toBeLessThanOrEqual(0);
+}
