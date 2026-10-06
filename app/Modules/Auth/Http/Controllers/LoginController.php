@@ -158,7 +158,7 @@ final readonly class LoginController
             'phone' => $challenge->phone,
             'resendIn' => $challenge->resendInSeconds,
             'expiresIn' => $challenge->expiresInSeconds,
-            'code' => is_string($code) && (bool) config('otp.bypass') ? $code : null,
+            'code' => is_string($code) && (bool) config('otp.bypass', false) ? $code : null,
         ];
     }
 

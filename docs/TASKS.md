@@ -19,7 +19,7 @@
 🔴 **Hich kodum REGISTER NASHODAN** (provider hashun tu `bootstrap/providers.php` nist، js ha import nashodan) — bi-asar-and ta Phase 3. Tu P3 bayad: review + register + test + hamahangi ba memari (Livewire e ma vs controller e una) + token haye theme. `HtmlSanitizer` (baraye rich-text) amdan nayamade — age lazem shod az Desktop biad.
 
 **Phase**: 2 ✓، 3 ✓ (joz P3-00b Media)، 4 core ✓، 5 dar hal e kar (board+chart ✓)
-**Vaziat e test (2026-10-06)**: **867 test sabz (3650 assertion)**، **e2e 19/19** (login 6 + panel 6 + public 3 + upstream 4).
+**Vaziat e test (2026-10-06)**: **867 test sabz (3650 assertion)**، **e2e 32/32** (login 6 + panel 6 + public 3 + upstream 4 + responsive 13).
 
 ### 📋 Darkhast haye in session (chat ha) — vaziat
 - [x] Dolar e tgju ru tablo (freshness override).
@@ -42,6 +42,8 @@
 - [ ] 🔴 **`P4-15`** — **Telescope** rah biofte (dev).
 - [ ] 🔴 **`P4-16`** — **Horizon** rah biofte + dashboard.
 - [ ] 🔴 **`P4-17`** — **Enum e Queue tu `Common`**: hame ye queue ha (Horizon config + har ja tu tick/job queue estefade mishe) yekparche az yek enum beran.
+- [x] 🔴 **`P4-19`** — **Responsive e KOL e panel e admin (darkhast e chat 2026-10-06)**: hame ye safhe haye `/dashboard/**` tu 375px bedun e overflow e ofoghi ye PAGE (jadval ha faghat DAKHEL e container e khodeshun scroll konan). Negahban: `e2e/responsive.spec.ts` ke hame ye safhe ha ro tu mobile check mikone.
+  → **Anjam shod (2026-10-06)**: moshkel e asli in bud ke sidebar tu mobile BAZ mimund va ~2/3 e arz ro mikhord. Hal: sidebar tu <lg yek **drawer e off-canvas** shod (`fixed` + class e `drawer-start-closed` tu layer e components baraye halat e pish-az-Alpine، `open` e Alpine baraye baz shodan) + hamburger tu topbar (`$dispatch('toggle-sidebar')`) + backdrop e teleport-shode + Escape/backdrop/close. Desktop daghighan hamun rail e ghabli (68↔240px). 🔴 **Dars e Tailwind v4**: utility haye `translate-x-*` property e `translate` ro set mikonan na `transform` — rule e custom ba `transform` bahashun JAM' mishe (drawer e «baz» 240px birun mund)؛ rule e custom ham bayad `translate:` bezane. Hamchenin `translate-x-full` tu cascade BA'D az `translate-x-0` miad، pas «static full + bound 0» kar nemikone — class e layer e components lazem bud. Negahban: `e2e/responsive.spec.ts` (11 safhe × overflow check tu 375px + 2 test e drawer). Kol: 867 PHP + **32/32 e2e**. Fix e kuchik: sotun e «حجم» e safhe ye upstream `ltr` shod (bidi «KB 5.3» neshun midad).
 - [ ] 🔴 **`P4-18`** — **UX e `/dashboard/monitor` (darkhast e chat 2026-10-06)**: fe'lan stream e card e zamani-e bedun e hich filter-i. Bayad: (1) filter e provider، (2) filter e «faghat khata/rad»، (3) filter e symbol، (4) namayesh e jadval-i/daste-bandi-shode bar asas e provider (na faghat timeline). Server-side filter ru `TickReportQuery` + Alpine baraye toggle ha.
 - [ ] 🔴 **`P5-07`** — Olaviat e PER-SYMBOL baraye feed e mo'asser (masalan abshode: aval tgju، bad estjt، …، akhar manual). Config e qabel e tanzim tu panel. (Fe'lan olaviat GLOBAL ba `sort`-e.)
   **Takmil (chat 2026-10-06)**: hamin zanjire bayad «پر کردن از منبع» e safhe ye `/dashboard/manual` ro ham hedayat kone — be jaye entekhab e YEK provider baraye hame، har symbol az avvalin provider e zanjire-ash ke javab e salem dad por she (masalan `xau-18k-g-irr`: tgju → estjt → …). Yani yek jadval e olaviat e per-symbol (DB) + UI e tanzim tu panel، masraf tu DO ja: `EffectivePriceQuery::choose()` va seed e manual.

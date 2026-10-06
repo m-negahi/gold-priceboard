@@ -378,6 +378,16 @@
 }
 
 @layer components {
+    /* P4-19 — drawer-e mobile-ye sidebar: halat-e PISH-az-Alpine va baste.
+       Layer-e components ast ta `translate-x-0`-e bound (utilities، ba'd az
+       in layer) va `lg:translate-x-0` betunan override-esh konan —
+       `translate-x-full`-e utility in kar ro NEMIKARD chon tu cascade
+       BA'D az `translate-x-0` miad va hamishe mibord. */
+    /* ⚠️ Hatman `translate` (property-e jodagane)، NA `transform`: utility
+       haye v4 `translate:` set mikonan va `transform` bahash JAM' mishe —
+       ba transform، drawer-e baz ham 240px birun mimund. */
+    .drawer-start-closed { translate: 100% 0; }
+
     /* Matn-e rahnama: chand tag-e sade ba fasele-ye khandani. */
     .prose-help h3 { @apply mt-2 text-sm font-bold text-ink; }
     .prose-help p { @apply text-ink-2; }

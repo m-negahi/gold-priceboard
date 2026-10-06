@@ -10,8 +10,21 @@ const STORAGE_KEY = 'pb:panel:sidebar';
 
 export default () => ({
     expanded: true,
+    /**
+     * Drawer-e MOBILE (P4-19) — joda az `expanded`: rail-e desktop yek
+     * tarjih-e paydar-e, drawer yek halat-e gozara. Ba event-e window
+     * (`toggle-sidebar` az hamburger-e topbar) baz mishe chon topbar kharej
+     * az scope-e in component-e. Persist NEMISHE: har navigate bayad baste
+     * shoroo beshe.
+     */
+    open: false,
     /** Kelid-e item-i ke tooltip-esh alan bayad dide beshe (faghat rail-e baste). */
     hovered: null,
+
+    /** Label-ha dide beshan? Desktop: rail-e baz. Mobile: drawer-e baz. */
+    get wide() {
+        return this.expanded || this.open;
+    },
 
     init() {
         try {
@@ -35,8 +48,9 @@ export default () => ({
     },
 
     show(key) {
-        // Tooltip faghat tu rail-e BASTE ma'ni dare — halat-e baz label dare.
-        if (!this.expanded) this.hovered = key;
+        // Tooltip faghat tu rail-e BASTE ma'ni dare — halat-e baz (ya
+        // drawer-e mobile) label dare.
+        if (!this.wide) this.hovered = key;
     },
 
     hide(key) {

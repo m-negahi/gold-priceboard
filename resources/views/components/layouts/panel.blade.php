@@ -20,7 +20,15 @@
         <div class="flex min-w-0 flex-1 flex-col">
             {{-- Topbar: card e gerd e JODAGANE (doc §4)، na yek navar e full-width. --}}
             <header class="sticky top-0 z-40 px-4 pt-4 lg:px-6">
-                <div class="flex h-14 items-center gap-4 rounded-2xl bg-surface px-4 shadow-sm">
+                <div class="flex h-14 items-center gap-2 rounded-2xl bg-surface px-3 shadow-sm lg:gap-4 lg:px-4">
+                    {{-- Hamburger e mobile (P4-19) — drawer e sidebar ro ba event
+                         baz mikone (sidebar kharej az scope e in dokme-ast). --}}
+                    <button type="button" x-data @click="$dispatch('toggle-sidebar')"
+                            aria-label="باز کردن منو"
+                            class="grid size-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink lg:hidden">
+                        <x-icon name="menu" />
+                    </button>
+
                     <nav class="flex min-w-0 flex-1 items-center gap-2 text-sm text-muted" aria-label="مسیر">
                         @foreach ($breadcrumbs as $crumb)
                             @if (! $loop->first)
