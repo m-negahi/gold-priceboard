@@ -76,6 +76,11 @@
         </div>
 
         <div class="flex items-center gap-2">
+            <a href="{{ route('panel.monitor.upstream') }}"
+               class="inline-flex h-10 items-center gap-2 rounded-xl border border-line px-4 text-sm font-medium text-ink hover:bg-surface-2">
+                <x-icon name="download" class="size-4" />
+                پایش منابع
+            </a>
             <a href="{{ route('panel.monitor.api') }}"
                class="inline-flex h-10 items-center gap-2 rounded-xl border border-line px-4 text-sm font-medium text-ink hover:bg-surface-2">
                 <x-icon name="code" class="size-4" />

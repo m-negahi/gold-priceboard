@@ -7,10 +7,12 @@ namespace App\Modules\Pricing\Application\Pipeline\Stages;
 use App\Modules\Pricing\Application\Dto\ProviderHealthDto;
 use App\Modules\Pricing\Application\Dto\SourceRequestDto;
 use App\Modules\Pricing\Application\Dto\SourceResultDto;
+use App\Modules\Pricing\Application\Dto\UpstreamCallDto;
 use App\Modules\Pricing\Application\Pipeline\Stage;
 use App\Modules\Pricing\Application\Pipeline\TickContext;
 use App\Modules\Pricing\Domain\Enums\StagePolicy;
 use App\Modules\Pricing\Domain\Ports\QuoteSourcePort;
+use App\Modules\Pricing\Domain\Ports\UpstreamLogPort;
 use App\Modules\Pricing\Domain\Services\TransientFailure;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Pool;
@@ -59,6 +61,13 @@ final readonly class FetchStage implements Stage
         private int $retryDelayMs = 300,
         /** Budget e kol e fetch — ma'mulan hamun grid e tick. */
         private int $budgetMs = 15_000,
+        /**
+         * Daftarche ye call haye upstream (P4-14) — har TALASH e HTTP yek
+         * entry. Nullable ta unit test haye pipeline bedun e log bemunan؛
+         * tazrigh e vaghei tu `PricingServiceProvider` ast (va yek bind-test
+         * negahban esh e، chun ja mundan esh hich khata-i NEMIDE).
+         */
+        private ?UpstreamLogPort $upstreamLog = null,
     ) {}
 
     public function name(): string
@@ -191,6 +200,16 @@ final readonly class FetchStage implements Stage
         // «1ms» gozaresh mishe va monitoring e panel dorugh mige.
         $latencyMs = $this->transferMs($response);
 
+        // Status/bytes GHABL az try: khata ye parse (200 vali markup e
+        // avaz-shode) ham bayad ba status e vaghei-sh log beshe.
+        $status = null;
+        $bytes = null;
+
+        if ($response !== null && ! $response instanceof Throwable) {
+            $status = $response->status();
+            $bytes = strlen($response->body());
+        }
+
         try {
             if ($response instanceof Throwable) {
                 throw $response;
@@ -211,18 +230,15 @@ final readonly class FetchStage implements Stage
             }
 
             $body = $response->body();
+            $result = $source->parse($payload)->withPayloadMeta(md5($body), strlen($body));
 
-            $this->accept(
-                $context,
-                $source,
-                $source->parse($payload)->withPayloadMeta(md5($body), strlen($body)),
-                $latencyMs,
-                $attempt,
-            );
+            $this->accept($context, $source, $result, $latencyMs, $attempt);
+            $this->logCall($context, $source, true, $status, $latencyMs, $attempt, null, $result->count(), $bytes);
 
             return true;
         } catch (Throwable $e) {
             $this->fail($context, $source, $e, $latencyMs, $attempt);
+            $this->logCall($context, $source, false, $status, $latencyMs, $attempt, $e->getMessage(), 0, $bytes);
 
             return ! TransientFailure::isRetryable($e);
         }
@@ -282,6 +298,46 @@ final readonly class FetchStage implements Stage
             error: mb_substr($e->getMessage(), 0, 480),
             attempts: $attempt,
         );
+    }
+
+    /**
+     * Sabt e yek talash e HTTP tu daftarche ye upstream (P4-14).
+     *
+     * Faghat source haye POOLED (HTTP e vaghei) — mock/manual request-i be
+     * provider nemizanan va tu in daftarche ja-i nadaran.
+     */
+    private function logCall(
+        TickContext $context,
+        QuoteSourcePort $source,
+        bool $succeeded,
+        ?int $status,
+        int $latencyMs,
+        int $attempt,
+        ?string $error,
+        int $symbolCount,
+        ?int $bytes,
+    ): void {
+        $request = $source->request();
+
+        if ($this->upstreamLog === null || $request === null) {
+            return;
+        }
+
+        // Gharardad e port: `push` hargez throw nemikone — pas inja try
+        // lazem nist va shekast e log hich vaght tick ro nemishkane.
+        $this->upstreamLog->push(new UpstreamCallDto(
+            providerKey: $source->key(),
+            succeeded: $succeeded,
+            at: CarbonImmutable::createFromTimestampUTC($context->at->timestamp()),
+            method: strtoupper($request->method),
+            url: $request->url,
+            status: $status,
+            latencyMs: $latencyMs,
+            attempt: $attempt,
+            error: $error === null ? null : mb_substr($error, 0, 480),
+            symbolCount: $symbolCount,
+            bytes: $bytes,
+        ));
     }
 
     /**

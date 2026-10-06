@@ -25,7 +25,9 @@ use App\Modules\Pricing\Domain\Ports\ClockPort;
 use App\Modules\Pricing\Domain\Ports\HotCachePort;
 use App\Modules\Pricing\Domain\Ports\SnapshotStorePort;
 use App\Modules\Pricing\Domain\Ports\TimeSeriesPort;
+use App\Modules\Pricing\Domain\Ports\UpstreamLogPort;
 use App\Modules\Pricing\Infrastructure\Cache\RedisHotCache;
+use App\Modules\Pricing\Infrastructure\Monitoring\RedisUpstreamCallLog;
 use App\Modules\Pricing\Infrastructure\Persistence\EloquentSnapshotStore;
 use App\Modules\Pricing\Infrastructure\Time\SystemClock;
 use App\Modules\Pricing\Infrastructure\TimeSeries\InfluxSpool;
@@ -66,6 +68,8 @@ final class PricingServiceProvider extends ServiceProvider
         );
 
         $this->app->singleton(ClockPort::class, static fn (): ClockPort => new SystemClock);
+
+        $this->app->singleton(UpstreamLogPort::class, static fn (): UpstreamLogPort => new RedisUpstreamCallLog);
 
         $this->app->singleton(InfluxSpool::class, static fn (): InfluxSpool => new InfluxSpool(
             (int) config('pricing.influx.spool_max_lines', 40_000),
@@ -135,6 +139,9 @@ final class PricingServiceProvider extends ServiceProvider
                     maxAttempts: (int) config('pricing.fetch.max_attempts', 2),
                     retryDelayMs: (int) config('pricing.fetch.retry_delay_ms', 300),
                     budgetMs: (int) config('pricing.tick_seconds', 15) * 1_000,
+                    // P4-14 — ja mundan e in param hich khata-i NEMIDE
+                    // (nullable ast)؛ `PricingBindingTest` negahban esh e.
+                    upstreamLog: $app->make(UpstreamLogPort::class),
                 ),
                 new ValidateStage(
                     maxDeviation: (array) config('pricing.max_deviation', []),

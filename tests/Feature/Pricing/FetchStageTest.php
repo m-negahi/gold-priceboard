@@ -18,6 +18,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Tests\Support\Fakes\FakeQuoteSource;
 use Tests\Support\Fakes\FrozenClock;
+use Tests\Support\Fakes\InMemoryUpstreamCallLog;
 use Tests\TestCase;
 
 /**
@@ -535,5 +536,124 @@ final class FetchStageTest extends TestCase
         $this->assertSame([], $context->raw);
         $this->assertSame([], $context->health);
         Http::assertNothingSent();
+    }
+
+    // ── 🔴 Daftarche ye upstream (P4-14) ────────────────────────────
+
+    /** Stage ba daftarche — baraye test haye in bakhsh. */
+    private function loggedStage(InMemoryUpstreamCallLog $log, int $maxAttempts = 2): FetchStage
+    {
+        return new FetchStage(maxAttempts: $maxAttempts, retryDelayMs: 0, upstreamLog: $log);
+    }
+
+    public function test_a_successful_pooled_call_is_logged(): void
+    {
+        Http::fake(['example.test/*' => Http::response(['ok' => true])]);
+        $log = new InMemoryUpstreamCallLog;
+
+        $this->fetch(
+            [(new FakeQuoteSource('tgju'))->returns([$this->quote()])->pooled('https://example.test/prices')],
+            $this->loggedStage($log),
+        );
+
+        $this->assertCount(1, $log->calls);
+        $call = $log->calls[0];
+        $this->assertSame('tgju', $call->providerKey);
+        $this->assertTrue($call->succeeded);
+        $this->assertSame(200, $call->status);
+        $this->assertSame('GET', $call->method);
+        $this->assertSame('https://example.test/prices', $call->url);
+        $this->assertSame(1, $call->attempt);
+        $this->assertSame(1, $call->symbolCount);
+        $this->assertNull($call->error);
+        $this->assertSame(strlen((string) json_encode(['ok' => true])), $call->bytes);
+    }
+
+    public function test_a_failed_pooled_call_is_logged_with_status_and_error(): void
+    {
+        Http::fake(['example.test/*' => Http::response('nope', 503)]);
+        $log = new InMemoryUpstreamCallLog;
+
+        $this->fetch(
+            [(new FakeQuoteSource('tgju'))->returns([$this->quote()])->pooled('https://example.test/prices')],
+            $this->loggedStage($log),
+        );
+
+        $this->assertCount(1, $log->calls);
+        $this->assertFalse($log->calls[0]->succeeded);
+        $this->assertSame(503, $log->calls[0]->status);
+        $this->assertStringContainsString('503', (string) $log->calls[0]->error);
+    }
+
+    public function test_a_connection_error_is_logged_without_a_status(): void
+    {
+        // Hich pasokh e HTTP nayumade — status e sakhtegi nabayad sakhte she.
+        Http::fake(['example.test/*' => static fn (): never => throw new ConnectionException('cURL error 28: timeout')]);
+        $log = new InMemoryUpstreamCallLog;
+
+        $this->fetch(
+            [(new FakeQuoteSource('tgju'))->returns([$this->quote()])->pooled('https://example.test/p')],
+            $this->loggedStage($log),
+        );
+
+        $this->assertCount(1, $log->calls);
+        $this->assertNull($log->calls[0]->status);
+        $this->assertStringContainsString('timeout', (string) $log->calls[0]->error);
+    }
+
+    public function test_a_parse_failure_is_logged_with_its_http_status(): void
+    {
+        // In daghighan halati-e ke daftarche barash sakhte shode: provider
+        // 200 mide vali markup avaz shode — status 200 + succeeded=false.
+        Http::fake(['example.test/*' => Http::response(['current' => []])]);
+        $log = new InMemoryUpstreamCallLog;
+
+        $this->fetch(
+            [(new FakeQuoteSource('tgju'))->fails('markup avaz shode')->pooled('https://example.test/p')],
+            $this->loggedStage($log),
+        );
+
+        $this->assertCount(1, $log->calls);
+        $this->assertFalse($log->calls[0]->succeeded);
+        $this->assertSame(200, $log->calls[0]->status);
+        $this->assertSame(0, $log->calls[0]->symbolCount);
+        $this->assertStringContainsString('markup avaz shode', (string) $log->calls[0]->error);
+    }
+
+    public function test_every_retry_attempt_gets_its_own_entry(): void
+    {
+        // Health faghat NATIJE ye akhar ro dare؛ daftarche bayad har talash
+        // ro joda neshun bede — vagarna «har tick retry mikhore» dide nemishe.
+        Http::fake(['example.test/*' => Http::response(['ok' => true])]);
+        $log = new InMemoryUpstreamCallLog;
+
+        $this->fetch(
+            [(new FakeQuoteSource('tgju'))
+                ->returns([$this->quote()])
+                ->failsOnce(message: 'cURL error 35: SSL connect error')
+                ->pooled('https://example.test/p')],
+            $this->loggedStage($log),
+        );
+
+        $this->assertCount(2, $log->calls);
+        // Jadid tarin aval: [0] talash e dovom (movafagh)، [1] talash e aval.
+        $this->assertSame(2, $log->calls[0]->attempt);
+        $this->assertTrue($log->calls[0]->succeeded);
+        $this->assertSame(1, $log->calls[1]->attempt);
+        $this->assertFalse($log->calls[1]->succeeded);
+    }
+
+    public function test_direct_sources_are_not_logged(): void
+    {
+        // Mock/manual HTTP nadaran — tu daftarche ye «call be provider»
+        // ja-i nadaran.
+        $log = new InMemoryUpstreamCallLog;
+
+        $this->fetch(
+            [(new FakeQuoteSource('mock'))->returns([$this->quote(provider: 'mock')])],
+            $this->loggedStage($log),
+        );
+
+        $this->assertSame([], $log->calls);
     }
 }

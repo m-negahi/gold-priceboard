@@ -32,3 +32,4 @@ Thumbs.db
 /test-results/
 /playwright-report/
 /screenshots/
+.playwright-mcp/

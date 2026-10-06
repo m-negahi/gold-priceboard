@@ -26,7 +26,9 @@ use App\Modules\Pricing\Domain\Ports\ClockPort;
 use App\Modules\Pricing\Domain\Ports\HotCachePort;
 use App\Modules\Pricing\Domain\Ports\SnapshotStorePort;
 use App\Modules\Pricing\Domain\Ports\TimeSeriesPort;
+use App\Modules\Pricing\Domain\Ports\UpstreamLogPort;
 use App\Modules\Pricing\Infrastructure\Cache\RedisHotCache;
+use App\Modules\Pricing\Infrastructure\Monitoring\RedisUpstreamCallLog;
 use App\Modules\Pricing\Infrastructure\Persistence\EloquentSnapshotStore;
 use App\Modules\Pricing\Infrastructure\Time\SystemClock;
 use App\Modules\Pricing\Infrastructure\TimeSeries\InfluxSpool;
@@ -69,6 +71,7 @@ final class PricingBindingTest extends TestCase
             'hot cache' => [HotCachePort::class, RedisHotCache::class],
             'time series' => [TimeSeriesPort::class, InfluxTimeSeries::class],
             'clock' => [ClockPort::class, SystemClock::class],
+            'upstream log' => [UpstreamLogPort::class, RedisUpstreamCallLog::class],
         ];
     }
 
@@ -170,6 +173,22 @@ final class PricingBindingTest extends TestCase
             PersistStage::class,
             PublishStage::class,
         ], array_map(static fn (object $stage): string => $stage::class, $stages));
+    }
+
+    /**
+     * 🔴 `FetchStage` e pipeline bayad daftarche ye upstream ro BEGIRE.
+     *
+     * Param esh nullable ast (unit test ha bedun e log misazan-esh)، pas
+     * faramush kardan e tazrigh tu provider hich khata-i nemide — faghat
+     * safhe ye monitor baraye hamishe khali mimune. In test un shekast e
+     * saket ro migire.
+     */
+    public function test_the_fetch_stage_receives_the_upstream_log(): void
+    {
+        $fetch = $this->stages()[0];
+
+        $this->assertInstanceOf(FetchStage::class, $fetch);
+        $this->assertInstanceOf(UpstreamLogPort::class, $this->property($fetch, 'upstreamLog'));
     }
 
     public function test_validate_comes_before_enrich(): void

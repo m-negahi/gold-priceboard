@@ -75,6 +75,7 @@ Route::middleware(['auth', EnsureAdmin::class])
         Route::get('/health', [MonitorController::class, 'health'])->name('health');
         Route::get('/monitor', [MonitorController::class, 'ticks'])->name('monitor.ticks');
         Route::get('/monitor/api', [MonitorController::class, 'api'])->name('monitor.api');
+        Route::get('/monitor/upstream', [MonitorController::class, 'upstream'])->name('monitor.upstream');
         Route::get('/matrix', [MatrixController::class, 'show'])->name('matrix');
     });
 

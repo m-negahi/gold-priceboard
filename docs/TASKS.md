@@ -19,7 +19,7 @@
 🔴 **Hich kodum REGISTER NASHODAN** (provider hashun tu `bootstrap/providers.php` nist، js ha import nashodan) — bi-asar-and ta Phase 3. Tu P3 bayad: review + register + test + hamahangi ba memari (Livewire e ma vs controller e una) + token haye theme. `HtmlSanitizer` (baraye rich-text) amdan nayamade — age lazem shod az Desktop biad.
 
 **Phase**: 2 ✓، 3 ✓ (joz P3-00b Media)، 4 core ✓، 5 dar hal e kar (board+chart ✓)
-**Vaziat e test (2026-10-06)**: **~851 test sabz**، **e2e 15/15** (login 6 + panel 6 + public 3).
+**Vaziat e test (2026-10-06)**: **867 test sabz (3650 assertion)**، **e2e 19/19** (login 6 + panel 6 + public 3 + upstream 4).
 
 ### 📋 Darkhast haye in session (chat ha) — vaziat
 - [x] Dolar e tgju ru tablo (freshness override).
@@ -36,12 +36,17 @@
 - [x] Chart e KLineCharts ru board e omumi (P5-04).
 - [x] Manual page AJAX (bi-reload/scroll).
 - [x] Login e dev (driver fake) bi-rate-limit (`otp.throttle`).
-- [ ] 🔴 **`P4-14`** — **CLARIFICATION**: `/dashboard/monitor/api` bayad call-hayi ke MA be PROVIDER ha (tgju/estjt) mizanim ro neshun bede (baraye debug e khata ye provider)، NA call-e customer be ma. Yani yek «upstream call inspector». (Call e customer ham mimune vali hadaf e debug e provider-e.)
+- [x] 🔴 **`P4-14`** — **CLARIFICATION**: `/dashboard/monitor/api` bayad call-hayi ke MA be PROVIDER ha (tgju/estjt) mizanim ro neshun bede (baraye debug e khata ye provider)، NA call-e customer be ma. Yani yek «upstream call inspector». (Call e customer ham mimune vali hadaf e debug e provider-e.)
+  **Ta'eed e dobare + tarh (chat 2026-10-06)**: log e upstream az stage e `Fetch` (per-provider: URL، status، duration az `handlerStats`، matn e khata، retry) tu yek Redis list e JODA (`pb:upstream:requests` — hamun olgu ye `ApiRequestLog`)؛ namayesh be sorat e tab/safhe ye joda kenar e «پایش API» ba filter e provider + faghat-khata. Log e customer sar e jash mimune.
+  → **Anjam shod (2026-10-06)**: Port e `UpstreamLogPort` + `UpstreamCallDto` + adapter e `RedisUpstreamCallLog` (Redis e default، saghf 300 ≈ yek sa'at) + fake + bind + bind-test (mutation check: hazf e tazrigh va hazf e `ltrim` har do ghermez kardan). `FetchStage` har TALASH ro log mikone (retry ha joda؛ khata ye parse ba status 200 e vaghei؛ khata ye ettesal ba status e `null` na adad e sakhtegi). Safhe: `/dashboard/monitor/upstream` («پایش منابع» — jadval + filter e provider/faghat-khata ba Alpine e UI-only، bedun e asset build) + link ha ru ticks/api. Test: 16 test e jadid (FetchStage log، adapter، binding، safhe) + `e2e/upstream.spec.ts` 4/4 (ba entry e determinist az tinker + check e token). Kol: 867 PHP + 19/19 e2e. Ba Playwright ru data ye VAGHEI dide shod (tgju ~1.2s GET، estjt ~8-10s POST).
 - [ ] 🔴 **`P4-15`** — **Telescope** rah biofte (dev).
 - [ ] 🔴 **`P4-16`** — **Horizon** rah biofte + dashboard.
 - [ ] 🔴 **`P4-17`** — **Enum e Queue tu `Common`**: hame ye queue ha (Horizon config + har ja tu tick/job queue estefade mishe) yekparche az yek enum beran.
+- [ ] 🔴 **`P4-18`** — **UX e `/dashboard/monitor` (darkhast e chat 2026-10-06)**: fe'lan stream e card e zamani-e bedun e hich filter-i. Bayad: (1) filter e provider، (2) filter e «faghat khata/rad»، (3) filter e symbol، (4) namayesh e jadval-i/daste-bandi-shode bar asas e provider (na faghat timeline). Server-side filter ru `TickReportQuery` + Alpine baraye toggle ha.
 - [ ] 🔴 **`P5-07`** — Olaviat e PER-SYMBOL baraye feed e mo'asser (masalan abshode: aval tgju، bad estjt، …، akhar manual). Config e qabel e tanzim tu panel. (Fe'lan olaviat GLOBAL ba `sort`-e.)
+  **Takmil (chat 2026-10-06)**: hamin zanjire bayad «پر کردن از منبع» e safhe ye `/dashboard/manual` ro ham hedayat kone — be jaye entekhab e YEK provider baraye hame، har symbol az avvalin provider e zanjire-ash ke javab e salem dad por she (masalan `xau-18k-g-irr`: tgju → estjt → …). Yani yek jadval e olaviat e per-symbol (DB) + UI e tanzim tu panel، masraf tu DO ja: `EffectivePriceQuery::choose()` va seed e manual.
 - [ ] 🔴 **`P5-08`** — Chart/candle tu ADMIN ham namayesh (fe'lan faghat board e omumi). Ezafe be matrix ya safhe ye joda.
+  **Pishnahad (chat 2026-10-06)**: safhe ye joda `/dashboard/charts` (sidebar e «نمودارها») + link e mostaghim az har radif e matrix. Reuse e `price-chart.js` + `/candles.json` (interval haye mojud: m1/m5/m15/h1/h4/d1). Baraye haftegi/mahane/salane: tajmi' az `candles_1d` dar lahze ye query (Flux `aggregateWindow` ru d1)، na bucket e jadid. Toggle e khat (area) / candle — KLineCharts har do ro dare.
 - [ ] `P4-07`/`P4-10` — panel haye admin/customer (customer «felan vel»).
 - [ ] `P5-03` (board TV)، `P5-05` (SEO) — mande.
 

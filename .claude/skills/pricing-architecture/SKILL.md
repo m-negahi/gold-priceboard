@@ -50,6 +50,7 @@ $this->providerAction->update($dto);
 | `HotCachePort` | `RedisHotCache` | gheymat e dagh |
 | `TimeSeriesPort` | `InfluxTimeSeries` | tick + candle |
 | `ClockPort` | `SystemClock` / `FrozenClock` | zaman — ta test determinist bashe |
+| `UpstreamLogPort` | `RedisUpstreamCallLog` | daftarche ye call haye MA be provider ha (P4-14) — `push` hargez throw nemikone |
 
 Port e jadid vaghti lazem ast ke `Application/` bekhad ba donya ye birun harf bezane. Marahel:
 1. Interface tu `Domain/Ports/` (faghat Dto/VO tu signature).
