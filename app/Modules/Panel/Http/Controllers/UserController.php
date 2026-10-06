@@ -57,9 +57,14 @@ final readonly class UserController
         ]);
     }
 
-    public function show(int $user): View
+    public function show(Request $request, int $user): View
     {
-        return view('panel::users.show', $this->detail->show($user));
+        return view('panel::users.show', [
+            ...$this->detail->show($user),
+            // Safhe ye KHOD e admin: form e disable neshun dade nemishe (Action
+            // ham rad mikone — `selfDisable`).
+            'isSelf' => $request->user()?->getAuthIdentifier() === $user,
+        ]);
     }
 
     public function create(): View

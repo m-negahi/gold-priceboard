@@ -30,3 +30,10 @@ Schedule::command('pricing:influx:health')
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->name('pricing-influx-health');
+
+// Usage e paydar e API (P6-08): Redis (calls) + ledger (hazine) ->
+// `api_usage_daily`. Idempotent؛ emruz + diruz e Tehran.
+Schedule::command('api:usage:rollup')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->name('api-usage-rollup');

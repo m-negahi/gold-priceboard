@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Panel\Queries;
 
 use App\Modules\Api\Application\Queries\ApiClientQuery;
+use App\Modules\Api\Application\Queries\ApiUsageQuery;
 use App\Modules\Api\Infrastructure\Persistence\Models\ApiClient;
 use App\Modules\Auth\Application\Queries\UserQuery;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
@@ -26,6 +27,8 @@ final readonly class UserDetailQuery
 {
     private const LEDGER_LIMIT = 30;
 
+    private const USAGE_DAYS = 30;
+
     /** Label e Farsi e `reason` haye ledger (reason string e azad ast). */
     private const REASONS = [
         'topup' => 'شارژ',
@@ -40,6 +43,7 @@ final readonly class UserDetailQuery
         private UserQuery $users,
         private WalletQuery $wallets,
         private ApiClientQuery $clients,
+        private ApiUsageQuery $usage,
     ) {}
 
     /** @return array<string, mixed> */
@@ -55,6 +59,7 @@ final readonly class UserDetailQuery
             // ersal e dobare ye HAMUN form yek radif misaze. Biroon az
             // `wallet` chun karbar e bedun e kif ham sharj mishe.
             'walletAdjustKey' => (string) Str::uuid(),
+            'usage' => $this->usage($user->id),
             'sites' => $this->clients->forUser($user->id)
                 ->map(fn (ApiClient $client): array => $this->site($client))
                 ->all(),
@@ -110,6 +115,36 @@ final readonly class UserDetailQuery
             'balanceToman' => Money::rialToToman((int) $wallet->balance_minor),
             'isBlocked' => (bool) $wallet->is_blocked,
             'ledger' => $ledger,
+        ];
+    }
+
+    /**
+     * Chart e usage e 30 rooz (P6-08) — bar = call haye yek rooz e Tehran.
+     * Label faghat har 5 rooz + emruz (30 label ru 375px ja nemishe).
+     *
+     * @return array<string, mixed>
+     */
+    private function usage(int $userId): array
+    {
+        $usage = $this->usage->dailyForUser($userId, self::USAGE_DAYS);
+        $last = count($usage['days']) - 1;
+
+        $bars = array_map(static function (array $day, int $i) use ($last): array {
+            $at = CarbonImmutable::parse($day['day'].' 12:00:00', Jalali::TIMEZONE);
+
+            return [
+                'label' => ($last - $i) % 5 === 0 ? (string) Jalali::format($at, 'm/d') : '',
+                'value' => $day['calls'],
+                'active' => $i === $last,
+                'title' => Jalali::date($at).' — '.$day['calls'].' فراخوانی، '.Money::rialToToman($day['costMinor']).' تومان',
+            ];
+        }, $usage['days'], array_keys($usage['days']));
+
+        return [
+            'bars' => $bars,
+            'totalCalls' => $usage['totalCalls'],
+            'totalCostToman' => Money::rialToToman($usage['totalCostMinor']),
+            'days' => self::USAGE_DAYS,
         ];
     }
 

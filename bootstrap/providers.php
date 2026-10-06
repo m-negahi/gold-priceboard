@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Api\Providers\ApiServiceProvider;
 use App\Modules\Auth\Providers\AuthServiceProvider;
 use App\Modules\Panel\Providers\PanelServiceProvider;
 use App\Modules\Pricing\Providers\PricingServiceProvider;
@@ -18,6 +19,7 @@ use App\Providers\AppServiceProvider;
 return [
     AppServiceProvider::class,
     AuthServiceProvider::class,
+    ApiServiceProvider::class,
     PricingServiceProvider::class,
     PanelServiceProvider::class,
     SeoServiceProvider::class,

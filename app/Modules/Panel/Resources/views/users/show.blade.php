@@ -71,6 +71,8 @@
                             فعال‌سازی دوباره
                         </button>
                     </form>
+                @elseif ($isSelf)
+                    <p class="text-xs text-muted" data-user-self>این حساب خودتان است؛ غیرفعال‌سازی آن ممکن نیست.</p>
                 @else
                     <form method="POST" action="{{ route('panel.users.disable', $profile['id']) }}" class="space-y-3" data-user-disable-form>
                         @csrf
@@ -168,6 +170,28 @@
             @endif
         </section>
     </div>
+
+    {{-- ── Usage e API (P6-08) — az `api_usage_daily` (rollup e har 15 daghighe). ── --}}
+    <section class="mt-4 rounded-2xl bg-surface card-p shadow-xs" aria-labelledby="usage-title"
+             data-usage-chart data-usage-total-calls="{{ $usage['totalCalls'] }}" data-usage-total-cost="{{ $usage['totalCostToman'] }}">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <h2 id="usage-title" class="text-base font-bold text-ink">مصرف API</h2>
+                <p class="mt-1 text-xs text-muted">{{ $usage['days'] }} روز اخیر — فراخوانی در روز (همهٔ سایت‌ها)</p>
+            </div>
+            <dl class="flex gap-6 text-sm">
+                <div>
+                    <dt class="text-xs text-muted">فراخوانی</dt>
+                    <dd class="num text-lg font-bold text-ink">{{ $usage['totalCalls'] }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs text-muted">هزینه (تومان)</dt>
+                    <dd class="num text-lg font-bold text-ink">{{ $usage['totalCostToman'] }}</dd>
+                </div>
+            </dl>
+        </div>
+        <x-panel.bar-chart :bars="$usage['bars']" gap="gap-0.5 sm:gap-1.5" spill-labels class="mt-4" aria-label="نمودار فراخوانی روزانه" />
+    </section>
 
     {{-- ── Site ha (api_clients) ──────────────────────────────────── --}}
     <section class="mt-4 overflow-hidden rounded-2xl bg-surface shadow-xs" aria-labelledby="sites-title">

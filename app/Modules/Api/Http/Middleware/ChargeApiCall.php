@@ -6,6 +6,7 @@ namespace App\Modules\Api\Http\Middleware;
 
 use App\Modules\Api\Application\Actions\ChargeApiCallAction;
 use App\Modules\Api\Infrastructure\Persistence\Models\ApiClient;
+use App\Modules\Api\Infrastructure\Usage\RedisUsageCounter;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,7 +28,10 @@ use Symfony\Component\HttpFoundation\Response;
  */
 final class ChargeApiCall
 {
-    public function __construct(private readonly ChargeApiCallAction $charger) {}
+    public function __construct(
+        private readonly ChargeApiCallAction $charger,
+        private readonly RedisUsageCounter $usage,
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -65,6 +69,10 @@ final class ChargeApiCall
         }
 
         $response = $next($request);
+
+        // Usage e ruzane (P6-08): har call e SERVE-shode (304/khata ham —
+        // «call» ast، hazine ash az ledger miad).
+        $this->usage->hit($client->id);
 
         $charged = $charge['status'] === 'ok';
 

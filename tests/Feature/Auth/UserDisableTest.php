@@ -153,6 +153,16 @@ final class UserDisableTest extends TestCase
             ->assertSee('تخلف در استفاده');
     }
 
+    public function test_an_admin_does_not_see_the_disable_form_on_their_own_page(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $this->actingAs($admin)->get(route('panel.users.show', $admin->id))
+            ->assertOk()
+            ->assertDontSee(route('panel.users.disable', $admin->id), false)
+            ->assertSee('data-user-self', false);
+    }
+
     // ── Login e jadid ───────────────────────────────────────────────
 
     public function test_a_disabled_user_cannot_sign_in_with_a_correct_code(): void

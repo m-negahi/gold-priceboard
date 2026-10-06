@@ -6,6 +6,7 @@ namespace App\Modules\Wallet\Application\Queries;
 
 use App\Modules\Wallet\Infrastructure\Persistence\Models\Wallet;
 use App\Modules\Wallet\Infrastructure\Persistence\Models\WalletTransaction;
+use Carbon\CarbonImmutable;
 
 /**
  * Khundan e kif e pul (P4-02) — bedun e side effect.
@@ -67,6 +68,31 @@ final readonly class WalletQuery
                 'adminId' => is_array($tx->meta) && isset($tx->meta['admin_id']) ? (int) $tx->meta['admin_id'] : null,
                 'createdAt' => $tx->created_at?->toIso8601String(),
             ])
+            ->all();
+    }
+
+    /**
+     * Hazine ye KHALES e API dar yek baze (P6-08): kasr haye `api_call` −
+     * `refund` haye hamun client (304/khata). Kelid = `client_id` e omumi
+     * (az `meta`) — ledger PK e `api_clients` ro nemidune.
+     *
+     * Baze `[from, to)` be UTC (hamun shekli ke `created_at` zakhire mishe).
+     *
+     * @return array<string, int> client_id => net cost (minor)
+     */
+    public function netApiCostByClient(CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        return WalletTransaction::query()
+            ->whereIn('reason', ['api_call', 'refund'])
+            ->whereNotNull('meta->client_id')
+            ->where('created_at', '>=', $from->utc())
+            ->where('created_at', '<', $to->utc())
+            ->groupBy('meta->client_id')
+            ->select('meta->client_id as client')
+            ->selectRaw("sum(case when reason = 'api_call' then amount_minor else -amount_minor end) as net")
+            ->toBase()
+            ->get()
+            ->mapWithKeys(static fn (object $row): array => [(string) $row->client => (int) $row->net])
             ->all();
     }
 }

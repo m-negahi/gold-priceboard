@@ -1,9 +1,15 @@
 @props([
-    // [['label' => '…', 'value' => int, 'active' => bool], …]
+    // [['label' => '…', 'value' => int, 'active' => bool, 'title' => ?string], …]
+    // `title` (ekhtiari) = tooltip e kamel؛ pish-farz «label: value».
     'bars' => [],
     // Saghf e mehvar؛ null = bishtarin value.
     'max' => null,
     'height' => 'h-36',
+    // Fasele ye bar ha — chart e 30-bar (usage) ru mobile gap e riz mikhad.
+    'gap' => 'gap-2',
+    // `true` = label az sotun e bar birun mizane (na truncate) — baraye
+    // chart e por-bar ke faghat har chand bar yek label dare (usage e 30 rooz).
+    'spillLabels' => false,
 ])
 
 @php
@@ -13,7 +19,7 @@
 
 {{-- Bar chart e Donezo (doc §5): bar haye CAPSULE؛ fa'al = brand، gheyr e
      fa'al = hachure (emza ye theme). --}}
-<div {{ $attributes->class(['flex items-end justify-between gap-2', $height]) }} role="img">
+<div {{ $attributes->class(['flex items-end justify-between', $gap, $height]) }} role="img">
     @foreach ($bars as $bar)
         @php $ratio = max(0.06, min(1, ((float) ($bar['value'] ?? 0)) / $ceiling)); @endphp
         <div class="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
@@ -27,10 +33,10 @@
                         'hachure' => ! ($bar['active'] ?? false),
                     ])
                      style="--bar-h: {{ round($ratio * 100, 1) }}%"
-                     title="{{ $bar['label'] ?? '' }}: {{ $bar['value'] ?? 0 }}"></div>
+                     title="{{ $bar['title'] ?? (($bar['label'] ?? '').': '.($bar['value'] ?? 0)) }}"></div>
             </div>
             @if (($bar['label'] ?? '') !== '')
-                <span class="num max-w-full truncate text-[0.6875rem] text-muted-2">{{ $bar['label'] }}</span>
+                <span @class(['num text-[0.6875rem] text-muted-2', 'max-w-full truncate' => ! $spillLabels, 'whitespace-nowrap' => $spillLabels])>{{ $bar['label'] }}</span>
             @endif
         </div>
     @endforeach

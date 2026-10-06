@@ -260,3 +260,22 @@ test.describe('wallet e dasti (P6-06)', () => {
         await expect(page.locator('[data-user-error]')).toHaveText('موجودی کیف پول کافی نیست.');
     });
 });
+
+test.describe('usage e API (P6-08)', () => {
+    test('chart e 30 rooz ba bar e emruz be rang e brand', async () => {
+        await page.goto('/dashboard/users/1');
+        const chart = page.locator('[data-usage-chart]');
+        await expect(chart.getByRole('heading', { name: 'مصرف API' })).toBeVisible();
+
+        const bars = chart.locator('[role="img"] > div');
+        await expect(bars).toHaveCount(30);
+
+        // Bar e akhar (emruz) fa'al = brand-500؛ baghi hachure.
+        const today = bars.last().locator('.rounded-full');
+        const brand = await tokenRgb('--color-brand-500');
+        expect(await today.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(brand);
+
+        // Jam' ha adad-and (raghame Latin).
+        await expect(chart).toHaveAttribute('data-usage-total-calls', /^\d+$/);
+    });
+});
