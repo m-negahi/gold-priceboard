@@ -4,19 +4,23 @@ declare(strict_types=1);
 
 namespace App\Modules\Panel\Http\Controllers;
 
+use App\Modules\Auth\Application\Actions\SaveUserProfileAction;
 use App\Modules\Auth\Application\Actions\UserAdminAction;
 use App\Modules\Auth\Application\Queries\UserQuery;
 use App\Modules\Auth\Domain\Enums\CustomerType;
 use App\Modules\Auth\Domain\Enums\UserLevel;
 use App\Modules\Auth\Domain\Enums\UserStatus;
 use App\Modules\Auth\Domain\Exceptions\UserAdminException;
+use App\Modules\Auth\Http\Support\UserProfileRules;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Common\Helpers\Money;
+use App\Modules\Kyc\Application\Queries\VerificationQuery;
 use App\Modules\Panel\Queries\UserDetailQuery;
 use App\Modules\Wallet\Application\Actions\AdjustWalletAction;
 use App\Modules\Wallet\Domain\Exceptions\WalletException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -28,6 +32,8 @@ use Illuminate\View\View;
 final readonly class UserController
 {
     public function __construct(
+        private SaveUserProfileAction $saveProfile,
+        private VerificationQuery $verification,
         private UserQuery $users,
         private UserDetailQuery $detail,
         private UserAdminAction $admin,
@@ -71,6 +77,7 @@ final readonly class UserController
     {
         return view('panel::users.create', [
             'customerTypes' => CustomerType::labels(),
+            'levels' => UserLevel::labels(),
         ]);
     }
 
@@ -80,20 +87,10 @@ final readonly class UserController
      */
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'phone' => ['required', 'string', 'max:32'],
-            'name' => ['nullable', 'string', 'max:120'],
-            'role' => ['required', Rule::in(['admin', 'customer'])],
-            'customer_type' => ['required', Rule::in(CustomerType::values())],
-        ]);
+        $data = UserProfileRules::validate($request, withRole: true);
 
         try {
-            $user = $this->admin->create(
-                $data['phone'],
-                $data['name'] ?? null,
-                $data['role'] === 'admin',
-                CustomerType::from($data['customer_type']),
-            );
+            $user = $this->saveProfile->execute(null, $data, $request->user());
         } catch (UserAdminException $e) {
             return back()->withErrors([$e->field => $e->getMessage()])->withInput();
         }
@@ -103,6 +100,30 @@ final readonly class UserController
             'title' => 'کاربر ساخته شد',
             'message' => 'با اولین ورود OTP شماره‌اش تأیید می‌شود.',
         ]);
+    }
+
+    public function edit(int $user): View
+    {
+        if ($this->users->findOrFail($user)->is_admin) {
+            Gate::authorize('access.manage');
+        }
+
+        return view('panel::users.edit', [
+            'profile' => $this->users->profile($user), 'customerTypes' => CustomerType::labels(), 'levels' => UserLevel::labels(),
+            'verificationRuns' => $this->verification->forUser($user), 'audits' => $this->users->profileAudit($user),
+        ]);
+    }
+
+    public function update(Request $request, int $user): RedirectResponse
+    {
+        $data = UserProfileRules::validate($request, $user);
+        try {
+            $this->saveProfile->execute($this->users->findOrFail($user), $data, $request->user());
+        } catch (UserAdminException $e) {
+            return back()->withErrors([$e->field => $e->getMessage()])->withInput();
+        }
+
+        return redirect()->route('panel.users.edit', $user)->with('toast', ['kind' => 'success', 'title' => 'اطلاعات کاربر ذخیره شد', 'message' => 'تغییرات ثبت و استعلام زحل در صف قرار گرفت.']);
     }
 
     public function role(Request $request, int $user): RedirectResponse
@@ -154,12 +175,12 @@ final readonly class UserController
         ]);
     }
 
-    public function enable(int $user): RedirectResponse
+    public function enable(Request $request, int $user): RedirectResponse
     {
         /** @var User $target */
         $target = $this->users->findOrFail($user);
 
-        $this->admin->enable($target);
+        $this->admin->enable($target, $request->user());
 
         return redirect()->route('panel.users.show', $target->id)->with('toast', [
             'kind' => 'success',
@@ -170,7 +191,7 @@ final readonly class UserController
 
     /**
      * P6-06 — sharj/kasr e dasti. Mablagh TOMAN e matni ast va ba
-     * `Money::tomanToRial` (string/bcmath) be rial mire — hich float.
+     * `Money::rialFromInput` be rial parse mishe — hich float.
      */
     public function adjustWallet(Request $request, int $user): RedirectResponse
     {
@@ -181,10 +202,10 @@ final readonly class UserController
             'idempotency_key' => ['required', 'uuid'],
         ]);
 
-        $amountMinor = Money::tomanToRial($data['amount']);
+        $amountMinor = Money::rialFromInput($data['amount']);
 
         if ($amountMinor === null || $amountMinor <= 0) {
-            return back()->withErrors(['amount' => 'مبلغ معتبر نیست (تومان، حداکثر یک رقم اعشار).'])->withInput();
+            return back()->withErrors(['amount' => 'مبلغ ریالی معتبر نیست.'])->withInput();
         }
 
         /** @var User $target */
@@ -210,7 +231,7 @@ final readonly class UserController
         return redirect()->route('panel.users.show', $target->id)->with('toast', [
             'kind' => 'success',
             'title' => $data['direction'] === 'credit' ? 'کیف پول شارژ شد' : 'از کیف پول کسر شد',
-            'message' => Money::rialToToman($amountMinor).' تومان — ثبت در دفتر کل.',
+            'message' => Money::rialDisplay($amountMinor).' ریال — ثبت در دفتر کل.',
         ]);
     }
 }

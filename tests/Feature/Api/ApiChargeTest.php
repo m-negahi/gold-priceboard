@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Tests\Feature\Api;
 
 use App\Modules\Api\Application\Actions\ApiClientAction;
+use App\Modules\Api\Application\Actions\PurchasePlanAction;
 use App\Modules\Api\Domain\Services\HmacSignature;
 use App\Modules\Api\Infrastructure\Persistence\Models\ApiClient;
+use App\Modules\Api\Infrastructure\Persistence\Models\ApiPlan;
 use App\Modules\Api\Infrastructure\Persistence\Models\ApiPriceGroup;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Wallet\Application\Actions\WalletAction;
@@ -211,6 +213,22 @@ final class ApiChargeTest extends TestCase
         Cache::flush();
         $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'lost-cache'])->assertConflict();
         self::assertSame(9000, $this->wallet->refresh()->balance_minor);
+    }
+
+    public function test_lost_replay_cache_does_not_reuse_an_included_subscription_call(): void
+    {
+        $plan = ApiPlan::query()->create([
+            'key' => 'included-replay', 'name' => 'Included', 'price_minor' => 0,
+            'duration_days' => 30, 'calls_included' => 1, 'calls_per_day' => 1,
+            'cost_per_call_minor' => 500, 'is_active' => true,
+        ]);
+        app(PurchasePlanAction::class)->purchase($this->client, $plan, 'purchase-replay');
+
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'included-old'])->assertOk()->assertHeader('X-Pb-Cost', '0');
+        $this->assertDatabaseCount('site_subscription_calls', 1);
+        Cache::flush();
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'included-old'])->assertConflict();
+        $this->assertDatabaseCount('site_subscription_calls', 1);
     }
 
     public function test_long_request_ids_fit_the_ledger_even_when_refunded(): void

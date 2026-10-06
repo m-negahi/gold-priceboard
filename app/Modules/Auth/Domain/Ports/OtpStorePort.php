@@ -14,8 +14,8 @@ use App\Modules\Auth\Application\Dto\OtpEntryDto;
  * BA HAM evict mishan — hich halati vojud nadare ke shomaresh bemune vali
  * code na، ya bar'aks (shomaresh e evict-shode ya'ni talash haye majani).
  *
- * Ru Redis e OMUMI (na `redis-prices`): OTP yek cache e VAGHEI-e — evict
- * shodanesh faghat ya'ni «dobare befrest»، na az dast raftan e data.
+ * Ru connection e default (DB0) e Redis e vahed ba TTL; prices ru DB2.
+ * noeviction jelo e hazf e saket ro migire.
  */
 interface OtpStorePort
 {

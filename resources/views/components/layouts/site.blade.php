@@ -64,16 +64,16 @@
                 <nav class="flex items-center gap-2 text-sm">
                     <a href="#api" class="hidden rounded-lg px-3 py-2 font-medium text-muted hover:text-ink sm:inline-block">API</a>
                     @auth
-                        {{-- Panel faghat baraye admin (baraye baghi 404 ast)؛ moshtari be ticket haye khodesh mire (P7-01). --}}
+                        {{-- Panel faghat baraye admin (baraye baghi 404 ast)؛ moshtari be hesab e khodesh mire. --}}
                         @if (auth()->user()->is_admin)
-                            <a href="{{ route('panel.dashboard') }}" class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 font-semibold text-on-brand shadow-(--bp-elev-brand) hover:bg-brand-2">
+                            <a href="{{ route(app(\App\Modules\Access\Application\Queries\AccessQuery::class)->landingRoute(auth()->user())) }}" class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 font-semibold text-on-brand shadow-(--bp-elev-brand) hover:bg-brand-2">
                                 <x-icon name="gauge" class="size-4" />
                                 پنل
                             </a>
                         @else
-                            <a href="{{ route('account.tickets.index') }}" data-account-link class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 font-semibold text-on-brand shadow-(--bp-elev-brand) hover:bg-brand-2">
-                                <x-icon name="ticket" class="size-4" />
-                                تیکت‌ها
+                            <a href="{{ route('account.billing.dashboard') }}" data-account-link class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 font-semibold text-on-brand shadow-(--bp-elev-brand) hover:bg-brand-2">
+                                <x-icon name="wallet" class="size-4" />
+                                حساب من
                             </a>
                         @endif
                     @else

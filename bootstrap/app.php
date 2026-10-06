@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Auth\Http\Middleware\EnsureActiveUser;
+use App\Modules\Auth\Http\Middleware\EnsureAdmin;
 use App\Modules\Common\Exceptions\InvalidTableRequestException;
 use App\Modules\Common\Http\Middleware\LatinizeDigits;
 use App\Modules\Common\Http\Middleware\NormalizePhoneMiddleware;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
          * Kharej az local/testing 404 — vojudeshun ham nabayad ma'lum bashe.
          */
         $middleware->alias([
+            'admin' => EnsureAdmin::class,
             'local-only' => EnsureLocalEnvironment::class,
         ]);
 

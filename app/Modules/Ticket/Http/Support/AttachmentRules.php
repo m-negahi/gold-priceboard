@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Ticket\Http\Support;
 
+use Illuminate\Http\UploadedFile;
+
 /**
  * Ghanun e validation e peyvast (P7-02) — YEK ja baraye har form e ticket
  * (javab e karbar/admin، ticket e jadid، onboarding).
@@ -16,6 +18,8 @@ final class AttachmentRules
     public const MAX_FILES = 5;
 
     public const MAX_KB = 5120;
+
+    public const MAX_TOTAL_KB = 15360;
 
     /**
      * Payam e Farsi — proje file e `lang/fa` nadare va payam e pish-farz e
@@ -36,11 +40,15 @@ final class AttachmentRules
         ];
     }
 
-    /** @return array<string, list<string>> */
+    /** @return array<string, list<string|\Closure>> */
     public static function rules(bool $required = false): array
     {
         return [
-            'files' => [$required ? 'required' : 'nullable', 'array', 'max:'.self::MAX_FILES],
+            'files' => [$required ? 'required' : 'nullable', 'array', 'max:'.self::MAX_FILES, static function (string $attribute, mixed $files, \Closure $fail): void {
+                if (is_array($files) && array_sum(array_map(static fn ($file): int => $file instanceof UploadedFile ? (int) $file->getSize() : 0, $files)) > self::MAX_TOTAL_KB * 1024) {
+                    $fail('مجموع حجم فایل‌ها حداکثر 15 مگابایت است.');
+                }
+            }],
             'files.*' => [
                 'file',
                 'mimes:pdf,jpg,jpeg,png,webp',

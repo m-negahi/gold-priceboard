@@ -66,7 +66,7 @@ final readonly class Price
     }
 
     /**
-     * Matn e NAMAYESHI (rial -> toman، dollar ba 2 ragham) — ba bcmath، na float.
+     * Matn e NAMAYESHI (rial sahih، dollar ba 2 ragham) — ba bcmath، na float.
      *
      * Chera na `number_format($this->toFloat() / 10)`: bala ye 2^53 raghame
      * akhar saket gom mishe va gerd kardan e `round()` ru float gahi

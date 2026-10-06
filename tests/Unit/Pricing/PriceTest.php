@@ -25,14 +25,14 @@ final class PriceTest extends TestCase
     }
 
     /**
-     * `display()` (P5-03) — matn e namayeshi BEDUN e float: rial -> toman
-     * (÷10) va dollar ba 2 ragham. Gerd kardan nim-be-bala (half-up).
+     * `display()` (P5-03) — matn e namayeshi BEDUN e float: rial sahih
+     * (bedun e taghsim) va dollar ba 2 ragham. Gerd kardan nim-be-bala (half-up).
      */
     public function test_display_formats_minor_units_without_float(): void
     {
-        self::assertSame('26,640,000', Price::irr(266_400_000)->display());
-        self::assertSame('26,640,001', Price::irr(266_400_005)->display());
-        self::assertSame('26,640,000', Price::irr(266_400_004)->display());
+        self::assertSame('266,400,000', Price::irr(266_400_000)->display());
+        self::assertSame('266,400,005', Price::irr(266_400_005)->display());
+        self::assertSame('266,400,004', Price::irr(266_400_004)->display());
         self::assertSame('4,140.19', Price::usd(41_401_900)->display());
         self::assertSame('4,140.20', Price::usd(41_401_950)->display());
         self::assertSame('6.49', Price::usd(64_920)->display());
@@ -62,7 +62,7 @@ final class PriceTest extends TestCase
      */
     public function test_display_keeps_every_digit_of_a_huge_value(): void
     {
-        self::assertSame('900,719,925,474,099,321', Price::irr(9_007_199_254_740_993_210)->display());
+        self::assertSame('9,007,199,254,740,993,210', Price::irr(9_007_199_254_740_993_210)->display());
     }
 
     /**

@@ -31,7 +31,7 @@ final readonly class TicketAttachmentController
     {
         /** @var User $viewer */
         $viewer = $request->user();
-        $file = $this->tickets->attachmentForViewerOrFail($attachment, $viewer->id, (bool) $viewer->is_admin);
+        $file = $this->tickets->attachmentForViewerOrFail($attachment, $viewer->id, $viewer->can('tickets.view'));
 
         return $this->storage->disk($file->disk)->download($file->path, $file->original_name, [
             'Content-Type' => $file->mime,

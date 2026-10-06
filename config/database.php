@@ -179,24 +179,14 @@ return [
             'backoff_cap' => env('REDIS_BACKOFF_CAP', 1000),
         ],
 
-        /*
-         * 🔴 Instance e JODA baraye gheymat (`redis-prices` tu compose).
-         *
-         * Connection haye bala ru Redis e omumi mishinan ke `allkeys-lru`
-         * ast: tu feshar e memory HAR kelidi ro mindaze — shamel e kelid haye
-         * gheymat — dar hali ke khodesh ro kamelan salem gozaresh mide.
-         * Natije: tablo bedun e hich error khali mishe.
-         *
-         * In instance `noeviction` ast va kelid haye gheymat BEDUN e TTL
-         * neveshte mishan. Hich chiz e digar-i nabayad inja neveshte she.
-         */
+        // Hamun server e Redis, database e joda baraye hot cache; noeviction ru server ejbari ast.
         'prices' => [
-            'url' => env('REDIS_PRICES_URL'),
-            'host' => env('REDIS_PRICES_HOST', '127.0.0.1'),
-            'username' => env('REDIS_PRICES_USERNAME'),
-            'password' => env('REDIS_PRICES_PASSWORD'),
-            'port' => env('REDIS_PRICES_PORT', '6379'),
-            'database' => env('REDIS_PRICES_DB', '0'),
+            'url' => null,
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'username' => env('REDIS_USERNAME'),
+            'password' => env('REDIS_PASSWORD'),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_PRICE_DATABASE', '2'),
             'max_retries' => env('REDIS_MAX_RETRIES', 3),
             'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
             'backoff_base' => env('REDIS_BACKOFF_BASE', 100),

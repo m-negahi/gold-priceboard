@@ -10,9 +10,8 @@ use App\Modules\Pricing\Domain\Enums\Interval;
 /**
  * Yek series e candle + meta-i ke KLineCharts lazem dare.
  *
- * `displayDivisor` ya'ni **yek** formatter e frontend rial ro toman neshun
- * mide. 🔴 Hargez tu storage toman nakon — un yek tabdil e yek-tarafe-ast
- * ke ba'dan hich kas nemifahme kodum adad rial bude va kodum toman.
+ * `displayDivisor = 1`: IRR tu UI ham rial ast; USD ba scale e khodesh mimune.
+ * Storage va frontend hich tabdil e rial/toman nadaran.
  */
 final readonly class CandleSeriesDto
 {

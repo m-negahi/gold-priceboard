@@ -7,9 +7,9 @@ namespace App\Modules\Auth\Domain\Enums;
 use App\Modules\Common\Traits\EnumTrait;
 
 /**
- * Sath e karbar (P6-01): `basic` pish-farz؛ `invoice_verified` faghat ba
- * ta'eed e admin ru ticket e KYC (Phase 7) — factor e rasmi faghat baraye
- * in sath.
+ * Sath e karbar: `basic` pish-farz; ertegha ba tasmim e sarih e admin
+ * (ticket e KYC ya virayesh e audit-dar). Factor e rasmi alave bar in
+ * sath, snapshot e ta'eed-shode ye invoice_profile ro ham mikhad.
  */
 enum UserLevel: string
 {

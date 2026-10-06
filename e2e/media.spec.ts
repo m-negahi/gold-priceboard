@@ -4,8 +4,8 @@ import { artisan, expectNoPageOverflow, signInAsAdmin, tokenRgb } from './helper
 /** Faghat fixture haye hamin spec ru DB e dev pak mishan. */
 const cleanup = () => artisan('tinker', '--execute=' + String.raw`
 $p = App\Modules\Pricing\Infrastructure\Persistence\Models\Provider::withTrashed()->where('key', 'e2e-media-review')->first();
-if ($p) { app(App\Modules\Media\Actions\SyncMediaUsageAction::class)->forget($p); $p->forceDelete(); }
-foreach (App\Modules\Media\Infrastructure\Persistence\Models\Media::where('name', 'e2e-media-review.svg')->get() as $m) { app(App\Modules\Media\Actions\DeleteMediaAction::class)->handle($m); }
+if ($p) { app(App\Modules\Media\Application\Actions\SyncMediaUsageAction::class)->forget($p); $p->forceDelete(); }
+foreach (App\Modules\Media\Infrastructure\Persistence\Models\Media::where('name', 'e2e-media-review.svg')->get() as $m) { app(App\Modules\Media\Application\Actions\DeleteMediaAction::class)->handle($m); }
 echo 'DONE';
 `);
 

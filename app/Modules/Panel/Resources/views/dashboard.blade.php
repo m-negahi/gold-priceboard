@@ -3,7 +3,7 @@
      namayesh e (ghanun e laye ha). --}}
 
 @php
-    // Format e gheymat: divisor e namayesh (rial -> toman) + raghame Latin
+    // Format e gheymat: divisor e namayesh (rial/dollar) + raghame Latin
     // ba joda-konande. FAGHAT namayesh — hich mohasebe-i.
     $money = static fn (array $cell): string => number_format($cell['sell'] / $cell['divisor'], $cell['precision']);
     $age = static function (int $seconds): string {
@@ -123,7 +123,7 @@
     {{-- ── Jadval e moghayese ───────────────────────────────────────── --}}
     <section class="mt-4 overflow-hidden rounded-2xl bg-surface shadow-xs" aria-labelledby="board-title">
         <div class="flex items-center justify-between gap-3 card-p pb-0">
-            <h2 id="board-title" class="text-base font-bold text-ink">قیمت فروش منابع <span class="text-sm font-normal text-muted">(تومان / دلار)</span></h2>
+            <h2 id="board-title" class="text-base font-bold text-ink">قیمت فروش منابع <span class="text-sm font-normal text-muted">(ریال / دلار)</span></h2>
             @if ($stats['degraded'])
                 <x-panel.pill tone="warn" dot>مسیر جایگزین — کندتر ولی درست</x-panel.pill>
             @endif

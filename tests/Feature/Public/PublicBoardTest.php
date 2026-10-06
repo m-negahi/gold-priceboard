@@ -41,8 +41,37 @@ final class PublicBoardTest extends TestCase
             // `LatinizeDigits` «۱۸» ro Latin mikone.
             ->assertSee('طلای 18 عیار')
             ->assertSee('تی‌جی‌جی‌یو')
-            // Toman (266,400,000 rial / 10) — Latin digit (LatinizeDigits).
-            ->assertSee('26,640,000');
+            ->assertSee('266,400,000')
+            ->assertDontSee('26,640,000')
+            ->assertSee('قیمت‌ها به ریال');
+    }
+
+    /**
+     * SSR va JS har do az `divisor` e radif estefade mikonan؛ agar in adad
+     * ghalat bashe، poll e ba'di ye Alpine gheymat ro 10 barabar mikone.
+     */
+    public function test_board_rows_display_rial_without_scaling_and_keep_genuine_usd_quotes(): void
+    {
+        $this->seedPrice();
+
+        $provider = Provider::query()->where('key', 'tgju')->firstOrFail();
+
+        PriceSnapshot::query()->create([
+            'provider_id' => $provider->id,
+            'symbol' => 'xau-oz-usd', 'side' => 'last',
+            'quote_currency' => 'USD', 'scale' => 4, 'raw_minor' => 41_401_900,
+            'change_pct' => 0, 'direction' => 'flat', 'quoted_at' => now(),
+        ]);
+
+        $rows = collect($this->getJson('/board.json')->assertOk()->json('rows'))->keyBy('symbol');
+
+        $this->assertSame(1, $rows['xau-18k-g-irr']['divisor']);
+        $this->assertSame('ریال', $rows['xau-18k-g-irr']['quoteLabel']);
+        $this->assertEqualsWithDelta(266_400_000, $rows['xau-18k-g-irr']['min'], 0.0);
+
+        $this->assertSame(1, $rows['xau-oz-usd']['divisor']);
+        $this->assertSame('دلار', $rows['xau-oz-usd']['quoteLabel']);
+        $this->assertEqualsWithDelta(4140.19, $rows['xau-oz-usd']['min'], 0.0001);
     }
 
     /**
@@ -59,6 +88,29 @@ final class PublicBoardTest extends TestCase
             ->assertSee('طلا و سکه')
             ->assertSee('bg-metal-gold', false)
             ->assertDontSee('ارز');
+    }
+
+    public function test_large_rial_prices_and_statistics_preserve_every_digit_in_ssr_and_polling(): void
+    {
+        $this->seedPrice();
+        PriceSnapshot::query()->update(['raw_minor' => 9_007_199_254_740_993]);
+        $other = Provider::query()->create([
+            'key' => 'estjt', 'driver' => 'estjt', 'name' => 'ESTJT', 'name_fa' => 'اتحادیه',
+            'is_active' => true, 'on_board' => true,
+        ]);
+        PriceSnapshot::query()->create([
+            'provider_id' => $other->id, 'symbol' => 'xau-18k-g-irr', 'side' => 'last',
+            'quote_currency' => 'IRR', 'scale' => 0, 'raw_minor' => 9_007_199_254_740_995,
+            'change_pct' => 0, 'direction' => 'flat', 'quoted_at' => now(),
+        ]);
+
+        $this->get('/')->assertOk()->assertSee('9,007,199,254,740,993')
+            ->assertDontSee('9,007,199,254,740,992');
+        $this->getJson('/board.json')->assertOk()
+            ->assertJsonPath('rows.0.cells.tgju.sellDisplay', '9,007,199,254,740,993')
+            ->assertJsonPath('rows.0.minDisplay', '9,007,199,254,740,993')
+            ->assertJsonPath('rows.0.maxDisplay', '9,007,199,254,740,995')
+            ->assertJsonPath('rows.0.avgDisplay', '9,007,199,254,740,994');
     }
 
     public function test_the_home_page_shows_an_empty_state_with_no_prices(): void

@@ -57,12 +57,12 @@ final class ManualFallbackTest extends TestCase
 
     // ── ManualPriceAction ───────────────────────────────────────────
 
-    public function test_set_from_display_converts_toman_to_minor(): void
+    public function test_set_from_display_keeps_rial_as_minor(): void
     {
         $action = new ManualPriceAction;
 
-        // 26,640,000 toman -> 266,400,000 rial (divisor 10، scale 0).
-        $action->setFromDisplay(Instrument::Gold18Gram, 26_640_000, 'admin');
+        // 266,400,000 rial -> haman minor (divisor 1، scale 0).
+        $action->setFromDisplay(Instrument::Gold18Gram, 266_400_000, 'admin');
 
         $row = ManualPrice::query()->where('symbol', 'xau-18k-g-irr')->firstOrFail();
         self::assertSame(266_400_000, (int) $row->minor);
@@ -102,24 +102,6 @@ final class ManualFallbackTest extends TestCase
         $this->assertDatabaseCount('manual_prices', 0);
     }
 
-    public function test_seed_from_provider_copies_latest_snapshots(): void
-    {
-        $provider = Provider::query()->create([
-            'key' => 'tgju', 'driver' => 'tgju', 'name' => 'TGJU', 'name_fa' => 'ت', 'is_active' => true,
-        ]);
-        PriceSnapshot::query()->create([
-            'provider_id' => $provider->id, 'symbol' => 'xau-18k-g-irr', 'side' => 'last',
-            'quote_currency' => 'IRR', 'scale' => 0, 'raw_minor' => 266_400_000, 'quoted_at' => now(),
-        ]);
-
-        $count = (new ManualPriceAction)->seedFromProvider('tgju', 'admin');
-
-        self::assertSame(1, $count);
-        $row = ManualPrice::query()->where('symbol', 'xau-18k-g-irr')->firstOrFail();
-        self::assertSame(266_400_000, (int) $row->minor);
-        self::assertSame('tgju', $row->source_hint);
-    }
-
     // ── ManualPriceQuery alarm ──────────────────────────────────────
 
     public function test_a_stale_manual_price_raises_an_alarm(): void
@@ -141,7 +123,7 @@ final class ManualFallbackTest extends TestCase
 
     public function test_a_fresh_manual_price_has_no_alarm(): void
     {
-        (new ManualPriceAction)->setFromDisplay(Instrument::Gold18Gram, 26_640_000, 'admin');
+        (new ManualPriceAction)->setFromDisplay(Instrument::Gold18Gram, 266_400_000, 'admin');
 
         $query = new ManualPriceQuery(app(ClockPort::class), 86_400);
 
@@ -292,6 +274,7 @@ final class ManualFallbackTest extends TestCase
         // pas isStale ru read ba sen hesab mishe؛ manual snapshot e taze dare).
         $manual = $this->activeProvider('manual', 80);
         $this->snapshot($manual, 5);
+        (new ManualPriceAction)->setFromDisplay(Instrument::Gold18Gram, '266400000');
 
         $feed = $this->app->make(EffectivePriceQuery::class)->feed();
         $gold = collect($feed['symbols'])->firstWhere('symbol', 'xau-18k-g-irr');

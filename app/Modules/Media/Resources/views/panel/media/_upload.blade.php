@@ -4,7 +4,7 @@
     Id-haye control ha namespaced-and (`media[alt]` → `f-media-alt`) ta ba `f-title`-e safhe-ye mizban barkhord nakonand.
     Alpine: resources/js/alpine/media-upload.js
 --}}
-<div x-data="mediaUpload({ url: @js(route('panel.media.store')), maxBytes: @js(\App\Modules\Media\Actions\UploadMediaAction::MAX_BYTES) })"
+<div x-data="mediaUpload({ url: @js(route('panel.media.store')), maxBytes: @js(\App\Modules\Media\Application\Actions\UploadMediaAction::MAX_BYTES) })"
      class="space-y-4" data-media-upload>
     <div @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false" @drop.prevent="drop($event)"
          :class="dragging ? 'border-brand bg-brand-soft' : 'border-line-3 bg-surface-2'"

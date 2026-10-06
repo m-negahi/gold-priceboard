@@ -51,6 +51,7 @@ final readonly class ProviderConfigDto
          * bayat e'lam kon، 10 daghighe ba'd az un makhfi kon».
          */
         public int $hideAfterSeconds = 600,
+        public bool $isTrustAnchor = false,
     ) {}
 
     public function driverKey(): string
@@ -70,6 +71,7 @@ final readonly class ProviderConfigDto
             options: (array) ($row['options'] ?? []),
             pollIntervalSeconds: (int) ($row['poll_interval_seconds'] ?? 15),
             hideAfterSeconds: (int) ($row['hide_after_seconds'] ?? 600),
+            isTrustAnchor: (bool) ($row['is_trust_anchor'] ?? false),
         );
     }
 
@@ -85,6 +87,7 @@ final readonly class ProviderConfigDto
             'symbol_freshness' => $this->symbolFreshness,
             'poll_interval_seconds' => $this->pollIntervalSeconds,
             'hide_after_seconds' => $this->hideAfterSeconds,
+            'is_trust_anchor' => $this->isTrustAnchor,
         ];
     }
 

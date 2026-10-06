@@ -6,19 +6,18 @@ namespace App\Modules\Pricing\Application\Actions;
 
 use App\Modules\Pricing\Application\Dto\BoardRowDto;
 use App\Modules\Pricing\Domain\Enums\Instrument;
-use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
+use App\Modules\Pricing\Domain\Services\DisplayPriceParser;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\ManualPrice;
-use App\Modules\Pricing\Infrastructure\Persistence\Models\PriceSnapshot;
-use App\Modules\Pricing\Infrastructure\Persistence\Models\Provider;
+use App\Modules\Pricing\Infrastructure\Persistence\Models\SymbolPriceSetting;
 use InvalidArgumentException;
 
 /**
  * Neveshtan e gheymat haye DASTI (fallback) — Phase 4/5.
  *
- * Admin ya yeki-yeki set mikone، ya az yek provider SEED mikone (akharin
- * gheymat haye un ro mirize tu manual، ba'd dasti tweak mikone).
+ * Admin yeki-yeki set mikone ya az zanjire ye olaviat e har symbol
+ * gheymat e kham va taze ro copy mikone.
  *
- * 🔴 Vorudi DISPLAY unit ast (toman baraye IRR، dollar baraye USD) — inja
+ * 🔴 Vorudi DISPLAY unit ast (rial baraye IRR، dollar baraye USD) — inja
  * be minor tabdil mishe (`displayDivisor × 10^scale`) ta ba baghi ye
  * pipeline yeki bashe.
  */
@@ -32,59 +31,6 @@ final readonly class ManualPriceAction
     }
 
     /**
-     * Seed az yek provider: akharin gheymat haye un ro mirize tu manual.
-     *
-     * @return int tedad e symbol-i ke seed shod
-     */
-    public function seedFromProvider(string $providerKey, ?string $updatedBy = null): int
-    {
-        $provider = Provider::query()->where('key', $providerKey)->first();
-
-        if ($provider === null) {
-            return 0;
-        }
-
-        $snapshots = PriceSnapshot::query()
-            ->where('provider_id', $provider->id)
-            ->whereIn('side', ['last', 'ask'])
-            ->get(['symbol', 'side', 'raw_minor', 'quote_currency', 'scale']);
-
-        $seeded = 0;
-        $seen = [];
-
-        foreach ($snapshots as $snapshot) {
-            $instrument = Instrument::tryFrom((string) $snapshot->symbol);
-
-            if ($instrument === null) {
-                continue;
-            }
-
-            // `last` bar `ask` moghaddam (abshode do radif dare).
-            if (isset($seen[$snapshot->symbol]) && $snapshot->side !== 'last') {
-                continue;
-            }
-
-            $quote = $snapshot->quote_currency instanceof QuoteCurrency
-                ? $snapshot->quote_currency->value
-                : (string) $snapshot->quote_currency;
-
-            $this->store(
-                $instrument,
-                (int) $snapshot->raw_minor,
-                $providerKey,
-                $updatedBy,
-                $quote,
-                (int) $snapshot->scale,
-            );
-
-            $seen[$snapshot->symbol] = true;
-            $seeded++;
-        }
-
-        return $seeded;
-    }
-
-    /**
      * Seed bar asas e OLAVIAT e per-symbol (P5-07): har symbol az avvalin
      * provider e TAZE ye zanjire ye khodesh.
      *
@@ -92,8 +38,8 @@ final readonly class ManualPriceAction
      * symbol-i ke manba' e taze nadasht unja NIST، pas gheymat e dasti e
      * ghabli ash ba adad e bayat jaygozin nemishe.
      *
-     * 🔴 Gheymat e KHAM (`raw`، ghabl az spread) zakhire mishe — mesl e
-     * `seedFromProvider`: spread ru read e'mal mishe، na ru gheymat e manba'.
+     * 🔴 Gheymat e KHAM (`raw`، ghabl az spread) zakhire mishe;
+     * spread ru read e'mal mishe، na ru gheymat e manba'.
      *
      * @param  array<string, BoardRowDto>  $rows  symbol -> radif e entekhab-shode
      * @return int tedad e symbol-i ke seed shod
@@ -102,7 +48,12 @@ final readonly class ManualPriceAction
     {
         $seeded = 0;
 
+        $manualOnly = SymbolPriceSetting::query()->where('manual_only', true)->pluck('symbol')->all();
+
         foreach ($rows as $row) {
+            if (in_array($row->instrument->value, $manualOnly, true)) {
+                continue;
+            }
             $this->store(
                 $row->instrument,
                 $row->raw->minor,
@@ -120,6 +71,10 @@ final readonly class ManualPriceAction
 
     public function remove(Instrument $instrument): void
     {
+        if (SymbolPriceSetting::query()->where('symbol', $instrument->value)->where('manual_only', true)->exists()) {
+            throw new InvalidArgumentException('ابتدا حالت فقط دستی را خاموش کنید.');
+        }
+
         ManualPrice::query()->where('symbol', $instrument->value)->delete();
     }
 
@@ -151,23 +106,8 @@ final readonly class ManualPriceAction
         return $row;
     }
 
-    private function toMinor(Instrument $instrument, string|int $displayValue): int
+    public function toMinor(Instrument $instrument, string|int $displayValue): int
     {
-        $factor = $instrument->quote()->displayDivisor() * (10 ** $instrument->quote()->scale());
-
-        $value = (string) $displayValue;
-
-        if (strlen($value) > 100 || preg_match('/^\d+(?:\.\d+)?$/D', $value) !== 1) {
-            throw new InvalidArgumentException('gheymat bayad decimal e mosbat bashe.');
-        }
-
-        $scaled = bcmul($value, (string) $factor, 1);
-        $rounded = bcadd($scaled, '0.5', 0);
-
-        if (bccomp($rounded, '0', 0) <= 0 || bccomp($rounded, (string) PHP_INT_MAX, 0) > 0) {
-            throw new InvalidArgumentException('gheymat az mahdude e mojaz birun ast.');
-        }
-
-        return (int) $rounded;
+        return DisplayPriceParser::parse($instrument, $displayValue)->minor;
     }
 }

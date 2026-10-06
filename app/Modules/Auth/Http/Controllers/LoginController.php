@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth\Http\Controllers;
 
+use App\Modules\Access\Application\Queries\AccessQuery;
 use App\Modules\Auth\Application\Actions\SendOtpAction;
 use App\Modules\Auth\Application\Actions\VerifyOtpAction;
 use App\Modules\Auth\Application\Queries\PendingOtpQuery;
@@ -44,6 +45,7 @@ final readonly class LoginController
         private VerifyOtpAction $verifyOtp,
         private PendingOtpQuery $pending,
         private AuthFactory $auth,
+        private AccessQuery $access,
     ) {}
 
     public function show(Request $request): View
@@ -128,7 +130,7 @@ final readonly class LoginController
         return new JsonResponse([
             // P7-03: moshtari ke hanuz be soal e factor javab nadade → onboarding.
             'redirect' => match (true) {
-                $user->is_admin => route('panel.dashboard'),
+                $user->is_admin => route($this->access->landingRoute($user)),
                 $user->needsOnboarding() => route('onboarding.show'),
                 default => route('home'),
             },

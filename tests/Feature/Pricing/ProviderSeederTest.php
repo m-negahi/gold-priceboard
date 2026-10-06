@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Pricing;
 
 use App\Modules\Pricing\Domain\Enums\Instrument;
+use App\Modules\Pricing\Domain\Enums\ProviderKind;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\Provider;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\ProviderSpread;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\ProviderSpreadRevision;
@@ -36,7 +37,7 @@ final class ProviderSeederTest extends TestCase
         $this->seedProviders();
 
         $this->assertSame(
-            ['estjt', 'manual', 'mock', 'tgju'],
+            ['estjt', 'manual', 'milli', 'mock', 'nerkh', 'nerkh-stock', 'talasea', 'technogold', 'tgju'],
             Provider::query()->orderBy('key')->pluck('key')->all(),
         );
     }
@@ -84,6 +85,32 @@ final class ProviderSeederTest extends TestCase
 
         // Dollar: 2 rooz (gap e akhare-hafte، na yek-hafte-i).
         $this->assertSame(172_800, (int) $overrides[Instrument::UsdIrr->value]);
+    }
+
+    /** Platform ha `kind = platform` daran — vagarna board kharid/foroosh eshun ro «محاسبه‌شده» barchasb mizane. */
+    public function test_platforms_are_seeded_with_the_platform_kind(): void
+    {
+        $this->seedProviders();
+
+        $kinds = Provider::query()->whereIn('key', ['milli', 'talasea', 'technogold'])->pluck('kind', 'key')
+            ->map(static fn (ProviderKind $kind): string => $kind->value)->all();
+        ksort($kinds);
+
+        $this->assertSame(['milli' => 'platform', 'talasea' => 'platform', 'technogold' => 'platform'], $kinds);
+        $this->assertSame(ProviderKind::Reference, Provider::query()->where('key', 'nerkh')->firstOrFail()->kind);
+    }
+
+    public function test_stock_fallback_is_labeled_as_nerkh_data_without_guessed_platform_provenance(): void
+    {
+        $this->seedProviders();
+        $stock = Provider::query()->where('key', 'nerkh-stock')->firstOrFail();
+
+        self::assertSame('nerkh', $stock->driver);
+        self::assertSame(['item' => 'GOLD18K_STOCK'], $stock->options);
+        self::assertSame('https://nerkh.io', $stock->website);
+        self::assertSame(ProviderKind::Reference, $stock->kind);
+        self::assertFalse($stock->is_active);
+        self::assertFalse($stock->is_trust_anchor);
     }
 
     public function test_estjt_keeps_its_measured_timeout(): void
@@ -140,6 +167,16 @@ final class ProviderSeederTest extends TestCase
 
         // Va hich revision e ja'li.
         $this->assertSame($revisionsBefore, ProviderSpreadRevision::query()->count());
+    }
+
+    public function test_reseeding_preserves_the_trust_anchor_selected_by_the_admin(): void
+    {
+        $this->seedProviders();
+        Provider::query()->where('key', 'tgju')->update(['is_active' => true, 'is_trust_anchor' => true]);
+
+        $this->seedProviders();
+
+        self::assertTrue(Provider::query()->where('key', 'tgju')->firstOrFail()->is_trust_anchor);
     }
 
     public function test_reseeding_is_idempotent(): void

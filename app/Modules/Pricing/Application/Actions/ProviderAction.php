@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Modules\Pricing\Application\Actions;
 
-use App\Modules\Media\Actions\SyncMediaUsageAction;
+use App\Modules\Media\Application\Actions\SyncMediaUsageAction;
 use App\Modules\Media\Infrastructure\Persistence\Models\Media;
 use App\Modules\Pricing\Application\Dto\ProviderInputDto;
 use App\Modules\Pricing\Domain\Enums\HealthState;
 use App\Modules\Pricing\Domain\Exceptions\InvalidProviderException;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\Provider;
-use App\Modules\Pricing\Services\SourceManager;
+use App\Modules\Pricing\Infrastructure\Sources\NerkhQuoteSource;
+use App\Modules\Pricing\Infrastructure\Sources\SourceManager;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -109,7 +110,7 @@ final readonly class ProviderAction
      */
     public function setFlags(Provider $provider, array $flags): Provider
     {
-        $allowed = ['is_active', 'in_comparison', 'on_board', 'in_chart'];
+        $allowed = ['is_active', 'in_comparison', 'on_board', 'in_chart', 'is_trust_anchor'];
 
         $columns = [];
 
@@ -128,6 +129,10 @@ final readonly class ProviderAction
             $columns['consecutive_failures'] = 0;
             $columns['health_state'] = HealthState::Unknown->value;
             $columns['last_error'] = null;
+        }
+
+        if (($columns['is_trust_anchor'] ?? false) && $provider->driver === 'manual') {
+            throw new InvalidProviderException('منبع دستی نمی‌تواند مرجع اعتماد باشد.');
         }
 
         $provider->forceFill($columns)->save();
@@ -207,6 +212,10 @@ final readonly class ProviderAction
 
     private function validate(ProviderInputDto $input): void
     {
+        if ($input->isTrustAnchor && $input->driver === 'manual') {
+            throw new InvalidProviderException('منبع دستی نمی‌تواند مرجع اعتماد باشد.');
+        }
+
         if ($input->key === '') {
             throw InvalidProviderException::blankKey();
         }
@@ -222,6 +231,11 @@ final readonly class ProviderAction
 
         if (! in_array($input->driver, $drivers, true)) {
             throw InvalidProviderException::unknownDriver($input->driver, $drivers);
+        }
+
+        if ($input->driver === NerkhQuoteSource::KEY && array_key_exists('item', $input->options)
+            && (! is_string($input->options['item']) || ! in_array($input->options['item'], NerkhQuoteSource::itemKeys(), true))) {
+            throw new InvalidProviderException('کلید item برای درایور نرخ معتبر نیست.');
         }
 
         if ($input->pollIntervalSeconds < self::MIN_POLL_SECONDS

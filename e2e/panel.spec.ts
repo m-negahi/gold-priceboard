@@ -86,7 +86,9 @@ test.describe('panel', () => {
 
     test('salamat + matrix bala miyan', async () => {
         await page.goto('/dashboard/health');
-        await expect(page.getByRole('heading', { level: 1, name: 'سلامت منابع' })).toBeVisible();
+        await expect(page).toHaveURL(/\/dashboard\/providers$/);
+        await expect(page.getByRole('heading', { level: 1, name: 'منابع قیمت' })).toBeVisible();
+        await expect(page.locator('[data-provider-row="tgju"]')).toContainText('شکست پیاپی');
 
         await page.goto('/dashboard/matrix');
         await expect(page.getByRole('heading', { level: 1, name: 'ماتریس نمادها' })).toBeVisible();

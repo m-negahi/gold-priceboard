@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Ticket;
 
+use App\Modules\Access\Application\Actions\ManageAccessAction;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Ticket\Application\Actions\OpenTicketAction;
 use App\Modules\Ticket\Domain\Enums\TicketType;
@@ -196,5 +197,20 @@ final class TicketAttachmentTest extends TestCase
 
         $this->assertSame(['form.pdf', 'first.pdf'], TicketAttachment::query()->orderBy('id')->pluck('original_name')->all());
         $this->assertSame($admin->id, TicketAttachment::query()->orderBy('id')->first()->uploaded_by);
+    }
+
+    public function test_admin_without_ticket_permission_cannot_download_someone_elses_private_document(): void
+    {
+        $owner = User::factory()->create();
+        $admin = User::factory()->admin()->create();
+        $restricted = User::factory()->admin()->create();
+        $access = app(ManageAccessAction::class);
+        $role = $access->saveRole($admin, null, ['name' => 'خواننده کاربران', 'permissions' => ['users.view']]);
+        $access->assign($admin, $restricted->id, [$role->id], false);
+        $ticket = $this->ticketFor($owner);
+        $this->uploadAs($owner, $ticket, [$this->pdf()])->assertRedirect();
+        $attachment = TicketAttachment::query()->where('ticket_id', $ticket->id)->firstOrFail();
+        $this->actingAs($restricted)->get($this->downloadUrl($attachment))->assertNotFound();
+        $this->actingAs($owner)->get($this->downloadUrl($attachment))->assertDownload('license.pdf');
     }
 }

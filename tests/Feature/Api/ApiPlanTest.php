@@ -20,8 +20,8 @@ use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
- * Model e karbari ye P4-09: kharid e plan wallet ro sharj mikone،
- * masraf pay-as-you-go ba nerkh e plan kasr mishe، saghf e ruzane 429.
+ * Eshterak e site: kharid kasr, call haye dakhel e sahmie rayegan,
+ * mazaad ba nerkh e plan az wallet kasr mishe.
  */
 final class ApiPlanTest extends TestCase
 {
@@ -47,12 +47,15 @@ final class ApiPlanTest extends TestCase
         $this->client->forceFill(['website_url' => 'https://tala.ir'])->save();
         $this->secret = $made['secret'];
         $this->wallet = (new WalletAction)->forOwner($user->id);
+        (new WalletAction)->credit($this->wallet, 8_000_000, 'topup', 'seed');
 
         $this->plan = ApiPlan::query()->create([
             'key' => 'basic-1200',
             'name' => 'پایه — ۱۲۰۰ فراخوانی در روز',
             'price_minor' => 5_000_000,
-            'calls_per_day' => 3,
+            'duration_days' => 30,
+            'calls_included' => 3,
+            'calls_per_day' => 2,
             'cost_per_call_minor' => 2_000,
         ]);
     }
@@ -81,53 +84,48 @@ final class ApiPlanTest extends TestCase
         ], $headers));
     }
 
-    public function test_buying_a_plan_credits_the_wallet_by_the_plan_price(): void
+    public function test_buying_a_plan_debits_the_wallet_and_stores_terms(): void
     {
         $this->purchase();
 
-        self::assertSame(5_000_000, (int) $this->wallet->refresh()->balance_minor);
+        self::assertSame(3_000_000, (int) $this->wallet->refresh()->balance_minor);
         self::assertSame($this->plan->id, $this->client->plan_id);
-        $this->assertDatabaseHas('wallet_transactions', ['reason' => 'plan_purchase', 'amount_minor' => 5_000_000]);
+        $this->assertDatabaseHas('wallet_transactions', ['reason' => 'plan_purchase', 'direction' => 'debit', 'amount_minor' => 5_000_000]);
+        $this->assertDatabaseHas('site_subscriptions', ['api_client_id' => $this->client->id, 'calls_included' => 3, 'calls_per_day' => 2]);
     }
 
-    public function test_a_gateway_retry_credits_only_once(): void
+    public function test_a_purchase_retry_debits_only_once(): void
     {
         $this->purchase('pay-dup');
         $this->purchase('pay-dup');
 
-        self::assertSame(5_000_000, (int) $this->wallet->refresh()->balance_minor, 'callback e tekrari do bar sharj nemikone.');
+        self::assertSame(3_000_000, (int) $this->wallet->refresh()->balance_minor);
+        $this->assertDatabaseCount('site_subscriptions', 1);
     }
 
-    public function test_calls_use_the_plan_rate_and_hit_the_daily_cap(): void
+    public function test_included_calls_are_free_and_daily_overage_uses_plan_rate(): void
     {
         $this->purchase();
 
-        // 3 call e mojaz ba nerkh e 2000:
-        foreach ([1, 2, 3] as $i) {
-            $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => "d-{$i}"])->assertOk();
-        }
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'd-1'])->assertOk()->assertHeader('X-Pb-Cost', '0');
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'd-2'])->assertOk()->assertHeader('X-Pb-Cost', '0');
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'd-3'])->assertOk()->assertHeader('X-Pb-Cost', '2000');
 
-        self::assertSame(5_000_000 - 3 * 2_000, (int) $this->wallet->refresh()->balance_minor);
-
-        // Call e 4om: saghf e ruzane (429) — HICH kasr-i.
-        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'd-4'])->assertStatus(429);
-        self::assertSame(5_000_000 - 3 * 2_000, (int) $this->wallet->refresh()->balance_minor);
+        self::assertSame(2_998_000, (int) $this->wallet->refresh()->balance_minor);
+        $this->assertDatabaseCount('site_subscription_calls', 2);
     }
 
     public function test_purchasing_mid_stream_refreshes_the_redis_mirror(): void
     {
         $this->purchase();
 
-        // Mirror ba yek call seed mishe...
         $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'a'])->assertOk();
-
-        // ...kharid e plan e dovvom (sharj e bishtar) bayad mirror ro batel
-        // kone ta mande ye jadid dide she.
+        (new WalletAction)->credit($this->wallet, 5_000_000, 'topup', 'seed-2');
         app(PurchasePlanAction::class)->purchase($this->client, $this->plan, 'pay-2');
 
         self::assertTrue((new WalletQuery)->verifyBalance($this->wallet->refresh()));
 
-        // Call e ba'di ba mande ye JADID kar mikone (hich 402-i).
+        // Call e ba'di az sahmie ye fa'al estefade mikone.
         $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'b'])->assertOk();
     }
 

@@ -66,8 +66,8 @@ final class UserDetailPageTest extends TestCase
 
         $response = $this->actingAs($this->makeAdmin())->get(route('panel.users.show', $customer->id))->assertOk();
 
-        // 4,998,770 rial = 499,877 toman
-        $response->assertSee('499,877')
+        // Mande be rial namayesh dade mishe.
+        $response->assertSee('4,998,770')
             ->assertSee('شارژ')
             ->assertSee('فراخوانی API');
 

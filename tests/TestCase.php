@@ -81,6 +81,9 @@ abstract class TestCase extends BaseTestCase
         // test haye OTP kelid haye DEV (db 0 — Horizon، cache) ro dast
         // mizanan.
         $config->set('database.redis.default.database', '13');
+        foreach (['default', 'cache', 'prices'] as $connection) {
+            $config->set('database.redis.'.$connection.'.url', null);
+        }
 
         // ── Redis e gheymat: database e 15، na 0 ────────────────
         // `RedisHotCacheTest` `flushdb()` mizane — ru db e 0 un tablo ye
@@ -105,6 +108,9 @@ abstract class TestCase extends BaseTestCase
 
         // ── SMS: driver e fake — hich IO ───────────────────────
         $config->set('sms.driver', 'fake');
+        $config->set('modules.kyc.token', '');
+        $config->set('billing.zibal.merchant', '');
+        $config->set('database.redis.cache.database', '14');
 
         // ── OTP: meghdar haye SABET e test ─────────────────────
         // `.env` e dev `BYPASS_OTP=true` va `OTP_LENGTH=5` dare va container

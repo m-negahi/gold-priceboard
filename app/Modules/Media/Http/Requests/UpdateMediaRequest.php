@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Media\Http\Requests;
 
-use App\Modules\Media\Dto\MediaDto;
+use App\Modules\Media\Application\Dto\MediaDto;
 use Illuminate\Foundation\Http\FormRequest;
 
 /** Virayesh-e alt/title-e yek rasane az modal-e ketabkhane. */

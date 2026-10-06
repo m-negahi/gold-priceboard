@@ -71,6 +71,8 @@ final class TickContext
         public readonly TickTime $at,
         public readonly array $sources,
         public readonly array $providers,
+        /** @var list<string> */
+        public readonly array $trustAnchorKeys = [],
     ) {}
 
     public function config(string $providerKey): ProviderConfigDto

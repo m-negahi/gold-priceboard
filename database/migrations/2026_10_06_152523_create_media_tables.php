@@ -35,14 +35,14 @@ return new class extends Migration
             $table->unique(['media_id', 'usable_type', 'usable_id', 'field'], 'media_usages_unique');
         });
         Schema::table('providers', function (Blueprint $table): void {
-            $table->foreignId('logo_media_id')->nullable()->constrained('media')->restrictOnDelete();
+            $table->foreign('logo_media_id')->references('id')->on('media')->restrictOnDelete();
         });
     }
 
     public function down(): void
     {
         Schema::table('providers', function (Blueprint $table): void {
-            $table->dropConstrainedForeignId('logo_media_id');
+            $table->dropForeign(['logo_media_id']);
         });
         Schema::dropIfExists('media_usages');
         Schema::dropIfExists('media');

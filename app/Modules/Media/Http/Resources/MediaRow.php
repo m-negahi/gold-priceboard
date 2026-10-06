@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Media\Http\Resources;
 
 use App\Modules\Common\Helpers\Jalali;
-use App\Modules\Media\Actions\UploadMediaAction;
+use App\Modules\Media\Application\Actions\UploadMediaAction;
 use App\Modules\Media\Infrastructure\Persistence\Models\Media;
 
 /**

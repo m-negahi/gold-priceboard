@@ -9,6 +9,10 @@ use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
 use App\Modules\Pricing\Domain\Ports\QuoteSourcePort;
 use App\Modules\Pricing\Infrastructure\Sources\EstjtQuoteSource;
+use App\Modules\Pricing\Infrastructure\Sources\MilliQuoteSource;
+use App\Modules\Pricing\Infrastructure\Sources\NerkhQuoteSource;
+use App\Modules\Pricing\Infrastructure\Sources\TalaseaQuoteSource;
+use App\Modules\Pricing\Infrastructure\Sources\TechnogoldQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\TgjuQuoteSource;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -102,6 +106,65 @@ final class SourceFixtureMatrixTest extends TestCase
     }
 
     /**
+     * nerkh: 11 quote. IRR ha TOMAN-and، `OUNCE`/`OUNCE_SILVER` DOLLAR.
+     *
+     * Fixture 2026-10-06 ast (do rooz ba'd az tgju/estjt)؛ bazaar ~0.2–0.8%
+     * jabeja shode، pas moghayese ye cross-source hanuz zir e 3% mimune.
+     *
+     * @return array<string, array{0: string, 1: int, 2: QuoteCurrency}>
+     */
+    public static function nerkhMatrix(): array
+    {
+        return self::rows([
+            // Toman × 10 -> rial.
+            'xau-18k-g-irr:last' => [267_045_000, QuoteCurrency::IRR],
+            'xau-24k-g-irr:last' => [356_020_000, QuoteCurrency::IRR],
+            'xau-mesghal-irr:last' => [1_158_950_000, QuoteCurrency::IRR],
+            'xau-coin-emami-irr:last' => [2_722_900_000, QuoteCurrency::IRR],
+            'xau-coin-bahar-irr:last' => [2_648_100_000, QuoteCurrency::IRR],
+            'xau-coin-half-irr:last' => [1_434_000_000, QuoteCurrency::IRR],
+            'xau-coin-quarter-irr:last' => [772_000_000, QuoteCurrency::IRR],
+            'xau-coin-gerami-irr:last' => [381_500_000, QuoteCurrency::IRR],
+            'usd-irr:last' => [2_691_000, QuoteCurrency::IRR],
+            // USD — scale 4، bedun e ×10.
+            'xau-oz-usd:last' => [41_640_000, QuoteCurrency::USD],
+            'xag-oz-usd:last' => [610_000, QuoteCurrency::USD],
+        ]);
+    }
+
+    /**
+     * Platform ha (2026-10-06، API e khod e site) — faghat 18 ayar.
+     *
+     *   milli:      `price18 = 265100` RIAL/MILLIGRAM → ×1000
+     *   talasea:    `price = "26689"` TOMAN/MILLIGRAM (string) → ×1000 ×10
+     *   technogold: toman/g، jofte VAGHEI: `buy_price` = ask، `sell_price` = bid
+     *
+     * Se zarib e motefavet (1000، 10000، 10) — daghighan jayi ke yek
+     * `upstream_unit` e provider-level kafi nist.
+     *
+     * @return array<string, array{0: string, 1: int, 2: QuoteCurrency}>
+     */
+    public static function milliMatrix(): array
+    {
+        return self::rows(['xau-18k-g-irr:last' => [265_100_000, QuoteCurrency::IRR]]);
+    }
+
+    /** @return array<string, array{0: string, 1: int, 2: QuoteCurrency}> */
+    public static function talaseaMatrix(): array
+    {
+        return self::rows(['xau-18k-g-irr:last' => [266_890_000, QuoteCurrency::IRR]]);
+    }
+
+    /** @return array<string, array{0: string, 1: int, 2: QuoteCurrency}> */
+    public static function technogoldMatrix(): array
+    {
+        return self::rows([
+            'xau-18k-g-irr:ask' => [267_561_150, QuoteCurrency::IRR],
+            'xau-18k-g-irr:bid' => [264_233_280, QuoteCurrency::IRR],
+        ]);
+    }
+
+    /**
      * @param  array<string, array{0: int, 1: QuoteCurrency}>  $matrix
      * @return array<string, array{0: string, 1: int, 2: QuoteCurrency}>
      */
@@ -142,6 +205,55 @@ final class SourceFixtureMatrixTest extends TestCase
         self::assertMatrixCoversTheSource('estjt', self::estjtMatrix());
     }
 
+    // ── nerkh ───────────────────────────────────────────────────
+
+    #[DataProvider('nerkhMatrix')]
+    public function test_nerkh_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
+    {
+        self::assertQuote('nerkh', $key, $minor, $currency);
+    }
+
+    public function test_the_nerkh_matrix_is_exhaustive(): void
+    {
+        self::assertMatrixCoversTheSource('nerkh', self::nerkhMatrix());
+    }
+
+    // ── platform ha ─────────────────────────────────────────────
+
+    #[DataProvider('milliMatrix')]
+    public function test_milli_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
+    {
+        self::assertQuote('milli', $key, $minor, $currency);
+    }
+
+    #[DataProvider('talaseaMatrix')]
+    public function test_talasea_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
+    {
+        self::assertQuote('talasea', $key, $minor, $currency);
+    }
+
+    #[DataProvider('technogoldMatrix')]
+    public function test_technogold_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
+    {
+        self::assertQuote('technogold', $key, $minor, $currency);
+    }
+
+    #[DataProvider('platformMatrices')]
+    public function test_the_platform_matrix_is_exhaustive(string $source, array $matrix): void
+    {
+        self::assertMatrixCoversTheSource($source, $matrix);
+    }
+
+    /** @return array<string, array{0: string, 1: array<string, array{0: string, 1: int, 2: QuoteCurrency}>}> */
+    public static function platformMatrices(): array
+    {
+        return [
+            'milli' => ['milli', self::milliMatrix()],
+            'talasea' => ['talasea', self::talaseaMatrix()],
+            'technogold' => ['technogold', self::technogoldMatrix()],
+        ];
+    }
+
     // ── 🔴 Moghayese ye do manba' e MOSTAGHEL ───────────────────
 
     /**
@@ -161,25 +273,26 @@ final class SourceFixtureMatrixTest extends TestCase
      * hesab mishe، pas agar ruzi estjt yek symbol e jadid ezafe kone، un
      * khod-be-khod inja miad.
      */
-    public function test_both_sources_agree_on_every_shared_symbol(): void
+    #[DataProvider('sourcesComparedWithTgju')]
+    public function test_both_sources_agree_on_every_shared_symbol(string $source, int $minShared): void
     {
         $tgju = self::quotes('tgju');
-        $estjt = self::quotes('estjt');
+        $other = self::quotes($source);
 
-        $shared = array_intersect(array_keys($estjt), array_keys($tgju));
+        $shared = array_intersect(array_keys($other), array_keys($tgju));
 
         self::assertGreaterThanOrEqual(
-            9,
+            $minShared,
             count($shared),
             'eshterak kamtar az entezar ast — map e yeki az source ha kharab shode?',
         );
 
         foreach ($shared as $key) {
-            $a = $estjt[$key]->price->minor;
+            $a = $other[$key]->price->minor;
             $b = $tgju[$key]->price->minor;
 
             self::assertSame(
-                $estjt[$key]->price->quote,
+                $other[$key]->price->quote,
                 $tgju[$key]->price->quote,
                 "{$key}: do source arz haye MOTEFAVET midan — flip e arz.",
             );
@@ -188,10 +301,47 @@ final class SourceFixtureMatrixTest extends TestCase
                 $b,
                 $a,
                 $b * 0.03,
-                "{$key}: estjt={$a} va tgju={$b} bishtar az 3% ekhtelaf daran — ".
+                "{$key}: {$source}={$a} va tgju={$b} bishtar az 3% ekhtelaf daran — ".
                 'ehtemalan vahed ya martabe tu yeki az do source kharab ast.',
             );
         }
+    }
+
+    /**
+     * Har source e gheyr e tgju ba tgju moghayese mishe (tgju bishtarin
+     * symbol ro dare). Adad = kamtarin eshterak e entezari.
+     *
+     * @return array<string, array{0: string, 1: int}>
+     */
+    public static function sourcesComparedWithTgju(): array
+    {
+        return [
+            'estjt' => ['estjt', 9],
+            'nerkh' => ['nerkh', 11],
+            // Platform ha faghat 18 ayar midan؛ technogold bid/ask dare ke
+            // ba `last` e tgju kelid e moshtarak nadare — bebin
+            // `test_technogold_sides_bracket_the_reference_price`.
+            'milli' => ['milli', 1],
+            'talasea' => ['talasea', 1],
+        ];
+    }
+
+    /**
+     * technogold `last` nadare، pas moghayese ye bala un ro nemigire. Jofte
+     * bid/ask bayad ask > bid bashe (map e bar'aks = spread e manfi) va har
+     * do ta 3% az tgju fasele dashte bashan.
+     */
+    public function test_technogold_sides_bracket_the_reference_price(): void
+    {
+        $tech = self::quotes('technogold');
+        $reference = self::quotes('tgju')['xau-18k-g-irr:last']->price->minor;
+
+        $ask = $tech['xau-18k-g-irr:ask']->price->minor;
+        $bid = $tech['xau-18k-g-irr:bid']->price->minor;
+
+        self::assertGreaterThan($bid, $ask, 'ask bayad az bid bishtar bashe — `buy_price`/`sell_price` bar-aks map shodan?');
+        self::assertEqualsWithDelta($reference, $ask, $reference * 0.03);
+        self::assertEqualsWithDelta($reference, $bid, $reference * 0.03);
     }
 
     // ── Helper ──────────────────────────────────────────────────
@@ -245,6 +395,10 @@ final class SourceFixtureMatrixTest extends TestCase
         [$adapter, $fixture] = match ($source) {
             'tgju' => [new TgjuQuoteSource, 'tgju-ajax.json'],
             'estjt' => [new EstjtQuoteSource, 'estjt-new-price.json'],
+            'nerkh' => [new NerkhQuoteSource, 'nerkh-prices.json'],
+            'milli' => [new MilliQuoteSource, 'milli-price-external.json'],
+            'talasea' => [new TalaseaQuoteSource, 'talasea-get-gold-price.json'],
+            'technogold' => [new TechnogoldQuoteSource, 'technogold-only-price.json'],
             default => self::fail("source e nashenas: {$source}"),
         };
 
@@ -264,7 +418,7 @@ final class SourceFixtureMatrixTest extends TestCase
     /** Har kelid e jadval bayad be yek `Instrument` e vaghei eshare kone. */
     public function test_every_matrix_key_names_a_real_instrument(): void
     {
-        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix())] as $key) {
+        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix()), ...array_keys(self::nerkhMatrix()), ...array_keys(self::milliMatrix()), ...array_keys(self::talaseaMatrix()), ...array_keys(self::technogoldMatrix())] as $key) {
             $symbol = explode(':', $key)[0];
 
             self::assertNotNull(

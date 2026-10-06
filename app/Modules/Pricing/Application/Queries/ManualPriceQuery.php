@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Pricing\Application\Queries;
 
+use App\Modules\Common\Helpers\Jalali;
+use App\Modules\Pricing\Application\Dto\BoardRowDto;
+use App\Modules\Pricing\Domain\Enums\Direction;
 use App\Modules\Pricing\Domain\Enums\Instrument;
+use App\Modules\Pricing\Domain\Enums\Side;
 use App\Modules\Pricing\Domain\Ports\ClockPort;
+use App\Modules\Pricing\Domain\Services\SpreadPricer;
+use App\Modules\Pricing\Domain\ValueObjects\Price;
+use App\Modules\Pricing\Domain\ValueObjects\SpreadPair;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\ManualPrice;
 
 /**
@@ -53,14 +60,44 @@ final readonly class ManualPriceQuery
                 'quote' => $instrument->quote()->value,
                 'precision' => $instrument->quote()->displayPrecision(),
                 'hasPrice' => $row !== null,
-                // Display unit (toman/dollar) baraye namayesh tu form.
+                // Display unit (rial/dollar) baraye namayesh tu form.
                 'display' => $row !== null ? bcdiv((string) $row->minor, (string) ($divisor * (10 ** $scale)), max($scale, $divisor === 10 ? 1 : 0)) : null,
                 'sourceHint' => $row?->source_hint,
                 'updatedBy' => $row?->updated_by,
                 'updatedAt' => $row?->updated_at?->toIso8601String(),
+                'updatedDisplay' => $row?->updated_at !== null ? Jalali::format($row->updated_at, 'Y/m/d H:i:s') : '—',
+                'unitLabel' => $instrument->quote()->displayLabel(),
                 'ageSeconds' => $age,
                 'isAlarm' => $age !== null && $age > $this->alarmAfterSeconds,
             ];
+        }
+
+        return $rows;
+    }
+
+    /** @param array<string, array<string, SpreadPair>> $spreadMap
+     * @return array<string, BoardRowDto>
+     */
+    public function effectiveRows(array $spreadMap): array
+    {
+        $rows = [];
+        $now = $this->clock->now();
+
+        foreach (ManualPrice::query()->get() as $stored) {
+            $instrument = Instrument::tryFrom($stored->symbol);
+
+            if ($instrument === null || $stored->minor <= 0 || $stored->quote_currency !== $instrument->quote()->value) {
+                continue;
+            }
+
+            $price = new Price($stored->minor, $instrument->quote());
+            $pair = SpreadPricer::applyPair($price, SpreadQuery::resolve($spreadMap, 'manual', $instrument));
+            $age = $stored->updated_at !== null ? max(0, $now->timestamp - $stored->updated_at->timestamp) : PHP_INT_MAX;
+            $rows[$stored->symbol] = new BoardRowDto(
+                'manual', $instrument, Side::Last, $price, $pair['buy'], $pair['sell'],
+                null, null, null, 0.0, Direction::Flat, $age, $age > $this->alarmAfterSeconds,
+                true, ($stored->updated_at ?? $now)->toIso8601String(),
+            );
         }
 
         return $rows;

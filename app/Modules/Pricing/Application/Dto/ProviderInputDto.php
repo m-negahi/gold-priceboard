@@ -40,6 +40,7 @@ final class ProviderInputDto
         public array $options = [],
         public ?int $logoMediaId = null,
         public bool $logoSpecified = false,
+        public bool $isTrustAnchor = false,
     ) {}
 
     /**
@@ -75,6 +76,7 @@ final class ProviderInputDto
             options: (array) ($data['options'] ?? []),
             logoMediaId: empty($data['logo_media_id']) ? null : (int) $data['logo_media_id'],
             logoSpecified: array_key_exists('logo_media_id', $data),
+            isTrustAnchor: (bool) ($data['is_trust_anchor'] ?? false),
         );
     }
 
@@ -90,6 +92,7 @@ final class ProviderInputDto
             'website' => $this->website,
             'logo_path' => $this->logoPath,
             'is_active' => $this->isActive,
+            'is_trust_anchor' => $this->isTrustAnchor,
             'in_comparison' => $this->inComparison,
             'on_board' => $this->onBoard,
             'in_chart' => $this->inChart,

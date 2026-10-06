@@ -62,14 +62,14 @@ final class WalletAdjustTest extends TestCase
 
         $wallet = $this->wallet();
         $this->assertNotNull($wallet);
-        // 125,000 toman = 1,250,000 rial
-        $this->assertSame(1_250_000, $wallet->balance_minor);
+        // Vorudi va mande har do rial hastand.
+        $this->assertSame(125_000, $wallet->balance_minor);
 
         /** @var WalletTransaction $tx */
         $tx = WalletTransaction::query()->where('wallet_id', $wallet->id)->sole();
         $this->assertSame('credit', $tx->direction);
         $this->assertSame('admin_adjust', $tx->reason);
-        $this->assertSame(1_250_000, $tx->amount_minor);
+        $this->assertSame(125_000, $tx->amount_minor);
         $this->assertSame($this->admin->id, $tx->meta['admin_id']);
         $this->assertSame('جبران قطعی سرویس', $tx->meta['note']);
         $this->assertTrue(app(WalletQuery::class)->verifyBalance($wallet));
@@ -82,13 +82,13 @@ final class WalletAdjustTest extends TestCase
             ->assertSessionHasNoErrors();
 
         $wallet = $this->wallet();
-        $this->assertSame(1_000_000, $wallet->balance_minor);
+        $this->assertSame(100_000, $wallet->balance_minor);
         // Append-only: radif e avval dast nakhorde، radif e dovom ezafe shode.
         $rows = WalletTransaction::query()->where('wallet_id', $wallet->id)->orderBy('id')->get();
         $this->assertCount(2, $rows);
-        $this->assertSame(1_250_000, $rows[0]->amount_minor);
+        $this->assertSame(125_000, $rows[0]->amount_minor);
         $this->assertSame('debit', $rows[1]->direction);
-        $this->assertSame(1_000_000, $rows[1]->balance_after_minor);
+        $this->assertSame(100_000, $rows[1]->balance_after_minor);
     }
 
     public function test_the_same_form_submitted_twice_creates_one_row(): void
@@ -97,7 +97,7 @@ final class WalletAdjustTest extends TestCase
         $this->postAdjust()->assertSessionHasNoErrors();
 
         $this->assertSame(1, WalletTransaction::query()->count());
-        $this->assertSame(1_250_000, $this->wallet()->balance_minor);
+        $this->assertSame(125_000, $this->wallet()->balance_minor);
     }
 
     /**
@@ -130,7 +130,7 @@ final class WalletAdjustTest extends TestCase
 
         // Ledger va mande dast nakhordan.
         $this->assertSame(1, WalletTransaction::query()->count());
-        $this->assertSame(1_250_000, $this->wallet()->balance_minor);
+        $this->assertSame(125_000, $this->wallet()->balance_minor);
     }
 
     /** Radif e ghabli be esm e admin e DIGAR sabt shode — javab e in admin nist. */
@@ -183,14 +183,14 @@ final class WalletAdjustTest extends TestCase
         $this->postAdjust(['direction' => 'steal'])->assertSessionHasErrors('direction');
     }
 
-    /** 🔴 Hich float: adad e bozorg e toman daghigh be rial mire. */
+    /** 🔴 Hich float: adad e bozorg e rial daghigh mimune. */
     public function test_large_and_persian_amounts_are_exact(): void
     {
-        $this->postAdjust(['amount' => '99999999999999.5'])->assertSessionHasNoErrors();
+        $this->postAdjust(['amount' => '999999999999995'])->assertSessionHasNoErrors();
         $this->assertSame(999_999_999_999_995, $this->wallet()->balance_minor);
 
         $this->postAdjust(['amount' => '۱۲۵٬۰۰۰', 'idempotency_key' => '0b6c8f3e-1111-4a1b-9c2d-000000000003'])->assertSessionHasNoErrors();
-        $this->assertSame(999_999_999_999_995 + 1_250_000, $this->wallet()->balance_minor);
+        $this->assertSame(999_999_999_999_995 + 125_000, $this->wallet()->balance_minor);
     }
 
     public function test_customers_cannot_adjust_wallets(): void

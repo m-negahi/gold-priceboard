@@ -99,6 +99,9 @@
                 <h2 class="text-base font-bold text-ink">نمایش</h2>
 
                 <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                    <x-form.toggle name="is_trust_anchor" label="مرجع اعتماد قیمت"
+                                   :checked="(bool) $old('is_trust_anchor', false)" />
+                    <p class="text-xs text-muted">اولین قیمت منابع جدید فقط با مرجع اعتماد سنجیده می‌شود. برای منبع دستی فعال نکنید.</p>
                     <x-form.toggle name="is_active" label="فعال"
                                    description="منبع جدید را بعد از یک tick سالم روشن کنید."
                                    :checked="(bool) $old('is_active', false)" />

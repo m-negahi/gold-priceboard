@@ -4,35 +4,41 @@ declare(strict_types=1);
 
 namespace App\Modules\Panel\Http\Controllers;
 
+use App\Modules\Pricing\Application\Actions\ExportManualPricesAction;
+use App\Modules\Pricing\Application\Actions\ImportManualPricesAction;
 use App\Modules\Pricing\Application\Actions\ManualPriceAction;
 use App\Modules\Pricing\Application\Queries\EffectivePriceQuery;
+use App\Modules\Pricing\Application\Queries\ManualPriceImportQuery;
 use App\Modules\Pricing\Application\Queries\ManualPriceQuery;
-use App\Modules\Pricing\Application\Queries\ProviderQuery;
+use App\Modules\Pricing\Application\Queries\PricingSettingsQuery;
 use App\Modules\Pricing\Domain\Enums\Instrument;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Throwable;
 
 /**
- * Gheymat haye DASTI (fallback) — panel e admin (Phase 4/5).
- *
- * ⚠️ update/seed/remove JSON bar migardunan (safhe ba Alpine be-rooz
- * mishe — hich reload/scroll، khaste ye sahebe proje). Progressive: age
- * expectsJson nabud، redirect e classic.
+ * Virayesh/import e gheymat e dasti dar safhe ye olaviat.
+ * Mutation ha JSON midan ta Alpine safhe ro bedun reload be-rooz kone.
  */
 final readonly class ManualPriceController
 {
     public function __construct(
         private ManualPriceQuery $manual,
         private ManualPriceAction $action,
-        private ProviderQuery $providers,
         private EffectivePriceQuery $effective,
+        private ManualPriceImportQuery $import,
+        private ImportManualPricesAction $importAction,
+        private ExportManualPricesAction $export,
+        private PricingSettingsQuery $settings,
     ) {}
 
-    public function index(): View
+    public function index(): RedirectResponse
     {
-        return view('panel::manual.index', $this->payload());
+        return redirect()->route('panel.priorities.index');
     }
 
     public function update(Request $request): JsonResponse
@@ -55,18 +61,6 @@ final readonly class ManualPriceController
         }
 
         return $this->json($instrument->label().' به‌روز شد.');
-    }
-
-    public function seed(Request $request): JsonResponse
-    {
-        $data = $request->validate(['provider' => ['required', 'string', 'max:32']]);
-
-        $count = $this->action->seedFromProvider((string) $data['provider'], $this->editor($request));
-
-        return $this->json(
-            $count > 0 ? "{$count} نماد از منبع انتخابی کپی شد." : 'آن منبع هنوز قیمتی ندارد.',
-            $count > 0 ? 'success' : 'warning',
-        );
     }
 
     /**
@@ -94,41 +88,23 @@ final readonly class ManualPriceController
         $instrument = Instrument::tryFrom((string) $request->string('symbol'));
 
         if ($instrument !== null) {
-            $this->action->remove($instrument);
+            try {
+                $this->action->remove($instrument);
+            } catch (InvalidArgumentException $exception) {
+                return new JsonResponse(['message' => $exception->getMessage()], 422);
+            }
         }
 
         return $this->json('قیمت دستی برداشته شد.');
     }
 
-    /** Payload e moshtarak: rows + source ha + vaziat e feed e mo'asser. */
-    private function payload(): array
-    {
-        $seedSources = [];
-
-        foreach ($this->providers->panelRows() as $row) {
-            if ($row['key'] !== 'manual' && ! $row['deleted']) {
-                $seedSources[$row['key']] = $row['name'];
-            }
-        }
-
-        $effective = $this->effective->feed();
-
-        return [
-            'rows' => $this->manual->rows(),
-            'seedSources' => $seedSources,
-            'effective' => [
-                'alarm' => $effective['alarm'],
-                'fallbackCount' => $effective['fallbackCount'],
-            ],
-        ];
-    }
-
     private function json(string $message, string $kind = 'success'): JsonResponse
     {
-        $payload = $this->payload();
+        $payload = $this->settings->present();
 
         return new JsonResponse([
-            'rows' => $payload['rows'],
+            'rows' => $this->manual->rows(),
+            'unifiedRows' => $payload['rows'],
             'effective' => $payload['effective'],
             'toast' => ['kind' => $kind, 'title' => $kind === 'success' ? 'انجام شد' : 'توجه', 'message' => $message],
         ]);
@@ -139,5 +115,65 @@ final readonly class ManualPriceController
         $user = $request->user();
 
         return $user?->name ?: $user?->phone;
+    }
+
+    public function template(): BinaryFileResponse
+    {
+        $path = tempnam(sys_get_temp_dir(), 'manual-prices-');
+
+        if ($path === false) {
+            abort(503);
+        }
+
+        try {
+            $this->export->execute($path);
+        } catch (Throwable $exception) {
+            @unlink($path);
+
+            throw $exception;
+        }
+
+        return response()->download($path, 'manual-prices.xlsx', ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])->deleteFileAfterSend();
+    }
+
+    public function preview(Request $request): JsonResponse
+    {
+        $request->session()->forget('pricing.manual_import');
+        $request->validate(['workbook' => ['required', 'file', 'max:2048', 'extensions:xlsx']]);
+
+        try {
+            $preview = $this->import->preview($request->file('workbook')->getRealPath());
+        } catch (InvalidArgumentException $exception) {
+            return new JsonResponse(['message' => $exception->getMessage()], 422);
+        }
+
+        $token = Str::random(40);
+        $request->session()->put('pricing.manual_import', ['token' => $token, 'preview' => $preview, 'expires' => time() + 900]);
+
+        return new JsonResponse(['preview' => $preview, 'token' => $token]);
+    }
+
+    public function confirm(Request $request): JsonResponse
+    {
+        $data = $request->validate(['token' => ['required', 'string', 'size:40']]);
+        $pending = $request->session()->get('pricing.manual_import');
+
+        if (! is_array($pending) || ! hash_equals((string) ($pending['token'] ?? ''), $data['token']) || ($pending['expires'] ?? 0) < time()) {
+            return new JsonResponse(['message' => 'پیش‌نمایش منقضی شده است؛ فایل را دوباره انتخاب کنید.'], 422);
+        }
+
+        if ($pending['preview']['hasErrors'] || $pending['preview']['count'] === 0) {
+            return new JsonResponse(['message' => 'فایل دارای خطا یا بدون قیمت است؛ ابتدا آن را اصلاح کنید.'], 422);
+        }
+
+        try {
+            $count = $this->importAction->confirm($pending['preview']['rows'], $this->editor($request));
+        } catch (InvalidArgumentException $exception) {
+            return new JsonResponse(['message' => $exception->getMessage()], 422);
+        }
+
+        $request->session()->forget('pricing.manual_import');
+
+        return $this->json("{$count} قیمت دستی از اکسل ثبت شد.");
     }
 }

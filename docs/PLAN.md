@@ -28,7 +28,7 @@
 
 `/Users/m.negahi/Projects/priceboard` faghat Docker scaffolding dare — hich code e Laravel nist، git repo ham nist. Hadaf: site e moghayese ye gheymat e tala/noghre/mes beyn e provider haye Irani + foroosh e API be customers.
 
-Marhale ye avval faghat `tgju` va `estjt`. Platform ha (wallgold، taline، hamrahgold، milli، melligold ke buy/sell e vaghei daran) ba'dan faghat **yek adapter e jadid + yek radif dar `providers`** mishan.
+Marhale ye avval `tgju`، `estjt` va `nerkh` (`live.nerkh.io/api/prices`، JSON e toman ba timestamp e Jalali). Platform ha: milli، talasea، technogold az API e khodeshun (2026-10-06)؛ baghi (wallgold، taline، hamrahgold، melligold) ba'dan faghat **yek adapter e jadid + yek radif dar `providers`** mishan.
 
 `~/Projects/hg_website` **marja' e stack** ast (Laravel 13 / PHP 8.5 / PG 18 / Redis 8 / Octane / Livewire 4 / Tailwind 4)، **vali olgu ye me'mari nist** — khaste ye sahebe projeh in ast ke me'mari **standard tar va behtar az un projeh** bashe.
 
@@ -159,7 +159,7 @@ Natije: ba `cat docs/TASKS.md` mishe dar yek negah fahmid koja boodim va gam e b
 
 Sakhtar e avvaliye (kholase — file e kamel moofasal tar):
 ```
-P0  bootstrap   doc ha · compose(influx + redis-prices + price-worker) · port ha
+P0  bootstrap   doc ha · compose(influx + redis e vahed + price-worker) · port ha
                 · laravel install · ext check · git init · plugin ha
 P1  engine      Domain(VO/Enum/Port/Service) · NumberParser+PersianText · migration ha
                 · TgjuQuoteSource · EstjtQuoteSource · adapter ha(PG/Redis/Influx)
@@ -180,8 +180,7 @@ Gerefte shode: `8000, 8080, 8100, 8200, 5173, 5273, 5432, 6379, 55432, 55433, 56
 | Octane | `OCTANE_PORT` | **8300** |
 | Vite | `VITE_PORT` | **5373** |
 | Postgres | `DB_EXTERNAL_PORT` | **55434** |
-| Redis (cache/queue) | `REDIS_EXTERNAL_PORT` | **56381** |
-| Redis (prices) | `REDIS_PRICES_EXTERNAL_PORT` | **56382** |
+| Redis (hame e connection ha) | `REDIS_EXTERNAL_PORT` | **56381** |
 | InfluxDB | `INFLUX_EXTERNAL_PORT` | **8386** |
 
 ⚠️ compose default esh `b2blanding` ast → `pb`. Va `vite` ro `${VITE_PORT}:${VITE_PORT}` map mikone → `vite.config.js` bayad `port: 5373, strictPort: true`.
@@ -191,8 +190,7 @@ Gerefte shode: `8000, 8080, 8100, 8200, 5173, 5273, 5432, 6379, 55432, 55433, 56
 - **`price-worker`** ba loop e grid-aligned:
   `while :; do php artisan pricing:tick; sleep $((15 - $(date +%s) % 15)); done`
   (`sleep 15` e sade drift mikone va tick ha ru grid e 15s nemioftan — baraye idempotency e Influx mohem ast.)
-- 🔴 **`redis` e mojud `--maxmemory-policy allkeys-lru` dare** → dar feshar e memory **kelid haye gheymat ro evict mikone** dar hali ke khodesh ro salem gozaresh mide → board khali mishe bedun e hich error. hg_website in moshkel ro nadasht chun unja Postgres posht e cache bud؛ inja Redis store e dagh ast.
-  **Hall**: service e dovom `redis-prices` ba `--maxmemory-policy noeviction --maxmemory 64mb`، **bedun e `appendonly`** (AOF baraye datayi ke 15 saniye-i az PG backfill mishe arzesh nadare va `everysec` fsync faghat latency mide). Kelid haye gheymat **bedun e TTL**.
+- **Redis e vahed** (darkhast e 2026-10-06): DB0 session/queue/OTP, DB1 cache, DB2 prices. `noeviction`, AOF `everysec`, maxmemory e pish-farz 512MB. Kelid haye gheymat bedun e TTL; jadval e mojud az Redis e ghadimi ba hefz e TTL/data entegal yaft. Test ha DB13/14/15. Hame logical DB ha yek memory/failure domain daran; PG fallback e board, monitor e memory va queue ejbari ast.
 - `reverb` lazem nist. `scheduler` + `horizon` hamun.
 
 ### 0.3 Laravel install
@@ -397,6 +395,11 @@ Se ghanun e `SpreadPricer`: `change_pct`/`direction` **hargez** tanzim nemishan 
 | tgju (IRR) | `[',']` | `null` |
 | tgju (USD) | `[',']` | `'.'` |
 | estjt | `['٫','٬',',']` | `null` |
+| nerkh (IRR) | `[',']` | `null` |
+| nerkh (USD) | `[',']` | `'.'` |
+| milli (rial/mg) | `[',']` | `'.'` scale 3 (×1000) |
+| talasea (toman/mg) | `[',']` | `'.'` scale 3 (×1000) ×10 |
+| technogold (toman/g) | `[',']` | `null` ×10 |
 
 **Staleness**: `lag = tickAt - upstream_at` → reject agar `lag > effectiveFreshness` ya `lag < -120s`.
 `effectiveFreshness` **bayad per-instrument bashe**: `usd-irr`/`xau-oz-usd` taghriban 24/5 (180s)، `xag-925-g-irr` mitune yek sa'at nakhore، sekke ha faghat sa'at e bazaar. Yek threshold e global ya gheymat e 2021 ro rah mide ya instrument haye kond ro mindaze.
@@ -517,7 +520,7 @@ meta jsonb · created_at · unique(wallet_id, reason, reference)   // kasr e dob
 - **Board e TV**: font e bozorg، contrast e bala، flash e sabz/ghermez، full-screen.
 - **Jadval e moghayese**: radif = symbol، soton = provider، + kamtarin/bishtarin/miangin.
 - **Chart (KLineCharts core)**: `import()` e lazy. **Na `@klinecharts/pro`** — un (0.1.1) `solid-js` ro miare va ba Alpine/Livewire va token haye ma mijange. Core khodesh indicator (MA/EMA/MACD/RSI/BOLL/KDJ) va overlay haye tarsim (trendline، Fibonacci) dare — **toolbar ro khodemun ba Alpine misazim** ta RTL/Farsi va token dast e khodemun bemune. Rang az token haye CSS، na hardcode. Mehvar e Jalali **bedun e kitabkhane** ba `Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn')`.
-- `volume` = **tedad e tick** (KLineCharts in key ro mikhahe؛ pane e sefr e saf shekaste be nazar mirese). Envelope: `{quote, precision, displayDivisor: 10, spreadVersion, degraded, data}` — `displayDivisor` ya'ni **yek** formatter rial ro toman mikone. **Hargez tu storage toman nakon.**
+- `volume` = **tedad e tick** (KLineCharts in key ro mikhahe؛ pane e sefr e saf shekaste be nazar mirese). Envelope: `{quote, precision, displayDivisor: 1, spreadVersion, degraded, data}` — `displayDivisor` baraye IRR=1 ast; UI/API/wallet hame rial. USD e ons/jahani ba scale e khodesh USD mimune.
 - **Cache**: do tabaghe (fresh motanaseb e interval: m1 15s … d1 900s + `:last` 6 saat) → ghat'i e Influx mishe «bayat vali durost» na chart e khali. Worker har tick series e default ro warm mikone.
 - 🔴 **Quantize kardan e `from`/`to` ru marz e interval ejbari** — agar `to` e har karbar `now()` bashe، har request kelid e yekta misaze va hit rate **sefr** ast.
 - ⚠️ **Chart rooz e avval morde ast**: `d1` yek candle dare. KLineCharts ba se bar «software e kharab» be nazar mirese na «dataset e javun». (a) `Interval::availableFrom()` → interval haye bi-data **disabled** beshan، (b) **ekhtiari** backfill e yek-bare az endpoint e khod e tgju (`api.tgju.org/v1/market/indicator/summary-table-data/{symbol}`) — hamun host-i ke alan poll mikonim، pas vendor e jadid va surface e ban e jadid nadare، va chun **hamun provider** ast ba tick haye khodemun yekdast stitch mishe. Sahebe projeh «az tick haye khodemun» ro entekhab karde — in faghat yek dastur e opt-in ast agar chart e rooz e avval ghabl e ghabul nabud.
@@ -535,7 +538,7 @@ Ezafe shod 2026-10-06 (darkhast e sahebe proje). **Task ha، API e Zohal va soal
 - **Site ta ta'eed kar nemikone**: key/secret hamun moghe dade mishe vali `ApiHmacAuth` faghat site e `approved` + karbar e active ro ghabul mikone. Client haye mojud ba backfill `approved` mimunan.
 - **Karbar e disable** = na login، na API.
 - **Madarek ru disk e private**، download e emza-dar.
-- Mantegh e kasr e plan va pay-as-you-go **montazer e tasmim e sahebe proje** (soal e 1 tu TASKS).
+- Kharid e eshterak az wallet kasr mishe; call haye dakhel e sahmie e kol/rooz majani, ezafe ba nerkh e plan az wallet. Bedun e eshterak e faal PAYG e pish-farz. Zibal posht e Port; verify e idempotent va invoice e immutable.
 
 ## `CLAUDE.md` (se file)
 1. `/CLAUDE.md` — entry: brand، stack، port ha، Docker، workflow.
@@ -558,9 +561,17 @@ Ezafe shod 2026-10-06 (darkhast e sahebe proje). **Task ha، API e Zohal va soal
 2. **Domain (Unit، bedun e Docker)**: `NumberParser` (comma، `٫`، `\t`، raghame Farsi، toman→rial)، `PriceSanity`، `SpreadPricer` (se invariant)، `QuoteEnricher`، kol e `TickPipeline` ba fake e har port.
 3. **Source ha (fixture e vaghei)**: `tgju.json` va `estj_price.json` e **download shode tu hamin session** → `tests/Fixtures/`. Baraye **har instrument e har source** yek assert ru meghdar e minor (daghighan jaye bug e 10×).
 4. **Tick**: `php artisan pricing:tick` → snapshot por، Redis set، `price_changes` faghat baraye taghir ha، Influx row dare، `TickReportDto` tu console.
-5. **Taab-avari (har sink jodagane)**: `stop influxdb` → tick rad mishe bedun e crash، spool por، ba'd e `start` + `drain` **hich gap** nemune. Hamin baraye `redis-prices` (→ PG fallback) va `postgresql` (→ polling edame، board zende).
+5. **Taab-avari (har sink jodagane)**: `stop influxdb` → tick rad mishe bedun e crash، spool por، ba'd e `start` + `drain` **hich gap** nemune. Hamin baraye `redis` (→ PG fallback e board; session/queue ham unavailable) va `postgresql` (→ polling edame، board zende).
 6. **Influx tasks**: `pricing:influx:health` → akharin `candles_1m` < 3 daghighe، akharin `candles_1d` emruz (Tehran)، hame ye task run `success`. ⚠️ Test e `timezone.fixed`: candle e ruzane 00:00 **Tehran** shoru she na 03:30.
 7. **Spread**: avaz kon → `spread_version` bump، board **va** chart hamzaman avaz shan (asli tarin jaye vagerayi).
 8. **OTP**: rate limit e phone **va** IP jodagane، code e hash-shode، enumeration safety، `max_attempts` code ro batel kone.
 9. **Panel (Playwright)**: `/dashboard` → snapshot + screenshot، moghayese ba `images/dashboard-prefer.webp`.
 10. `php artisan test` + `vendor/bin/pint --dirty`.
+
+
+## Baseline e takmil e 2026-10-07
+
+- Panel: `providers` salamat+config, `priorities` olaviat+manual-only+backup+Excel, `users` hoviat/audit, `tickets` madarek+gozaresh e Zohal, `seo` override metadata, `access` role/permission.
+- Mali: chart of accounts, journal do-tarafe, daftar kol/tafsili/filter/CSV, reversal/correction, settlement e dargah, plan ha, site approval, invoice e immutable; customer `/account` ba wallet/site/subscription/usage.
+- Rial e sahih dar kol e platform; faghat quote haye USD e jahani USD mimunan. Upstream toman faghat tu adapter be rial normalize mishe.
+- Migration ha ba dastur e sarih tajmi shodan; create haye asli schema e nahayi ro misazan. Data migration e opening balance joda ast. Database e mojud reset nashod; migration haye baadi additive-and. Runbook va invariant ha dar `docs/architecture.md`.

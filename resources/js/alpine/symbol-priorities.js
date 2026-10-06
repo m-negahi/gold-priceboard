@@ -6,7 +6,14 @@
  */
 const MANUAL = 'manual';
 
-export default ({ route, rows, names }) => ({
+export default ({ route, rows, names, routes = {}, effective = {}, manualActive = false, autoNames = {} }) => ({
+    routes,
+    effective,
+    manualActive,
+    autoNames,
+    savedRows: JSON.parse(JSON.stringify(rows)),
+    preview: null,
+    importToken: null,
     rows,
     names,
     /** Symbol-i ke alan dar hal e virayesh-e (faghat yeki ta UI sade bemune). */
@@ -63,7 +70,79 @@ export default ({ route, rows, names }) => ({
 
         if (res.ok) {
             if (Array.isArray(res.data.rows)) this.rows = res.data.rows;
+            this.savedRows = JSON.parse(JSON.stringify(this.rows));
             this.cancel();
+        }
+    },
+
+    apply(data) {
+        if (Array.isArray(data.unifiedRows)) this.rows = data.unifiedRows;
+        else if (Array.isArray(data.rows)) this.rows = data.rows;
+        if (data.effective) this.effective = data.effective;
+        this.savedRows = JSON.parse(JSON.stringify(this.rows));
+    },
+
+    async savePrice(row) {
+        if (this.busy) return;
+        this.busy = true;
+        const res = await window.panelRequest(this.routes.manual, { body: { symbol: row.symbol, value: row.display } });
+        this.busy = false;
+        if (res.ok) this.apply(res.data);
+    },
+
+    async savePolicy(row) {
+        if (this.busy) return;
+        this.busy = true;
+        const res = await window.panelRequest(this.routes.settings, { body: {
+            symbol: row.symbol, manualOnly: row.manualOnly,
+            manualFallbackEnabled: row.manualFallbackEnabled, manualAutoSource: row.manualAutoSource,
+        } });
+        this.busy = false;
+        if (res.ok) this.apply(res.data);
+        else this.rows = JSON.parse(JSON.stringify(this.savedRows));
+    },
+
+    async removePrice(row) {
+        if (this.busy) return;
+        this.busy = true;
+        const res = await window.panelRequest(this.routes.remove, { body: { symbol: row.symbol } });
+        this.busy = false;
+        if (res.ok) this.apply(res.data);
+    },
+
+    async seedPriority() {
+        if (this.busy) return;
+        this.busy = true;
+        const res = await window.panelRequest(this.routes.seedPriority);
+        this.busy = false;
+        if (res.ok) this.apply(res.data);
+    },
+
+    async previewWorkbook(event) {
+        const file = event.target.files?.[0];
+        this.preview = null;
+        this.importToken = null;
+        if (!file || this.busy) return;
+        const body = new FormData();
+        body.append('workbook', file);
+        this.busy = true;
+        const res = await window.panelRequest(this.routes.preview, { body });
+        this.busy = false;
+        if (res.ok) {
+            this.preview = res.data.preview;
+            this.importToken = res.data.token;
+        }
+    },
+
+    async confirmWorkbook() {
+        if (!this.importToken || this.preview?.hasErrors || this.busy) return;
+        this.busy = true;
+        const res = await window.panelRequest(this.routes.confirm, { body: { token: this.importToken } });
+        this.busy = false;
+        if (res.ok) {
+            this.apply(res.data);
+            this.preview = null;
+            this.importToken = null;
         }
     },
 

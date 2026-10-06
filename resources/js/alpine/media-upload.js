@@ -4,7 +4,9 @@
  * `media-uploaded` (row-e hamun shekl-e jadval) be parent mide; ghavanin (mime, hajm, alt) hame
  * server-and va inja faghat neshun dade mishan (ADR-0020).
  */
-export default ({ url, maxBytes = 5 * 1024 * 1024 }) => ({
+export default ({ url = null, maxBytes = 5 * 1024 * 1024, localMultiple = false }) => ({
+    localMultiple,
+    localFiles: [],
     url,
     maxBytes,
     file: null,
@@ -34,6 +36,17 @@ export default ({ url, maxBytes = 5 * 1024 * 1024 }) => ({
         this.uploading = false;
         this.dragging = false;
         if (this.$refs.file) this.$refs.file.value = '';
+    },
+
+    pickLocal(event) {
+        this.localFiles = Array.from(event.target.files ?? []).map((file) => ({ name: file.name, size: Math.ceil(file.size / 1024) }));
+    },
+
+    dropLocal(event) {
+        this.dragging = false;
+        if (!event.dataTransfer?.files?.length) return;
+        this.$refs.file.files = event.dataTransfer.files;
+        this.pickLocal({ target: this.$refs.file });
     },
 
     pick(event) {

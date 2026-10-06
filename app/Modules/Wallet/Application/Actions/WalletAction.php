@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Wallet\Application\Actions;
 
+use App\Modules\Finance\Application\Actions\PostWalletJournalAction;
 use App\Modules\Wallet\Domain\Exceptions\WalletException;
 use App\Modules\Wallet\Infrastructure\Persistence\Models\Wallet;
 use App\Modules\Wallet\Infrastructure\Persistence\Models\WalletTransaction;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
+use Throwable;
 
 /**
  * Tanha masir e neveshtan e kif e pul (P4-02).
@@ -29,6 +32,8 @@ use Illuminate\Support\Facades\DB;
  */
 final readonly class WalletAction
 {
+    public function __construct(private PostWalletJournalAction $journal = new PostWalletJournalAction) {}
+
     public function forOwner(int $ownerId, string $currency = 'IRR'): Wallet
     {
         return Wallet::query()->firstOrCreate(['owner_id' => $ownerId, 'currency' => $currency]);
@@ -74,6 +79,10 @@ final readonly class WalletAction
                     ->first();
 
                 if ($existing !== null) {
+                    if ($existing->direction !== $direction || $existing->amount_minor !== $amountMinor) {
+                        throw WalletException::referenceReused($reference);
+                    }
+
                     return $existing;
                 }
 
@@ -101,6 +110,12 @@ final readonly class WalletAction
                 ]);
 
                 $locked->forceFill(['balance_minor' => $after])->save();
+                $this->journal->execute($transaction);
+
+                if (! in_array($reason, ['api_call', 'refund'], true)) {
+                    $this->invalidateApiMirror($locked->id);
+                    DB::afterCommit(fn (): mixed => $this->invalidateApiMirror($locked->id));
+                }
 
                 return $transaction;
             });
@@ -115,10 +130,23 @@ final readonly class WalletAction
                 ->first();
 
             if ($existing !== null) {
+                if ($existing->direction !== $direction || $existing->amount_minor !== $amountMinor) {
+                    throw WalletException::referenceReused($reference);
+                }
+
                 return $existing;
             }
 
             throw $e;
+        }
+    }
+
+    private function invalidateApiMirror(int $walletId): void
+    {
+        try {
+            Redis::connection()->del('api:wallet:bal:'.$walletId);
+        } catch (Throwable) {
+            // Ledger sahih mimune; mirror ba TTL dobare az ledger seed mishe.
         }
     }
 

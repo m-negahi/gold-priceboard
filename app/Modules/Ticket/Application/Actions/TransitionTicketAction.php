@@ -8,6 +8,7 @@ use App\Modules\Ticket\Domain\Enums\TicketStatus;
 use App\Modules\Ticket\Domain\Exceptions\TicketException;
 use App\Modules\Ticket\Infrastructure\Persistence\Models\Ticket;
 use App\Modules\Ticket\Infrastructure\Persistence\Models\TicketEvent;
+use App\Modules\Ticket\Jobs\SendTicketStatus;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -42,7 +43,7 @@ final readonly class TransitionTicketAction
                 'last_activity_at' => CarbonImmutable::now(),
             ])->save();
 
-            TicketEvent::query()->create([
+            $event = TicketEvent::query()->create([
                 'ticket_id' => $locked->id,
                 'actor_id' => $actorId,
                 'kind' => $kind,
@@ -50,6 +51,8 @@ final readonly class TransitionTicketAction
                 'to_status' => $to->value,
                 'note' => $note,
             ]);
+            DB::table('ticket_notifications')->insert(['event_id' => $event->id]);
+            SendTicketStatus::dispatch($event->id)->afterCommit();
         });
 
         return $ticket->refresh();

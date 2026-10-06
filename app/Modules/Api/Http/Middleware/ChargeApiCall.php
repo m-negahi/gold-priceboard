@@ -71,6 +71,8 @@ final class ChargeApiCall
         } catch (Throwable $exception) {
             if ($charge['status'] === 'ok') {
                 $this->charger->refundCall($client, $reference, $charge['cost']);
+            } elseif ($charge['status'] === 'included') {
+                $this->charger->releaseIncluded($client, $reference);
             }
             throw $exception;
         }
@@ -84,6 +86,8 @@ final class ChargeApiCall
         if ($charged && ($response->getStatusCode() === 304 || ! $response->isSuccessful())) {
             $this->charger->refundCall($client, $reference, $charge['cost']);
             $charged = false;
+        } elseif ($charge['status'] === 'included' && ($response->getStatusCode() === 304 || ! $response->isSuccessful())) {
+            $this->charger->releaseIncluded($client, $reference);
         }
 
         // Shafafiat baraye customer (PLAN): chi kasr shod.

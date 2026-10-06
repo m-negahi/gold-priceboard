@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Modules\Access\Providers\AccessServiceProvider;
 use App\Modules\Api\Providers\ApiServiceProvider;
 use App\Modules\Auth\Providers\AuthServiceProvider;
+use App\Modules\Billing\Providers\BillingServiceProvider;
 use App\Modules\Kyc\Providers\KycServiceProvider;
 use App\Modules\Media\Providers\MediaServiceProvider;
 use App\Modules\Panel\Providers\PanelServiceProvider;
@@ -21,7 +23,9 @@ return [
     AppServiceProvider::class,
     HorizonServiceProvider::class,
     AuthServiceProvider::class,
+    AccessServiceProvider::class,
     ApiServiceProvider::class,
+    BillingServiceProvider::class,
     MediaServiceProvider::class,
     PricingServiceProvider::class,
     PanelServiceProvider::class,

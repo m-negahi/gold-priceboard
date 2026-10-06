@@ -8,11 +8,13 @@
             <p class="mt-1 text-sm text-muted">همه کاربران — مشتری و ادمین — با کیف پول، سایت‌ها و وضعیت.</p>
         </div>
 
+        @can('users.manage')
         <a href="{{ route('panel.users.create') }}" data-user-create
            class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-brand shadow-(--bp-elev-brand) hover:bg-brand-2">
             <x-icon name="plus" class="size-4" />
             کاربر جدید
         </a>
+        @endcan
 
     </div>
 
@@ -55,7 +57,7 @@
                         <th class="px-5 py-3 text-start font-semibold">نقش</th>
                         <th class="px-5 py-3 text-start font-semibold">وضعیت</th>
                         <th class="px-5 py-3 text-start font-semibold">سطح</th>
-                        <th class="px-5 py-3 text-start font-semibold">کیف پول (تومان)</th>
+                        <th class="px-5 py-3 text-start font-semibold">کیف پول (ریال)</th>
                         <th class="px-5 py-3 text-start font-semibold">سایت</th>
                         <th class="px-5 py-3 text-start font-semibold">آخرین ورود</th>
                         <th class="px-5 py-3"><span class="sr-only">جزئیات</span></th>
@@ -75,7 +77,7 @@
                                 <x-panel.pill :tone="$user['status']->value === 'active' ? 'ok' : 'down'" dot>{{ $user['status']->label() }}</x-panel.pill>
                             </td>
                             <td class="px-5 py-3 text-xs text-muted">{{ $user['level']->label() }}</td>
-                            <td class="px-5 py-3 text-ink"><span class="ltr num">{{ $user['balanceToman'] ?? '—' }}</span></td>
+                            <td class="px-5 py-3 text-ink"><span class="ltr num">@can('finance.view'){{ $user['balanceRial'] ?? '—' }}@else — @endcan</span></td>
                             <td class="num px-5 py-3 text-muted" data-sites="{{ $user['sitesCount'] }}">{{ $user['sitesCount'] }}</td>
                             <td class="px-5 py-3 text-xs text-muted"><span class="ltr num">{{ $user['lastLoginAt'] ?? '—' }}</span></td>
                             <td class="px-5 py-3 text-end">

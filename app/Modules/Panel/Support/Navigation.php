@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Panel\Support;
 
+use App\Modules\Access\Application\Queries\AccessQuery;
+use App\Modules\Access\Domain\PermissionCatalog;
+
 /**
  * Sidebar be shekl-e data na markup, ta rail-e baste, list-e baz va breadcrumb
  * hame az yek manba' bekhunand va natoonand az ham fasele begirand.
@@ -30,14 +33,13 @@ final class Navigation
      */
     public static function groups(): array
     {
-        return [
+        $groups = [
             [
                 'label' => 'قیمت‌گذاری',
                 'items' => [
                     ['key' => 'dashboard', 'label' => 'میزکار', 'icon' => 'gauge', 'route' => 'panel.dashboard'],
                     ['key' => 'providers', 'label' => 'منابع قیمت', 'icon' => 'feed', 'route' => 'panel.providers.index'],
-                    ['key' => 'priorities', 'label' => 'اولویت منابع', 'icon' => 'layers', 'route' => 'panel.priorities.index'],
-                    ['key' => 'health', 'label' => 'سلامت منابع', 'icon' => 'pulse', 'route' => 'panel.health'],
+                    ['key' => 'priorities', 'label' => 'اولویت و قیمت دستی', 'icon' => 'layers', 'route' => 'panel.priorities.index'],
                     [
                         'key' => 'monitor', 'label' => 'پایش', 'icon' => 'eye', 'route' => 'panel.monitor.ticks',
                         'children' => [
@@ -48,14 +50,15 @@ final class Navigation
                     ],
                     ['key' => 'matrix', 'label' => 'ماتریس نمادها', 'icon' => 'coins', 'route' => 'panel.matrix'],
                     ['key' => 'charts', 'label' => 'نمودار قیمت', 'icon' => 'chart', 'route' => 'panel.charts'],
-                    ['key' => 'manual', 'label' => 'قیمت دستی', 'icon' => 'pencil', 'route' => 'panel.manual.index'],
                 ],
             ],
             [
                 'label' => 'مشتریان و مالی', // Phase 4
                 'items' => [
                     ['key' => 'customers', 'label' => 'مشتریان', 'icon' => 'users', 'route' => 'panel.users.index'],
-                    ['key' => 'wallets', 'label' => 'کیف پول', 'icon' => 'wallet', 'route' => null],
+                    ['key' => 'finance', 'label' => 'دفتر حساب و مالی', 'icon' => 'wallet', 'route' => 'panel.finance.index'],
+                    ['key' => 'plans', 'label' => 'پلن‌ها', 'icon' => 'layers', 'route' => 'panel.plans.index'],
+                    ['key' => 'sites', 'label' => 'سایت‌ها', 'icon' => 'world', 'route' => 'panel.sites.index'],
                 ],
             ],
             [
@@ -70,15 +73,36 @@ final class Navigation
                 'label' => 'سایت', // Phase 5 + P3-00 (Media)
                 'items' => [
                     ['key' => 'media', 'label' => 'رسانه', 'icon' => 'image', 'route' => 'panel.media.index'],
-                    ['key' => 'seo', 'label' => 'سئو', 'icon' => 'search', 'route' => null],
+                    ['key' => 'seo', 'label' => 'سئو', 'icon' => 'search', 'route' => 'panel.seo.index'],
                 ],
             ],
             [
                 'label' => 'تنظیمات',
                 'items' => [
-                    ['key' => 'settings', 'label' => 'تنظیمات', 'icon' => 'cog', 'route' => null],
+                    ['key' => 'access', 'label' => 'نقش و دسترسی', 'icon' => 'cog', 'route' => 'panel.access.index'],
                 ],
             ],
         ];
+
+        $user = auth()->user();
+        if ($user === null) {
+            return $groups;
+        }
+        $permissions = app(AccessQuery::class)->permissions($user);
+        $visible = static fn (?string $route): bool => in_array('*', $permissions, true)
+            || ($route !== null && in_array(PermissionCatalog::forRoute($route), $permissions, true));
+        foreach ($groups as &$group) {
+            foreach ($group['items'] as &$item) {
+                if (isset($item['children'])) {
+                    $item['children'] = array_values(array_filter($item['children'], fn (array $child): bool => $visible($child['route'])));
+                    $item['route'] = $item['children'][0]['route'] ?? null;
+                }
+            }
+            unset($item);
+            $group['items'] = array_values(array_filter($group['items'], fn (array $item): bool => $visible($item['route'])));
+        }
+        unset($group);
+
+        return array_values(array_filter($groups, fn (array $group): bool => $group['items'] !== []));
     }
 }

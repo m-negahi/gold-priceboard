@@ -6,10 +6,12 @@ namespace App\Modules\Api\Application\Actions;
 
 use App\Modules\Api\Infrastructure\Persistence\Models\ApiClient;
 use App\Modules\Api\Infrastructure\Persistence\Models\ApiPriceGroup;
+use App\Modules\Api\Infrastructure\Persistence\Models\SiteSubscription;
 use App\Modules\Wallet\Application\Actions\WalletAction;
 use App\Modules\Wallet\Application\Queries\WalletQuery;
 use App\Modules\Wallet\Infrastructure\Persistence\Models\Wallet;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Throwable;
 
@@ -55,36 +57,40 @@ final readonly class ChargeApiCallAction
     ) {}
 
     /**
-     * @return array{status: 'ok'|'free'|'insufficient'|'blocked'|'unavailable'|'over_quota', cost: int, balance: int|null}
+     * @return array{status: 'ok'|'free'|'included'|'insufficient'|'blocked'|'unavailable'|'over_quota', cost: int, balance: int|null}
      */
     public function charge(ApiClient $client, string $reference): array
     {
-        $cost = $this->costFor($client);
+        try {
+            $wallet = $this->wallets->forOwner($client->user_id);
+        } catch (Throwable) {
+            return ['status' => 'unavailable', 'cost' => 0, 'balance' => null];
+        }
+        if ($wallet->is_blocked) {
+            return ['status' => 'blocked', 'cost' => 0, 'balance' => null];
+        }
 
-        // ── Saghf e ruzane ye plan (P4-09) ──────────────────────────
-        // GHABL az reserve: call-i ke saghf esh por e aslan nabayad be
-        // wallet berese. Rooz be vaght e TEHRAN hesab mishe (bazaar e
-        // moshtari Irani-e). Fail-closed: Redis ghat' -> unavailable.
-        $plan = $client->plan_id !== null ? $client->plan : null;
-
-        if ($plan !== null && $plan->calls_per_day > 0) {
+        try {
+            $subscription = $this->activeSubscription($client);
+        } catch (Throwable) {
+            return ['status' => 'unavailable', 'cost' => 0, 'balance' => null];
+        }
+        if ($subscription !== null) {
             try {
-                if ($this->quotaExceeded($client, $plan->calls_per_day)) {
-                    return ['status' => 'over_quota', 'cost' => $cost, 'balance' => null];
+                if ($this->reserveIncluded($subscription, $reference)) {
+                    return ['status' => 'included', 'cost' => 0, 'balance' => null];
                 }
             } catch (Throwable) {
-                return ['status' => 'unavailable', 'cost' => $cost, 'balance' => null];
+                return ['status' => 'unavailable', 'cost' => 0, 'balance' => null];
             }
+        }
+        $cost = $subscription === null ? $this->costFor($client) : $subscription->cost_per_call_minor;
+        if ($subscription !== null && $cost === 0) {
+            return ['status' => 'over_quota', 'cost' => 0, 'balance' => null];
         }
 
         if ($cost === 0) {
             return ['status' => 'free', 'cost' => 0, 'balance' => null];
-        }
-
-        $wallet = $this->wallets->forOwner($client->user_id);
-
-        if ($wallet->is_blocked) {
-            return ['status' => 'blocked', 'cost' => $cost, 'balance' => null];
         }
 
         try {
@@ -147,6 +153,31 @@ final readonly class ChargeApiCallAction
         }
     }
 
+    public function releaseIncluded(ApiClient $client, string $reference): void
+    {
+        DB::transaction(static function () use ($client, $reference): void {
+            $call = DB::table('site_subscription_calls')->where('reference', $reference)->first();
+            if ($call === null) {
+                return;
+            }
+            $subscription = SiteSubscription::query()
+                ->where('api_client_id', $client->id)
+                ->lockForUpdate()->find($call->site_subscription_id);
+            if ($subscription === null) {
+                return;
+            }
+            $deleted = DB::table('site_subscription_calls')->where('id', $call->id)->delete();
+            if ($deleted === 0) {
+                return;
+            }
+            $subscription->decrement('calls_used');
+            DB::table('site_subscription_days')
+                ->where('site_subscription_id', $subscription->id)
+                ->where('day', $call->day)
+                ->decrement('calls_used');
+        });
+    }
+
     /** Topup/taghir e dasti ye mande bayad in ro seda bezane. */
     public function invalidateMirror(Wallet $wallet): void
     {
@@ -191,34 +222,50 @@ final readonly class ChargeApiCallAction
         }
     }
 
-    /**
-     * Shomaresh e call e emruz (Tehran) — INCR e atomic.
-     *
-     * Call e rad-shode/refund-shode ham HESAB mishe: saghf e plan saghf e
-     * ZARFIAT ast، na saghf e pul (pul ro refund modiriat mikone).
-     */
-    private function quotaExceeded(ApiClient $client, int $callsPerDay): bool
+    private function activeSubscription(ApiClient $client): ?SiteSubscription
     {
-        $key = 'api:quota:'.$client->client_id.':'
-            .CarbonImmutable::now('Asia/Tehran')->format('Y-m-d');
+        $now = CarbonImmutable::now();
 
-        $count = (int) Redis::connection()->incr($key);
+        return SiteSubscription::query()
+            ->where('api_client_id', $client->id)
+            ->where('starts_at', '<=', $now)
+            ->where('ends_at', '>', $now)
+            ->orderByDesc('starts_at')->first();
+    }
 
-        if ($count === 1) {
-            // 2 rooz: kelid e emruz farda-shab khodesh mire.
-            Redis::connection()->expire($key, 2 * 86_400);
-        }
+    private function reserveIncluded(SiteSubscription $subscription, string $reference): bool
+    {
+        return DB::transaction(static function () use ($subscription, $reference): bool {
+            /** @var SiteSubscription $locked */
+            $locked = SiteSubscription::query()->lockForUpdate()->findOrFail($subscription->id);
+            $existing = DB::table('site_subscription_calls')->where('reference', $reference)->first();
+            if ($existing !== null) {
+                return $existing->site_subscription_id === $locked->id;
+            }
+            $day = CarbonImmutable::now('Asia/Tehran')->format('Y-m-d');
+            DB::table('site_subscription_days')->insertOrIgnore([
+                'site_subscription_id' => $locked->id, 'day' => $day,
+                'calls_used' => 0,
+            ]);
+            $daily = DB::table('site_subscription_days')
+                ->where('site_subscription_id', $locked->id)->where('day', $day)->first();
+            if ($locked->calls_used >= $locked->calls_included
+                || ($locked->calls_per_day > 0 && $daily->calls_used >= $locked->calls_per_day)) {
+                return false;
+            }
+            DB::table('site_subscription_calls')->insert([
+                'site_subscription_id' => $locked->id,
+                'reference' => $reference, 'day' => $day, 'created_at' => now(),
+            ]);
+            $locked->increment('calls_used');
+            DB::table('site_subscription_days')->where('id', $daily->id)->increment('calls_used');
 
-        return $count > $callsPerDay;
+            return true;
+        });
     }
 
     private function costFor(ApiClient $client): int
     {
-        // Olaviat: nerkh e PLAN (model e jadid) > group > default group.
-        if ($client->plan_id !== null && $client->plan !== null) {
-            return max(0, (int) $client->plan->cost_per_call_minor);
-        }
-
         $group = $client->price_group_id !== null
             ? $client->priceGroup
             : ApiPriceGroup::query()->where('is_default', true)->first();

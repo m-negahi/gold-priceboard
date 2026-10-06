@@ -117,6 +117,7 @@ final class UserCreateAndRoleTest extends TestCase
         $this->actingAs($admin)->post(route('panel.users.role', $user->id), ['role' => 'customer'])
             ->assertRedirect(route('panel.users.show', $user->id));
         $this->assertFalse($user->refresh()->is_admin);
+        $this->assertDatabaseCount('user_profile_audits', 2);
     }
 
     public function test_an_admin_cannot_demote_themselves(): void

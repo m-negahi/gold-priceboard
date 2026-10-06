@@ -12,10 +12,8 @@ use Illuminate\Support\Facades\Redis;
 /**
  * Adapter e Redis baraye OTP — ru connection e `default` (Redis e omumi).
  *
- * ── Chera Redis e OMUMI va na `redis-prices` ────────────────────────
- * OTP yek cache e VAGHEI-e: evict shodanesh (zire `allkeys-lru`) faghat
- * ya'ni «dobare befrest» — na az dast raftan e data. `redis-prices` ba
- * `noeviction` baraye data-i-e ke nabayad bere؛ OTP un nist.
+ * Redis e vahed ba noeviction; OTP ru DB0 va TTL darad, prices ru DB2.
+ * Ghat'i e Redis login ro fail-closed mikone.
  *
  * ── Yek kelid، na do ──────────────────────────────────────────────────
  * Code-hash va shomaresh e talash tu YEK hash e Redis-and، pas ba ham

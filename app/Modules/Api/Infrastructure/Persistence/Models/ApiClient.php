@@ -33,6 +33,7 @@ class ApiClient extends Model
         'website_url',
         'client_id',
         'secret_encrypted',
+        'status',
     ];
 
     protected $hidden = [
@@ -44,6 +45,7 @@ class ApiClient extends Model
     {
         return [
             'is_active' => 'boolean',
+            'approved_at' => 'immutable_datetime',
             'last_used_at' => 'immutable_datetime',
         ];
     }

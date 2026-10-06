@@ -10,6 +10,7 @@ use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -74,7 +75,12 @@ final readonly class IdempotentApiCall
                     ]));
                 }
 
-                if ($this->wallets->hasApiCharge($client->user_id, $reference, $raw, $client->client_id)) {
+                $includedCallExists = DB::table('site_subscription_calls as calls')
+                    ->join('site_subscriptions as subscriptions', 'subscriptions.id', '=', 'calls.site_subscription_id')
+                    ->where('subscriptions.api_client_id', $client->id)
+                    ->where('calls.reference', $reference)
+                    ->exists();
+                if ($includedCallExists || $this->wallets->hasApiCharge($client->user_id, $reference, $raw, $client->client_id)) {
                     return $this->conflict();
                 }
             } catch (Throwable $exception) {

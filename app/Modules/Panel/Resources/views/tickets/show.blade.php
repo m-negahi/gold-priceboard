@@ -36,6 +36,30 @@
                 </section>
             @endif
 
+            @if ($ticket['type']->value === 'site_approval')
+                @can('sites.view')
+                    <a href="{{ route('panel.sites.index') }}" wire:navigate class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-surface px-4 text-sm font-medium text-brand-700 ring-1 ring-line">
+                        <x-icon name="external" class="size-4" />
+                        بررسی سایت و گزارش اینماد
+                    </a>
+                @endcan
+            @endif
+
+            @if ($ticket['type']->value === 'kyc_upgrade')
+                @include('kyc::verification-report')
+                @can('tickets.manage')
+                <form method="POST" action="{{ route('panel.tickets.rerun', $ticket['id']) }}">@csrf<x-panel.button type="submit" variant="secondary">اجرای دوباره استعلام (دارای هزینه)</x-panel.button></form>
+                @if ($canDecideKyc)
+                    <form method="POST" action="{{ route('panel.tickets.decide', $ticket['id']) }}" class="rounded-2xl bg-surface card-p space-y-3">
+                        @csrf
+                        <x-form.field name="decision" label="تصمیم"><x-form.select name="decision" :options="['approve' => 'تأیید و ارتقای سطح', 'reject' => 'رد درخواست']" /></x-form.field>
+                        <x-form.field name="reason" label="دلیل (برای رد الزامی)"><x-form.textarea name="reason" maxlength="500" /></x-form.field>
+                        <x-panel.button type="submit">ثبت تصمیم</x-panel.button>
+                    </form>
+                @endif
+                @endcan
+            @endif
+
             {{-- ── Goft-o-gu ───────────────────────────────────────── --}}
             <section class="rounded-2xl bg-surface card-p shadow-xs" aria-labelledby="messages-title">
                 <h2 id="messages-title" class="text-base font-bold text-ink">گفت‌وگو</h2>
@@ -53,7 +77,7 @@
                     @endforeach
                 </ol>
 
-                @if ($ticket['canReply'])
+                @if ($ticket['canReply'] && auth()->user()->can('tickets.manage'))
                     <form method="POST" action="{{ route('panel.tickets.reply', $ticket['id']) }}" enctype="multipart/form-data" class="mt-4 space-y-3" data-ticket-reply>
                         @csrf
                         <x-form.field name="body" label="پاسخ پشتیبانی" required>
@@ -70,7 +94,7 @@
                             </button>
                         </div>
                     </form>
-                @else
+                @elseif (! $ticket['canReply'])
                     <p class="mt-4 rounded-xl bg-surface-3 px-4 py-3 text-center text-sm text-muted">تیکت بسته است؛ برای پاسخ آن را دوباره باز کنید.</p>
                 @endif
             </section>
@@ -90,14 +114,16 @@
                         <dt class="text-muted">نوع</dt>
                         <dd class="text-end text-ink">{{ $owner['customerType']->label() }}</dd>
                     </dl>
-                    <a href="{{ route('panel.users.show', $owner['id']) }}" class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:text-brand-800">
+                    @can('users.view')
+                    <a href="{{ route('panel.users.show', $owner['id']) }}" wire:navigate class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:text-brand-800">
                         صفحه کاربر
                         <x-icon name="arrow-back" class="size-3.5" />
                     </a>
+                    @endcan
                 </section>
             @endif
 
-            @if ($statusTargets !== [])
+            @if ($statusTargets !== [] && auth()->user()->can('tickets.manage'))
                 <section class="rounded-2xl bg-surface card-p shadow-xs" aria-labelledby="status-title">
                     <h2 id="status-title" class="text-base font-bold text-ink">تغییر وضعیت</h2>
                     <form method="POST" action="{{ route('panel.tickets.status', $ticket['id']) }}" class="mt-4 space-y-3" data-ticket-status-form>

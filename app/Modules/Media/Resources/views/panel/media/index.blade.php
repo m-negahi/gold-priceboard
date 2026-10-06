@@ -37,7 +37,9 @@
                     <h3>حذف</h3>
                     <p>حذف، فایل اصلی و همه‌ی نسخه‌های آن را از دیسک پاک می‌کند و قابل بازگشت نیست. تصویری که جایی استفاده شده حذف نمی‌شود — اول آن را از صفحه بردارید.</p>
                 </x-panel.help>
-                <x-panel.button icon="upload" @click="openUpload()" data-media-open-upload>بارگذاری تصویر</x-panel.button>
+                @can('media.manage')
+                    <x-panel.button icon="upload" @click="openUpload()" data-media-open-upload>بارگذاری تصویر</x-panel.button>
+                @endcan
             </x-slot:actions>
         </x-panel.page-header>
 
@@ -61,14 +63,17 @@
             :filters="[['key' => 'mime', 'label' => 'نوع', 'options' => $mimeOptions]]"
             :row-actions="[
                 ['label' => 'مشاهده', 'icon' => 'external', 'event' => 'media-view'],
-                ['label' => 'ویرایش', 'icon' => 'pencil', 'event' => 'media-edit'],
-                ['label' => 'حذف', 'icon' => 'trash', 'event' => 'media-delete', 'tone' => 'danger'],
+                ...(auth()->user()->can('media.manage') ? [
+                    ['label' => 'ویرایش', 'icon' => 'pencil', 'event' => 'media-edit'],
+                    ['label' => 'حذف', 'icon' => 'trash', 'event' => 'media-delete', 'tone' => 'danger'],
+                ] : []),
             ]"
             :empty="[
                 'title' => 'هنوز تصویری بارگذاری نشده',
                 'text' => 'اولین تصویر را بارگذاری کنید؛ سپس در فرم منبع از کتابخانه انتخاب کنید.',
             ]" />
 
+        @can('media.manage')
         {{-- ── Modal-e upload ── --}}
         <x-panel.modal x-model="uploadOpen" title="بارگذاری تصویر" description="متن جایگزین را حتماً بنویسید؛ بدون آن تصویر ذخیره نمی‌شود." size="md">
             <div @media-uploaded="uploaded($event.detail)">
@@ -99,5 +104,6 @@
                 <x-panel.button @click="saveEdit()" ::disabled="saving">ذخیره</x-panel.button>
             </x-slot:footer>
         </x-panel.modal>
+        @endcan
     </div>
 </x-layouts.panel>

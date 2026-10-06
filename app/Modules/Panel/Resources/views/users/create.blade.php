@@ -21,13 +21,14 @@
                     </x-form.field>
 
                     <x-form.field name="role" label="نقش" required>
-                        <x-form.select name="role" :options="['customer' => 'مشتری', 'admin' => 'ادمین']" :value="old('role', 'customer')" />
+                        <x-form.select name="role" :options="auth()->user()->can('access.manage') ? ['customer' => 'مشتری', 'admin' => 'ادمین'] : ['customer' => 'مشتری']" :value="old('role', 'customer')" />
                     </x-form.field>
 
-                    <x-form.field name="customer_type" label="نوع مشتری" required>
-                        <x-form.select name="customer_type" :options="$customerTypes" :value="old('customer_type', 'individual')" />
-                    </x-form.field>
+                    <x-form.field name="email" label="ایمیل"><x-form.input name="email" type="email" ltr :value="old('email')" /></x-form.field>
                 </div>
+            </section>
+            <section class="rounded-2xl bg-surface card-p-lg shadow-xs">
+                @include('panel::users.identity-fields', ['profile' => []])
             </section>
 
             <div class="flex items-center justify-end gap-3">

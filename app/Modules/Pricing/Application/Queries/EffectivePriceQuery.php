@@ -32,6 +32,9 @@ final readonly class EffectivePriceQuery
         private BoardQuery $board,
         private ProviderQuery $providers,
         private SymbolPriorityQuery $priorities,
+        private SymbolPriceSettingsQuery $settings,
+        private ManualPriceQuery $manual,
+        private SpreadQuery $spreads,
     ) {}
 
     /**
@@ -48,8 +51,11 @@ final readonly class EffectivePriceQuery
         $symbols = [];
         $fallbackCount = 0;
 
-        foreach ($bySymbol as $rows) {
-            [$chosen, $usingFallback] = $this->choose($rows);
+        $settings = $this->settings->map();
+
+        foreach ($bySymbol as $symbol => $rows) {
+            $policy = $settings[$symbol] ?? SymbolPriceSettingsQuery::defaults();
+            [$chosen, $usingFallback] = $this->choose($rows, $policy);
 
             if ($chosen === null) {
                 continue;
@@ -73,6 +79,7 @@ final readonly class EffectivePriceQuery
                 'isStale' => $chosen->isStale,
                 'isDerived' => $chosen->isDerived,
                 'usingFallback' => $usingFallback,
+                'manualOnly' => $policy['manualOnly'],
                 'quotedAt' => $chosen->quotedAt,
             ];
         }
@@ -100,8 +107,12 @@ final readonly class EffectivePriceQuery
     {
         [$bySymbol] = $this->rankedRows();
         $chosen = [];
+        $settings = $this->settings->map();
 
         foreach ($bySymbol as $symbol => $rows) {
+            if ($settings[$symbol]['manualOnly'] ?? false) {
+                continue;
+            }
             foreach ($rows as $row) {
                 if (! $row->isStale && $row->providerKey !== ManualQuoteSource::KEY) {
                     $chosen[$symbol] = $row;
@@ -134,11 +145,23 @@ final readonly class EffectivePriceQuery
 
         foreach ($board->rows as $row) {
             // Faghat side e namayande (last/ask) baraye feed e mo'asser.
-            if (! in_array($row->side->value, ['last', 'ask'], true)) {
+            if ($row->providerKey === ManualQuoteSource::KEY || ! isset($configs[$row->providerKey]) || ! in_array($row->side->value, ['last', 'ask'], true)) {
                 continue;
             }
 
             $bySymbol[$row->instrument->value][] = $row;
+        }
+
+        $settings = $this->settings->map();
+        $manualRows = $this->manual->effectiveRows($this->spreads->map());
+
+        foreach ($manualRows as $symbol => $row) {
+            if (! isset($configs['manual']) && ! ($settings[$symbol]['manualOnly'] ?? false)) {
+                continue;
+            }
+
+            $bySymbol[$symbol] = array_values(array_filter($bySymbol[$symbol] ?? [], static fn (BoardRowDto $existing): bool => $existing->providerKey !== 'manual'));
+            $bySymbol[$symbol][] = $row;
         }
 
         foreach ($bySymbol as $symbol => $rows) {
@@ -156,8 +179,23 @@ final readonly class EffectivePriceQuery
      * @param  array<int, BoardRowDto>  $rows  ba olaviat sort-shode
      * @return array{0: BoardRowDto|null, 1: bool} [chosen, usingFallback]
      */
-    private function choose(array $rows): array
+    private function choose(array $rows, array $policy): array
     {
+        if ($policy['manualOnly']) {
+            foreach ($rows as $row) {
+                if ($row->providerKey === ManualQuoteSource::KEY) {
+                    return [$row, false];
+                }
+            }
+
+            // Admin manual-only ro entekhab karde; hich provider e jaygozin mojaz nist.
+            return [null, false];
+        }
+
+        if (! $policy['manualFallbackEnabled']) {
+            $rows = array_values(array_filter($rows, static fn (BoardRowDto $row): bool => $row->providerKey !== ManualQuoteSource::KEY));
+        }
+
         // 1. Avvalin TAZE ye gheyr-manual.
         foreach ($rows as $row) {
             if (! $row->isStale && $row->providerKey !== ManualQuoteSource::KEY) {

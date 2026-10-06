@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Modules\Access\Application\Queries\AccessQuery;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Telescope\Telescope;
@@ -21,7 +22,7 @@ final class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
 
     protected function authorization(): void
     {
-        Gate::define('viewTelescope', fn (User $user): bool => $user->is_admin && $user->isActive());
+        Gate::define('viewTelescope', fn (User $user): bool => app(AccessQuery::class)->allows($user, 'monitoring.view'));
         Telescope::auth(fn ($request): bool => Gate::allows('viewTelescope'));
     }
 }

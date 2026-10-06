@@ -81,9 +81,9 @@ wait_healthy() { # wait_healthy <service> <saniye>
 
 restore() {
   say "Bargardandan e mohit"
-  $DC start influxdb postgresql redis redis-prices >/dev/null 2>&1
+  $DC start influxdb postgresql redis >/dev/null 2>&1
   wait_healthy postgresql 60 >/dev/null
-  wait_healthy redis-prices 60 >/dev/null
+  wait_healthy redis 60 >/dev/null
   wait_healthy influxdb 60 >/dev/null
   $DC start price-worker >/dev/null 2>&1
   info "price-worker barmigardid."
@@ -149,8 +149,8 @@ check "Influx bargasht"                      "$(jget influx_available <<<"$AFTER
 check_gt "ba'd az drain، candle haye m1 ziad shodan" "$(jget m1.count <<<"$AFTER")" "$PRE_M1"
 
 # ══════════════════════════════════════════════════════════════════════
-say "Senario B — redis-prices ghat' ast"
-$DC stop redis-prices >/dev/null 2>&1
+say "Senario B — redis ghat' ast"
+$DC stop redis >/dev/null 2>&1
 
 T3=$(tick)
 check "tick rad nashod"                      "$(jget skipped <<<"$T3")" "false"
@@ -166,8 +166,8 @@ check "tablo be Postgres fallback kard"      "$(jget board.degraded <<<"$B")" "t
 check_gt "tablo hanuz radif dare"            "$(jget board.rows <<<"$B")" 0
 
 say "Senario B — bargasht"
-$DC start redis-prices >/dev/null 2>&1
-wait_healthy redis-prices 60
+$DC start redis >/dev/null 2>&1
+wait_healthy redis 60
 T4=$(tick)
 B2=$(probe "$(( $(date +%s) - 600 ))" "$(date +%s)")
 check "sink e redis bargasht"                "$(jget sinks.redis.ok <<<"$T4")" "true"

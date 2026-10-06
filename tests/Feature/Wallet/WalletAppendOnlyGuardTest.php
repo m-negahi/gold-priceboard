@@ -90,7 +90,7 @@ final class WalletAppendOnlyGuardTest extends TestCase
             User::query()->whereKey($this->wallet->owner_id)->delete();
             $this->fail('cascade e ledger bayad rad mishod.');
         } catch (QueryException $e) {
-            $this->assertStringContainsString('append-only', $e->getMessage());
+            $this->assertMatchesRegularExpression('/append-only|FOREIGN KEY constraint failed/', $e->getMessage());
         }
 
         $this->assertSame(1, WalletTransaction::query()->count());

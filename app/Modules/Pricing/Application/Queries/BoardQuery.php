@@ -22,7 +22,7 @@ use Throwable;
  * Khundan e tablo: store e dagh -> fallback e Postgres.
  *
  * ── Masir ───────────────────────────────────────────────────────────
- *   1. `redis-prices` (yek GET — kol e tablo tu yek kelid)
+ *   1. connection e `prices` (yek GET — kol e tablo tu yek kelid)
  *   2. agar khali ya ghat' bud -> Postgres (~50 radif e index-dar)
  *   3. spread ru khoruji e'mal mishe (hargez ru storage)
  *
@@ -183,7 +183,7 @@ final readonly class BoardQuery
      * 🔴 Aya nevisande zende ast?
      *
      * ── Chera in check vojud dare ───────────────────────────────────
-     * Bad tarin nou' e ghat'i e `redis-prices` un ast ke SALEM be nazar
+     * Bad tarin nou' e ghat'i e connection e `prices` un ast ke SALEM be nazar
      * mirese. Vaghti memory por she (`--maxmemory-policy noeviction`)، Redis
      * write ha ro ba `OOM command not allowed` rad mikone **vali read ha ro
      * kamel javab mide** va `PING` ham salem ast.

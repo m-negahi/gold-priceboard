@@ -41,6 +41,20 @@ final class FakeSms implements SmsPort
     /** @var array<int, array{phone: string, code: string}> */
     private array $sent = [];
 
+    /** @var list<array{phone: string, ticket_id: int, status: string}> */
+    public array $ticketMessages = [];
+
+    public function sendTicketStatus(string $phone, int $ticketId, string $status): void
+    {
+        if ($this->failWith !== null) {
+            throw SmsException::apiStatus('fake', 0, $this->failWith);
+        }
+        $this->ticketMessages[] = ['phone' => $phone, 'ticket_id' => $ticketId, 'status' => $status];
+        if (count($this->ticketMessages) > self::MAX_KEPT) {
+            array_shift($this->ticketMessages);
+        }
+    }
+
     private ?string $failWith = null;
 
     public function __construct(private readonly ?LoggerInterface $logger = null) {}

@@ -57,11 +57,23 @@ final readonly class ValidateStage implements Stage
     public function handle(TickContext $context): void
     {
         $accepted = [];
+        $anchors = $context->trustAnchorKeys;
+
+        foreach ($context->providers as $config) {
+            if ($config->isTrustAnchor && $config->key !== 'manual') {
+                $anchors[] = $config->key;
+            }
+        }
+
+        // Anchor ghabl az baghi validate mishe, hatta age response ash akhar resid.
+        if ($anchors !== []) {
+            usort($context->raw, static fn ($a, $b): int => (int) in_array($b->providerKey, $anchors, true) <=> (int) in_array($a->providerKey, $anchors, true));
+        }
 
         // Marja' haye cross-provider: gheymat e payedar e provider haye
         // DIGAR، be tafkik e instrument. Yek bar sakhte mishe va ba har
         // quote e paziresh-shode ye in tick ham por tar mishe.
-        $references = $this->referenceIndex($context);
+        $references = $this->referenceIndex($context, $anchors);
 
         foreach ($context->raw as $quote) {
             $key = SnapshotDto::makeKey($quote->providerKey, $quote->instrument, $quote->side);
@@ -126,10 +138,17 @@ final readonly class ValidateStage implements Stage
             // `previous` nist -> check e enheraf nemitune ejra beshe، va
             // band e motlagh khata ye 10x ro nemigire. In tanha darvaze-i
             // ast ke un rakhne ro mibande.
-            if ($previous === null && $this->maxCrossProviderDeviation > 0) {
+            if ($previous === null && $quote->providerKey !== 'manual' && ! in_array($quote->providerKey, $anchors, true) && $this->maxCrossProviderDeviation > 0) {
+                $trusted = $this->referencesFor($references, $quote->instrument->value, $quote->providerKey);
+
+                if ($anchors !== [] && $trusted === []) {
+                    $context->reject(new RejectionDto($quote->providerKey, $quote->instrument, $quote->side, 'trust_anchor:unavailable', $quote->price->minor));
+
+                    continue;
+                }
                 $verdict = PriceSanity::crossProvider(
                     $quote->price,
-                    $this->referencesFor($references, $quote->instrument->value, $quote->providerKey),
+                    $trusted,
                     $this->maxCrossProviderDeviation,
                 );
 
@@ -146,7 +165,9 @@ final readonly class ValidateStage implements Stage
             // Quote e paziresh-shode khodesh baraye baghi ye in tick marja'
             // mishe. Faghat tu halat e bootstrap asar dare (vaghti hanuz hich
             // gheymat e payedari nist)، vali hamun ja arzesh dare.
-            $references[$quote->instrument->value][$quote->providerKey] = $quote->price;
+            if ($quote->providerKey !== 'manual' && ($anchors === [] || in_array($quote->providerKey, $anchors, true))) {
+                $references[$quote->instrument->value][$quote->providerKey] = $quote->price;
+            }
 
             $accepted[] = $quote;
         }
@@ -164,12 +185,13 @@ final readonly class ValidateStage implements Stage
      *
      * @return array<string, array<string, Price>>
      */
-    private function referenceIndex(TickContext $context): array
+    private function referenceIndex(TickContext $context, array $anchors): array
     {
         $index = [];
 
         foreach ($context->previous as $snapshot) {
-            if ($snapshot->price->isPositive()) {
+            if ($snapshot->providerKey !== 'manual' && $snapshot->price->isPositive()
+                && ($anchors === [] || in_array($snapshot->providerKey, $anchors, true))) {
                 $index[$snapshot->instrument->value][$snapshot->providerKey] = $snapshot->price;
             }
         }

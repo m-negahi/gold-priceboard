@@ -1,4 +1,4 @@
-{{-- Tiket e poshtibani e jadid (P7-01) — noe HAMISHE `support`. --}}
+{{-- Ticket e jadid ba form e sakhtar-dar e hoviat. --}}
 
 <x-layouts.site title="تیکت جدید">
     <div class="container py-8"><div class="mx-auto max-w-2xl">
@@ -8,17 +8,9 @@
         </a>
         <h1 class="mt-1 text-2xl font-extrabold text-ink">تیکت جدید</h1>
 
-        <form method="POST" action="{{ route('account.tickets.store') }}" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl bg-surface card-p-lg shadow-xs" data-ticket-create-form>
+        <form method="POST" action="{{ route('account.tickets.store') }}" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl bg-surface card-p-lg shadow-xs" data-ticket-create-form x-data="{ type: @js(old('request_type', 'support')) }">
             @csrf
-            <x-form.field name="subject" label="موضوع" required>
-                <x-form.input name="subject" :value="old('subject')" maxlength="200" />
-            </x-form.field>
-            <x-form.field name="body" label="متن پیام" required>
-                <x-form.textarea name="body" rows="6" maxlength="5000">{{ old('body') }}</x-form.textarea>
-            </x-form.field>
-            <x-form.field name="files" :error="$errors->first('files') ?: ($errors->first('files.*') ?: null)" label="پیوست (اختیاری)" hint="حداکثر ۵ فایل PDF/JPG/PNG/WEBP، هر کدام تا ۵ مگابایت.">
-                <x-form.file />
-            </x-form.field>
+            @include('ticket::account.request-fields', ['typeField' => 'request_type'])
             <div class="flex justify-end">
                 <button type="submit"
                         class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-on-brand hover:bg-brand-2">

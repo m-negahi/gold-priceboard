@@ -16,9 +16,9 @@ const PAGES: Array<{ path: string; heading: RegExp }> = [
     { path: '/dashboard/providers/create', heading: /منبع/ },
     { path: '/dashboard/providers/tgju/edit', heading: /ویرایش/ },
     { path: '/dashboard/providers/tgju/spreads', heading: /اسپرد/ },
-    { path: '/dashboard/manual', heading: /قیمت دستی/ },
-    { path: '/dashboard/priorities', heading: /اولویت منابع/ },
-    { path: '/dashboard/health', heading: /سلامت منابع/ },
+    { path: '/dashboard/manual', heading: /اولویت و قیمت دستی/ },
+    { path: '/dashboard/priorities', heading: /اولویت و قیمت دستی/ },
+    { path: '/dashboard/health', heading: /منابع قیمت/ },
     { path: '/dashboard/monitor', heading: /پایش زنده/ },
     { path: '/dashboard/monitor/api', heading: /پایش API/ },
     { path: '/dashboard/monitor/upstream', heading: /پایش منابع/ },
@@ -119,6 +119,15 @@ test.describe('panel @ 375px', () => {
                 scrollWidth,
                 `${path}: page ${scrollWidth}px pahn ast ru viewport e ${clientWidth}px — yek element az container esh zade birun.`,
             ).toBeLessThanOrEqual(clientWidth + 1);
+
+            if (path === '/dashboard/providers' || path === '/dashboard/priorities') {
+                await test.info().attach('pricing-mobile-accessibility', {
+                    body: Buffer.from(await page.locator('main').ariaSnapshot()),
+                    contentType: 'text/plain',
+                });
+                const card = page.locator(path.endsWith('providers') ? '[data-provider-row]' : '[data-priority-row]').first();
+                await card.screenshot({ path: test.info().outputPath('pricing-mobile-card.png') });
+            }
         });
     }
 });

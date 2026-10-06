@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Modules\Panel\Http\Controllers;
 
+use App\Modules\Media\Application\Queries\MediaQuery;
 use App\Modules\Media\Http\Resources\MediaRow;
-use App\Modules\Media\Queries\MediaQuery;
 use App\Modules\Panel\Http\Requests\ProviderSaveRequest;
 use App\Modules\Pricing\Application\Actions\ProviderAction;
 use App\Modules\Pricing\Application\Dto\ProviderInputDto;
+use App\Modules\Pricing\Application\Queries\ProviderPanelQuery;
 use App\Modules\Pricing\Application\Queries\ProviderQuery;
 use App\Modules\Pricing\Domain\Enums\ProviderKind;
 use App\Modules\Pricing\Domain\Enums\UpstreamUnit;
 use App\Modules\Pricing\Domain\Exceptions\InvalidProviderException;
-use App\Modules\Pricing\Services\SourceManager;
+use App\Modules\Pricing\Infrastructure\Sources\SourceManager;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -30,12 +32,19 @@ final readonly class ProviderController
         private ProviderQuery $providers,
         private ProviderAction $action,
         private MediaQuery $media,
+        private ProviderPanelQuery $panel,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View|JsonResponse
     {
+        if ($request->expectsJson()) {
+            return new JsonResponse(['health' => $this->panel->liveRows()]);
+        }
+
         return view('panel::providers.index', [
-            'rows' => $this->providers->panelRows(),
+            'rows' => $this->panel->rows(),
+            'hasTrustAnchor' => $this->panel->hasTrustAnchor(),
+            'liveHealth' => $this->panel->liveRows(),
         ]);
     }
 
@@ -111,9 +120,14 @@ final readonly class ProviderController
             'in_comparison' => ['sometimes', 'boolean'],
             'on_board' => ['sometimes', 'boolean'],
             'in_chart' => ['sometimes', 'boolean'],
+            'is_trust_anchor' => ['sometimes', 'boolean'],
         ]);
 
-        $this->action->setFlags($provider, array_map(static fn ($v): bool => (bool) $v, $flags));
+        try {
+            $this->action->setFlags($provider, array_map(static fn ($v): bool => (bool) $v, $flags));
+        } catch (InvalidProviderException $exception) {
+            return back()->withErrors(['is_trust_anchor' => $exception->getMessage()]);
+        }
 
         return back()->with('toast', [
             'kind' => 'success',

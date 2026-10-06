@@ -33,6 +33,7 @@ final class ProviderSaveRequest extends FormRequest
             'hide_after_seconds' => ['required', 'integer', 'min:0', 'max:604800'],
             'sort' => ['required', 'integer', 'min:0', 'max:1000'],
             'is_active' => ['sometimes', 'boolean'],
+            'is_trust_anchor' => ['sometimes', 'boolean'],
             'in_comparison' => ['sometimes', 'boolean'],
             'on_board' => ['sometimes', 'boolean'],
             'in_chart' => ['sometimes', 'boolean'],
@@ -61,7 +62,7 @@ final class ProviderSaveRequest extends FormRequest
     {
         $data = parent::validated();
 
-        foreach (['is_active', 'in_comparison', 'on_board', 'in_chart'] as $flag) {
+        foreach (['is_active', 'in_comparison', 'on_board', 'in_chart', 'is_trust_anchor'] as $flag) {
             $data[$flag] = (bool) ($data[$flag] ?? false);
         }
 

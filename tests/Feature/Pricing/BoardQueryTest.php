@@ -394,13 +394,13 @@ final class BoardQueryTest extends TestCase
         $this->assertArrayHasKey('ageSeconds', $row);
     }
 
-    /** Rial `displayDivisor` e 10 dare — yek formatter، na tabdil tu storage. */
-    public function test_rial_rows_expose_the_toman_divisor(): void
+    /** Rial `displayDivisor` e 1 dare — yek formatter، na tabdil tu storage. */
+    public function test_rial_rows_expose_the_rial_divisor(): void
     {
         $this->provider();
         $this->warmBoard([$this->snapshot()]);
 
-        $this->assertSame(10, $this->boardQuery()->board()->rows[0]->toArray()['displayDivisor']);
+        $this->assertSame(1, $this->boardQuery()->board()->rows[0]->toArray()['displayDivisor']);
     }
 
     // ── 🔴 `hide_after_seconds` — P1-26 ─────────────────────────────

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -27,6 +28,8 @@ use Illuminate\Support\Facades\Schema;
  */
 return new class extends Migration
 {
+    private const MESSAGE = 'wallet_transactions append-only ast: UPDATE/DELETE mamnu';
+
     public function up(): void
     {
         Schema::create('wallets', function (Blueprint $table): void {
@@ -58,11 +61,76 @@ return new class extends Migration
             $table->unique(['wallet_id', 'reason', 'reference']);
             $table->index(['wallet_id', 'created_at']);
         });
+
+        match (DB::getDriverName()) {
+            'pgsql' => $this->upPostgres(),
+            'sqlite' => $this->upSqlite(),
+            default => null,
+        };
     }
 
     public function down(): void
     {
+        match (DB::getDriverName()) {
+            'pgsql' => DB::unprepared(<<<'SQL'
+                DROP TRIGGER IF EXISTS wallet_transactions_no_truncate ON wallet_transactions;
+                DROP TRIGGER IF EXISTS wallet_transactions_append_only ON wallet_transactions;
+                DROP FUNCTION IF EXISTS wallet_transactions_append_only();
+                SQL),
+            'sqlite' => DB::unprepared(<<<'SQL'
+                DROP TRIGGER IF EXISTS wallet_transactions_no_update;
+                DROP TRIGGER IF EXISTS wallet_transactions_no_delete;
+                SQL),
+            default => null,
+        };
+
         Schema::dropIfExists('wallet_transactions');
         Schema::dropIfExists('wallets');
+    }
+
+    private function upPostgres(): void
+    {
+        $message = self::MESSAGE;
+
+        DB::unprepared(<<<SQL
+            CREATE OR REPLACE FUNCTION wallet_transactions_append_only() RETURNS trigger
+            LANGUAGE plpgsql AS \$\$
+            BEGIN
+                RAISE EXCEPTION '{$message} (%)', TG_OP
+                    USING ERRCODE = 'restrict_violation';
+            END;
+            \$\$;
+
+            DROP TRIGGER IF EXISTS wallet_transactions_append_only ON wallet_transactions;
+            CREATE TRIGGER wallet_transactions_append_only
+                BEFORE UPDATE OR DELETE ON wallet_transactions
+                FOR EACH ROW EXECUTE FUNCTION wallet_transactions_append_only();
+
+            DROP TRIGGER IF EXISTS wallet_transactions_no_truncate ON wallet_transactions;
+            CREATE TRIGGER wallet_transactions_no_truncate
+                BEFORE TRUNCATE ON wallet_transactions
+                FOR EACH STATEMENT EXECUTE FUNCTION wallet_transactions_append_only();
+            SQL);
+    }
+
+    private function upSqlite(): void
+    {
+        $message = self::MESSAGE;
+
+        DB::unprepared(<<<SQL
+            CREATE TRIGGER IF NOT EXISTS wallet_transactions_no_update
+            BEFORE UPDATE ON wallet_transactions
+            BEGIN
+                SELECT RAISE(ABORT, '{$message}');
+            END;
+            SQL);
+
+        DB::unprepared(<<<SQL
+            CREATE TRIGGER IF NOT EXISTS wallet_transactions_no_delete
+            BEFORE DELETE ON wallet_transactions
+            BEGIN
+                SELECT RAISE(ABORT, '{$message}');
+            END;
+            SQL);
     }
 };

@@ -24,6 +24,8 @@ class ApiPlan extends Model
         'name',
         'price_minor',
         'calls_per_day',
+        'duration_days',
+        'calls_included',
         'cost_per_call_minor',
         'is_active',
         'sort',
@@ -35,6 +37,8 @@ class ApiPlan extends Model
         return [
             'price_minor' => 'integer',
             'calls_per_day' => 'integer',
+            'duration_days' => 'integer',
+            'calls_included' => 'integer',
             'cost_per_call_minor' => 'integer',
             'is_active' => 'boolean',
         ];

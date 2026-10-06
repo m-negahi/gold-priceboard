@@ -28,6 +28,7 @@ return [
         'sender' => env('KAVENEGAR_SENDER', ''),
         // Esm e template e OTP tu panel e Kavenegar (verify/lookup).
         'template' => env('KAVENEGAR_TEMPLATE_OTP', 'verify'),
+        'ticket_template' => env('KAVENEGAR_TEMPLATE_TICKET', ''),
         'base_url' => env('KAVENEGAR_BASE_URL', 'https://api.kavenegar.com/v1'),
     ],
 

@@ -38,6 +38,11 @@ final class UserAdminException extends RuntimeException
         return new self('حداقل یک ادمین فعال باید باقی بماند.', 'role');
     }
 
+    public static function lastAccessManager(): self
+    {
+        return new self('حداقل یک مدیر فعال با دسترسی مدیریت نقش‌ها باید باقی بماند.', 'role');
+    }
+
     public static function selfDisable(): self
     {
         return new self('نمی‌توانید حساب خودتان را غیرفعال کنید.', 'reason');

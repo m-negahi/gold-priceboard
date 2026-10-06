@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Access\Http\Controllers\AccessController;
 use App\Modules\Auth\Http\Controllers\LoginController;
 use App\Modules\Auth\Http\Middleware\EnsureAdmin;
 use App\Modules\Kyc\Http\Controllers\OnboardingController;
@@ -19,6 +20,7 @@ use App\Modules\Panel\Http\Controllers\TicketController;
 use App\Modules\Panel\Http\Controllers\UserController;
 use App\Modules\Pricing\Http\Controllers\PublicBoardController;
 use App\Modules\Seo\Http\Controllers\SeoController;
+use App\Modules\Seo\Http\Controllers\SeoEditorController;
 use App\Modules\Ticket\Http\Controllers\AccountTicketController;
 use App\Modules\Ticket\Http\Controllers\TicketAttachmentController;
 use Illuminate\Support\Facades\Route;
@@ -66,6 +68,16 @@ Route::middleware(['auth', EnsureAdmin::class])
     ->name('panel.')
     ->group(function (): void {
         Route::get('/', [DashboardController::class, 'show'])->name('dashboard');
+        Route::view('/no-access', 'access::no-access')->name('no-access');
+
+        Route::get('/seo', [SeoEditorController::class, 'index'])->name('seo.index');
+        Route::put('/seo/{page}', [SeoEditorController::class, 'update'])->name('seo.update');
+
+        Route::get('/access', [AccessController::class, 'index'])->name('access.index');
+        Route::post('/access/roles', [AccessController::class, 'save'])->name('access.roles.store');
+        Route::put('/access/roles/{role}', [AccessController::class, 'save'])->whereNumber('role')->name('access.roles.update');
+        Route::delete('/access/roles/{role}', [AccessController::class, 'destroy'])->whereNumber('role')->name('access.roles.destroy');
+        Route::put('/access/admins/{user}', [AccessController::class, 'assign'])->whereNumber('user')->name('access.assign');
 
         Route::get('/media', [MediaController::class, 'index'])->name('media.index');
         Route::get('/media/table', [MediaController::class, 'table'])->name('media.table');
@@ -92,16 +104,19 @@ Route::middleware(['auth', EnsureAdmin::class])
         // ── Gheymat e dasti (fallback — Phase 4/5) ──────────────────
         Route::get('/manual', [ManualPriceController::class, 'index'])->name('manual.index');
         Route::post('/manual', [ManualPriceController::class, 'update'])->name('manual.update');
-        Route::post('/manual/seed', [ManualPriceController::class, 'seed'])->name('manual.seed');
         Route::post('/manual/seed-priority', [ManualPriceController::class, 'seedByPriority'])->name('manual.seed-priority');
         Route::post('/manual/remove', [ManualPriceController::class, 'remove'])->name('manual.remove');
 
         // ── Olaviat e per-symbol (P5-07) ────────────────────────────
         Route::get('/priorities', [PriorityController::class, 'index'])->name('priorities.index');
         Route::post('/priorities', [PriorityController::class, 'update'])->name('priorities.update');
+        Route::post('/priorities/settings', [PriorityController::class, 'settings'])->name('priorities.settings');
+        Route::get('/manual/template', [ManualPriceController::class, 'template'])->name('manual.template');
+        Route::post('/manual/import/preview', [ManualPriceController::class, 'preview'])->block()->name('manual.import.preview');
+        Route::post('/manual/import/confirm', [ManualPriceController::class, 'confirm'])->block()->name('manual.import.confirm');
 
         // ── Monitoring (P3-08/09/10) ────────────────────────────────
-        Route::get('/health', [MonitorController::class, 'health'])->name('health');
+        Route::redirect('/health', '/dashboard/providers')->name('health');
         Route::get('/monitor', [MonitorController::class, 'ticks'])->name('monitor.ticks');
         Route::get('/monitor/api', [MonitorController::class, 'api'])->name('monitor.api');
         Route::get('/monitor/upstream', [MonitorController::class, 'upstream'])->name('monitor.upstream');
@@ -180,3 +195,7 @@ Route::middleware('local-only')
         Route::post('/request', [KitController::class, 'request'])->name('request');
         Route::post('/flash', [KitController::class, 'flash'])->name('flash');
     });
+
+require app_path('Modules/Panel/Http/routes-identity.php');
+
+require __DIR__.'/billing.php';

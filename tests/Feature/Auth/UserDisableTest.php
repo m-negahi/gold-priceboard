@@ -80,6 +80,7 @@ final class UserDisableTest extends TestCase
         $this->assertSame(UserStatus::Disabled, $user->status);
         $this->assertNotNull($user->disabled_at);
         $this->assertSame('تخلف در استفاده', $user->disabled_reason);
+        $this->assertDatabaseHas('user_profile_audits', ['user_id' => $user->id]);
     }
 
     public function test_a_reason_is_required(): void

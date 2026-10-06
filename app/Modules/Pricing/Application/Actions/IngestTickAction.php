@@ -13,7 +13,7 @@ use App\Modules\Pricing\Domain\Ports\ClockPort;
 use App\Modules\Pricing\Domain\Ports\HotCachePort;
 use App\Modules\Pricing\Domain\Ports\QuoteSourcePort;
 use App\Modules\Pricing\Domain\ValueObjects\TickTime;
-use App\Modules\Pricing\Services\SourceManager;
+use App\Modules\Pricing\Infrastructure\Sources\SourceManager;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Support\Facades\Cache;
 use Psr\Log\LoggerInterface;
@@ -103,7 +103,15 @@ final readonly class IngestTickAction
             );
         }
 
-        $report = $this->pipeline->run(new TickContext($at, $sources, $usable));
+        $anchors = array_keys(array_filter($usable, static fn (ProviderConfigDto $config): bool => $config->isTrustAnchor));
+
+        try {
+            $anchors = $this->providers->trustAnchorKeys();
+        } catch (Throwable) {
+            // Dar ghat'i ye DB az config e akharin tick estefade mishe.
+        }
+
+        $report = $this->pipeline->run(new TickContext($at, $sources, $usable, $anchors));
 
         $this->recordHealth($report, $usable);
 

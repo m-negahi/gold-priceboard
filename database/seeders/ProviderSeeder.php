@@ -114,6 +114,102 @@ final class ProviderSeeder extends Seeder
             Instrument::GoldOunce->value => 90_000,
         ]);
 
+        $this->provider([
+            'key' => 'nerkh',
+            'driver' => 'nerkh',
+            'name' => 'Nerkh',
+            'name_fa' => 'نرخ',
+            'website' => 'https://nerkh.io',
+            'kind' => 'reference',
+            'sort' => 30,
+            // ~0.3s javab mide (andaze-giri 2026-10-06)؛ 10 ba fasele ye zyad.
+            'timeout' => 10,
+            // Hame ye gheymat haye IRR e in feed TOMAN-and. `OUNCE` va
+            // `OUNCE_SILVER` DOLLAR-and — estesna tu map e khod e Source.
+            'upstream_unit' => 'toman',
+        ], [
+            /*
+             * nerkh baraye HAR radif timestamp e Jalali mide ke tu bazaar e
+             * baste (shab/jom'e/ta'til) yakh mizane — daghighan hamun
+             * asymmetry e tgju. Hamun override ha: 4 rooz baraye tala/sekke،
+             * 2 rooz dollar، ~1 rooz jahani ha. Dalil e kamel bala (tgju).
+             */
+            Instrument::GoldOunce->value => 90_000,
+            Instrument::SilverOunce->value => 90_000,
+            Instrument::Gold18Gram->value => 345_600,
+            Instrument::Gold24Gram->value => 345_600,
+            Instrument::GoldMesghal->value => 345_600,
+            Instrument::CoinEmami->value => 345_600,
+            Instrument::CoinBahar->value => 345_600,
+            Instrument::CoinHalf->value => 345_600,
+            Instrument::CoinQuarter->value => 345_600,
+            Instrument::CoinGerami->value => 345_600,
+            Instrument::UsdIrr->value => 172_800,
+        ]);
+
+        /*
+         * ── Platform ha (API e khod e site، na az nerkh) — 2026-10-06 ─────
+         * `kind = platform`: kharid/foroosh eshun vaghei-e va nabayad marker
+         * e «محاسبه‌شده» begiran. Faghat 18 ayar midan. Barresi ye API ha tu
+         * docblock e har Source.
+         */
+        $this->provider([
+            'key' => 'milli',
+            'driver' => 'milli',
+            'name' => 'Milli',
+            'name_fa' => 'میلی',
+            'website' => 'https://milli.gold',
+            'kind' => 'platform',
+            'sort' => 40,
+            'timeout' => 10,
+            // `price18` RIAL e har MILLIGRAM — ×1000 tu khod e Source.
+            'upstream_unit' => 'rial',
+        ], [
+            // Timestamp e daghighe-i mide؛ shab/ta'til mitune yakh bezane.
+            Instrument::Gold18Gram->value => 345_600,
+        ]);
+
+        $this->provider([
+            'key' => 'talasea',
+            'driver' => 'talasea',
+            'name' => 'Talasea',
+            'name_fa' => 'طلاسی',
+            'website' => 'https://talasea.ir',
+            'kind' => 'platform',
+            'sort' => 50,
+            'timeout' => 10,
+            // `price` TOMAN e har MILLIGRAM — ×1000 tu khod e Source.
+            'upstream_unit' => 'toman',
+        ], []);
+
+        $this->provider([
+            'key' => 'technogold',
+            'driver' => 'technogold',
+            'name' => 'Technogold',
+            'name_fa' => 'تکنوگلد',
+            'website' => 'https://technogold.gold',
+            'kind' => 'platform',
+            'sort' => 60,
+            'timeout' => 10,
+            // toman/g؛ jofte bid/ask e VAGHEI (`buy_price` = ask، `sell_price` = bid).
+            'upstream_unit' => 'toman',
+        ], []);
+
+        // Hoviat e asli ye STOCK az fixture ma'lum nist; esm va website faghat manba' e Nerkh ro migan.
+        $this->provider([
+            'key' => 'nerkh-stock',
+            'driver' => 'nerkh',
+            'name' => 'GOLD18K_STOCK via Nerkh',
+            'name_fa' => 'GOLD18K_STOCK (داده نرخ)',
+            'website' => 'https://nerkh.io',
+            'kind' => 'reference',
+            'sort' => 70,
+            'timeout' => 10,
+            'poll_interval_seconds' => 30,
+            'upstream_unit' => 'toman',
+            'options' => ['item' => 'GOLD18K_STOCK'],
+        ], [Instrument::Gold18Gram->value => 345_600]);
+
         /*
          * 🔴 Manual — fallback e dasti (khaste ye sahebe proje). `sort = 80`
          * ya'ni AKHARIN olaviat (provider haye vaghei avval، manual akhar).
@@ -163,7 +259,7 @@ final class ProviderSeeder extends Seeder
             // ma'muli har provider-i ke admin roshan karde ro KHAMOOSH mikone
             // — ya'ni site bedun e hich khata az gheymat mioftad.
             $provider = $providers->update($existing, ProviderInputDto::fromArray(
-                array_merge($attributes, ['is_active' => $existing->is_active]),
+                array_merge($attributes, ['is_active' => $existing->is_active, 'is_trust_anchor' => $existing->is_trust_anchor]),
             ));
         }
 

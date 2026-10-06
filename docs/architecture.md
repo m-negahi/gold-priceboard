@@ -43,7 +43,7 @@ Ports & Adapters har chahar ta ro hall mikone: `Domain` nemidune Influx vojud da
 
 | Store | Chi negah midare | Agar bioftad |
 |---|---|---|
-| `redis-prices` | akharin gheymat (board az inja mikhune) | `BoardQuery` mire ru Postgres — board **durost** mimune، faghat kond tar |
+| Redis DB2 (`prices`) | akharin gheymat (board az inja mikhune) | `BoardQuery` mire ru Postgres — board **durost** mimune، faghat kond tar |
 | PostgreSQL | akharin gheymat + hame ye data ye relational | polling edame mide (lista ye provider az `pb:providers:last`)، board **zende** mimune |
 | InfluxDB | hame ye tick + candle | board salem ast؛ chart `:last` e cache ro neshun mide ba flag e `degraded`. Tick ha tu spool jam' mishan va ba'd replay mishan → **hich gap** |
 
@@ -54,10 +54,12 @@ Esteddal e «Postgres aval baraye durability» ghabel e defa' ast va tu cadence 
 
 **Invariant e test-shodani**: Postgres hargez bishtar az yek tick aghab e Redis nist، va Redis hamishe az Postgres backfill-pazir ast.
 
-### 🔴 Chera do ta Redis
-`redis` e omumi `--maxmemory-policy allkeys-lru` dare. Tu feshar e memory Redis **har** kelidi ro evict mikone — shamel e kelid haye gheymat — va khodesh ro kamelan salem gozaresh mide. Natije: board bedun e hich error khali mishe.
-`hg_website` in moshkel ro nadasht chun unja Redis faghat **cache** bud va Postgres posht esh bud. Inja Redis **store e dagh** ast.
-→ `redis-prices` e joda ba `noeviction` + kelid haye **bedun e TTL**.
+### Redis e vahed, connection haye joda
+Yek container `redis:8-alpine` ba DB0 baraye OTP/session/queue, DB1 baraye cache va DB2 baraye prices. Policy `noeviction` jelo e hazf e saket e gheymat/session/queue ro migire; AOF `everysec` va volume e paydar. Maxmemory e pish-farz 512MB ba `REDIS_MAXMEMORY` ghabel e tanzim ast.
+
+Logical DB faghat namespace/isolation e amaliati mide, na memory ya availability e joda. Tu OOM, write fail mishe; memory, queue backlog va failed jobs bayad monitor shan. Ghat'i e Redis bar board PG fallback dare; OTP/session/queue hamzaman unavailable mishan. Test ha be DB13/14/15 majbur mishan va RedisManager ba config e test az no sakhte mishe ta flushdb be dev nakhore.
+
+Enteghal e dev: price-worker stop, 7 kelid ba DUMP/RESTORE va TTL be DB2 enteghal yaft, mohtava ba compare e canonical taeed shod; source dast nakhord. Ba'd az taeed, container e ghadimi hazf shod; volume ha hefz shodan. `.env` taghir nakard; `REDIS_PRICES_*` dige masraf nemishan, kelid e jadid `REDIS_PRICE_DATABASE=2` ast.
 
 ---
 
@@ -112,7 +114,8 @@ pricing:tick (container e price-worker، halghe ye grid-aligned e 15s)
 ├─ 4 Normalize   parse + unit + symbol map   (dakhel e Source)
 ├─ 5 Validate    staleness + PriceSanity
 ├─ 6 Persist     Redis → Postgres → Influx   (har kodum jodagane isolated)
-└─ 7 Publish     warm e payload
+├─ 7 ManualBackup raw e accepted e hamin tick → manual_prices (isolated)
+└─ 8 Publish     warm e payload
 ```
 
 ### Policy e shekast
@@ -206,3 +209,62 @@ Octane process ro zende negah midare — pas har chizi ke **halat** dare bayn e 
 | Zakhire kardan e `buy`/`sell` tu DB | bakhsh e 4 |
 | Backfill e tarikhche az biurn | sahebe projeh «az tick haye khodemun» ro entekhab kard. Opt-in mune: `api.tgju.org/v1/market/indicator/summary-table-data/{symbol}` |
 | Font e CDN | ru host e Iran ghabel e etminan nist — font local ast |
+
+
+## 10. Module ha va marz e masouliat
+
+| Module | Masouliat / manba e data |
+|---|---|
+| Pricing | quote adapter ha, sanity/trust-anchor, tick pipeline, spread ru read, manual/priorities, Redis/PG/Influx |
+| Auth | OTP, active/disabled user, profile e haghighi/hoghoghi, audit e taghirat |
+| Access | role, permission, profile e admin, route gate, navigation, audit e dastresi |
+| Ticket / Kyc | request/status/message/private attachment; estelam e Zohal, gozaresh, decision va notification |
+| Wallet | balance e locked + `wallet_transactions` append-only + idempotency |
+| Api | site credentials/HMAC/status, quota, plan/subscription, charge/refund/usage |
+| Billing | `PaymentGatewayPort`, Zibal, wallet topup, immutable invoice snapshot |
+| Finance | chart e hesab, journal/lines, daftar kol, reversal va settlement |
+| Media / Seo / Panel | file library; public metadata/SEO; controller/view haye dashboard |
+
+Action ha masir e write, Query ha masir e read-and. Model ha dar `Infrastructure/Persistence/Models`; adapter e source dar `Pricing/Infrastructure/Sources`; Media Actions/Queries/Dto dar `Application`, image processor dar `Infrastructure/Support`. Dependency e gateway dar `BillingServiceProvider` bind mishe. Provider ha dasti dar `bootstrap/providers.php` sabt mishan.
+
+## 11. Dastresi va hoviat
+
+Admin e ghadimi bedun e `admin_access_profiles` full-access ast. Vaghti profile sarih sabt shod, `full_access=false` + role e khali yaani hich permission. Permission ha `view/manage` dar `PermissionCatalog`; `manage` ijaze e read e hamun bakhsh ro ham mide. Route e nashenas baraye admin e mahdood denied ast. Horizon/Telescope ham permission e monitoring daran; list/read ba delete/retry/toggle joda ast.
+
+Har taghir e role/profile/status admin, admin ha ro ba tartib e ID lock va actor ro dobare authorize mikone. Hadaf: stale request natune dastresi e akharin admin e faal e `access.manage` ro hazf kone. Taghir e shomare/name e admin ham `access.manage` mikhad. Navigation va control ha permission-aware-and; backend ham mostaghel check mikone. Private ticket attachment faghat owner ya admin e `tickets.view`, hamrah e signed URL.
+
+Hoviat e haghighi/hoghoghi dar `identity_profile`; profile e taeed-shode e factor dar `invoice_profile`. Profile edit audit dare. `IdentityVerificationPort` natije e passed/failed/warning mide; token e natanzeem-shode warning ast. Job baraye har submission/run claim e atomic dare; rerun sarih e admin run e jadid misaze. KYC approval dar transaction sath/profile factor ro snapshot mikone. Madarek private-and. SMS e status tu queue ba template e tanzim-shode ersal mishe.
+
+## 12. Wallet, eshterak, pardakht va daftar kol
+
+Mablagh hameja rial e integer ast. Gheymat e marja e USD e jahani USD mimune. Display/parser e rial `Money` hich float ya zarib e toman nadare; upstream toman tu Source normalize mishe.
+
+Kharid e plan client/owner/status ro check, wallet ro lock va price ro debit mikone. Subscription snapshot e duration/quota/rate dare; edit e plan eshterak e ghabli ro avaz nemikone. Sahmie e kol va rooz aval masraf mishe; bishtar az sahmie ba rate e eshterak PAYG ast. Rate e sefr dar overage yaani 429. Eshterak e monghazi → PAYG e pish-farz. Wallet e blocked hata call e included ro rad mikone. Request e fail/refund baraye bargasht e quota/balance talash mikone. BUG e baz dar checkpoint: agar refund e DB shekast bokhorad, compensation e paydar nadarim va header mitavanad cost e sefr e eshtebah neshan dahad.
+
+Topup: request-key e karbar + track_id e gateway unique; callback faghat ba verify e server-to-server, amount e daghigh va result e motabar wallet ro credit mikone. Payment row lock shode; callback e tekrari credit e jadid nemisaze. Gateway unconfigured khata e vazeh mide. Zibal credential az `ZIBAL_MERCHANT`; test ha fake-and. Invoice faghat ba `invoice_verified` va invoice_profile (dar checkpoint e tavaqof, mapping e yekdast e approved profile hanuz pending ast): snapshot e kharidar, source e pardakht/eshterak, mablagh, shomare e sequence. Snapshot immutable ast. Factor e dakheli/printable ast; enteghal be samane e modian ya rule e maliat piade nashode.
+
+| Code e hesab | Masraf |
+|---|---|
+| 1000 | Bank; settlement ba reference e bank |
+| 1100 | Vojuh e dar rah e dargah |
+| 2100 | Bedehi e wallet e moshtarian |
+| 3000 | Traz e opening balance e data e ghabli |
+| 3900 | Hesab e vaset e eslahat e admin |
+| 4100 | Daramad e eshterak |
+| 4200 | Daramad e call e API |
+
+Har wallet transaction dar hamun DB transaction journal e do-tarafe misaze. `source_key` unique; har line faghat yek taraf e mosbat. PostgreSQL header/line UPDATE/DELETE ro ba trigger rad mikone; balance e har sanad dar COMMIT ba constraint trigger check mishe. `posting_txid` ba `txid_current()` set mishe; line faghat dar transaction e sakhte-shodan e header mojaz ast. In field amdan jaye tuple `xmin` ast: savepoint e nested transaction xmin e joda dare.
+
+Asnad e ghadimi pak/virayesh nemishan. Reversal yek sanad e mokhalef ba reference va admin/reason ast; correction reversal+replacement atomic ast. Mande manfi rad mishe. Opening migration aval sum e ledger ro ba cached balance moghayese mikone, mismatch ro rad mikone va baraye mande e mosbat journal misaze. Settlement faghat receipt e verified ro yek bar az clearing be bank montaghel mikone.
+
+## 13. Migration, ejra va test
+
+Baseline e 2026-10-07 ba darkhast e sahebe proje consolidate shod: users/profile, providers/logo/trust-anchor, plans/clients va wallet trigger dar create haye asli. Media FK ba'd az create e media attach mishe. Filename e create haye mojud hefz shode ta live dobare CREATE nakone. Migration haye pure alter e superseded hazf shodan; record e tarikhche e live hefz ast. Data migration e opening mali joda mimune.
+
+Baraye database e mojood e ghadimi: aval revision e pre-consolidation/additive ra migrate kon, ba backup va taeed e ledger; ba'd baseline e consolidated ra deploy kon. Taghir e mostaghim az yek schema e ghadimi be baseline-e rewritten bedun e upgrade script mojaz nist. In dev ghabl az consolidate update shod, backup local gerefte shod va hich `migrate:fresh` ru data e mojood ejra nashod. Migration haye baadi additive-and.
+
+- PHP suite: SQLite in-memory, Redis13/14/15, SMS fake, Zohal/Zibal credential khali; `GuardsTest` config va DB e vaghei e connection ro misanje. Test ha serial-and.
+- `tests/Integration/FinancePostgresTest.php`: faghat database e sarih `priceboard_verify_*`, ba guard e name va default-dev inequality; migrate e disposable, commit/trigger e vaghei, nested purchase/topup. Hargez default DB e dev.
+- Browser: Playwright az host, fixture e joda, theme/token/RTL/mobile375 check; no real payment/SMS/inquiry. Full PHP va E2E ba'd az integration.
+- Asset taghir kard: `npm run build`, ba'd `php artisan octane:reload`. `.env` taghir kard: container recreate. Worker ha ba deploy restart shan.
+- Service smoke: `/up`, `horizon:status`, `migrate:status`, count/status e Redis e vahed. Live provider tick ra baraye test offline majbur nakon.

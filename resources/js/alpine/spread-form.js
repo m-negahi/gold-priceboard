@@ -46,7 +46,7 @@ export default ({ previewUrl, rows = [] }) => ({
         }
     },
 
-    /** Namayesh ba divisor-e namad (rial -> toman) va ragham-e Latin. */
+    /** Namayesh ba divisor-e namad (rial/dollar) va ragham-e Latin. */
     fmt(row, value) {
         if (value === null || value === undefined || row.divisor === null) return '—';
 

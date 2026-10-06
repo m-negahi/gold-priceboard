@@ -28,6 +28,7 @@ final readonly class SubmitKycRequestAction
     public function __construct(
         private OpenTicketAction $open,
         private KycQuery $kyc,
+        private QueueIdentityChecksAction $checks,
     ) {}
 
     /** @param array<int, UploadedFile> $files */
@@ -53,6 +54,8 @@ final readonly class SubmitKycRequestAction
                 'onboarded_at' => $user->onboarded_at ?? CarbonImmutable::now(),
                 'invoice_requested' => true,
             ])->save();
+
+            $this->checks->execute($user->id, [...$request->toMeta(), 'mobile' => $user->phone], 'ticket:'.$ticket->id, $ticket->id);
 
             return $ticket;
         });

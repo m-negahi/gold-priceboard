@@ -24,9 +24,9 @@ final readonly class OpenTicketAction
      * @param  array<string, mixed>|null  $meta
      * @param  array<int, UploadedFile>  $files  peyvast haye payam e aval (P7-02)
      */
-    public function execute(int $userId, TicketType $type, string $subject, string $body, ?array $meta = null, array $files = []): Ticket
+    public function execute(int $userId, TicketType $type, string $subject, string $body, ?array $meta = null, array $files = [], ?int $actorId = null): Ticket
     {
-        return DB::transaction(function () use ($userId, $type, $subject, $body, $meta, $files): Ticket {
+        return DB::transaction(function () use ($userId, $type, $subject, $body, $meta, $files, $actorId): Ticket {
             $ticket = new Ticket([
                 'user_id' => $userId,
                 'type' => $type,
@@ -36,19 +36,19 @@ final readonly class OpenTicketAction
             $ticket->forceFill(['last_activity_at' => CarbonImmutable::now()])->save();
 
             $message = $ticket->messages()->create([
-                'author_id' => $userId,
-                'is_staff' => false,
+                'author_id' => $actorId ?? $userId,
+                'is_staff' => $actorId !== null,
                 'body' => $body,
             ]);
 
             TicketEvent::query()->create([
                 'ticket_id' => $ticket->id,
-                'actor_id' => $userId,
+                'actor_id' => $actorId ?? $userId,
                 'kind' => 'created',
                 'to_status' => TicketStatus::Open->value,
             ]);
 
-            $this->attachments->execute($ticket, $message->id, $userId, $files);
+            $this->attachments->execute($ticket, $message->id, $actorId ?? $userId, $files);
 
             return $ticket;
         });

@@ -8,6 +8,7 @@ use App\Modules\Api\Application\Queries\ApiClientQuery;
 use App\Modules\Api\Application\Queries\ApiUsageQuery;
 use App\Modules\Api\Infrastructure\Persistence\Models\ApiClient;
 use App\Modules\Auth\Application\Queries\UserQuery;
+use App\Modules\Auth\Domain\Enums\CustomerType;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Common\Helpers\Jalali;
 use App\Modules\Common\Helpers\Money;
@@ -38,6 +39,7 @@ final readonly class UserDetailQuery
         'plan_purchase' => 'خرید پلن',
         'adjustment' => 'اصلاح',
         'admin_adjust' => 'اصلاح دستی ادمین',
+        'admin_reversal' => 'ابطال اصلاح دستی',
     ];
 
     public function __construct(
@@ -83,7 +85,9 @@ final readonly class UserDetailQuery
             'disabledReason' => $user->disabled_reason,
             'level' => $user->level,
             'customerType' => $user->customer_type,
-            'nationalCode' => $user->national_code,
+            'nationalCode' => $user->customer_type === CustomerType::Legal
+                ? ($user->identity_profile['company_national_id'] ?? $user->national_code)
+                : $user->national_code,
             'createdAt' => Jalali::dateTime($user->created_at),
             'lastLoginAt' => Jalali::dateTime($user->last_login_at),
         ];
@@ -104,8 +108,8 @@ final readonly class UserDetailQuery
         $ledger = array_map(fn (array $tx): array => [
             'id' => $tx['id'],
             'credit' => $tx['direction'] === 'credit',
-            'amountToman' => Money::rialToToman((int) $tx['amountMinor']),
-            'balanceAfterToman' => Money::rialToToman((int) $tx['balanceAfterMinor']),
+            'amountRial' => Money::rialDisplay((int) $tx['amountMinor']),
+            'balanceAfterRial' => Money::rialDisplay((int) $tx['balanceAfterMinor']),
             'reason' => self::REASONS[$tx['reason']] ?? $tx['reason'],
             'reference' => $tx['reference'],
             'note' => $tx['note'] ?? null,
@@ -115,7 +119,7 @@ final readonly class UserDetailQuery
 
         return [
             'id' => $wallet->id,
-            'balanceToman' => Money::rialToToman((int) $wallet->balance_minor),
+            'balanceRial' => Money::rialDisplay((int) $wallet->balance_minor),
             'isBlocked' => (bool) $wallet->is_blocked,
             'ledger' => $ledger,
         ];
@@ -139,14 +143,14 @@ final readonly class UserDetailQuery
                 'label' => ($last - $i) % 5 === 0 ? (string) Jalali::format($at, 'm/d') : '',
                 'value' => $day['calls'],
                 'active' => $i === $last,
-                'title' => Jalali::date($at).' — '.$day['calls'].' فراخوانی، '.Money::rialToToman($day['costMinor']).' تومان',
+                'title' => Jalali::date($at).' — '.$day['calls'].' فراخوانی، '.Money::rialDisplay($day['costMinor']).' ریال',
             ];
         }, $usage['days'], array_keys($usage['days']));
 
         return [
             'bars' => $bars,
             'totalCalls' => $usage['totalCalls'],
-            'totalCostToman' => Money::rialToToman($usage['totalCostMinor']),
+            'totalCostRial' => Money::rialDisplay($usage['totalCostMinor']),
             'days' => self::USAGE_DAYS,
         ];
     }
@@ -182,7 +186,7 @@ final readonly class UserDetailQuery
             'plan' => $plan === null ? null : [
                 'name' => $plan->name,
                 'callsPerDay' => (int) $plan->calls_per_day,
-                'costPerCallToman' => Money::rialToToman((int) $plan->cost_per_call_minor),
+                'costPerCallRial' => Money::rialDisplay((int) $plan->cost_per_call_minor),
             ],
             'lastUsedAt' => Jalali::dateTime($client->getAttribute('last_used_at')),
         ];

@@ -85,7 +85,7 @@ export default ({ url, interval = 15000 }) => ({
                 const el = this.$root.querySelector(`[data-cell="${key}"]`);
 
                 if (el) {
-                    el.querySelector('[data-price]').textContent = this.fmt(cell.sell, row.divisor, row.precision);
+                    el.querySelector('[data-price]').textContent = cell.sellDisplay ?? this.fmt(cell.sell, row.divisor, row.precision);
                     this.setChange(el, cell);
 
                     // Flash: sabz age bala raft، ghermez age paeen.
@@ -98,9 +98,9 @@ export default ({ url, interval = 15000 }) => ({
             }
 
             // Kamtarin/bishtarin/miangin.
-            this.setStat(row.symbol, 'min', row.min, row.divisor, row.precision);
-            this.setStat(row.symbol, 'max', row.max, row.divisor, row.precision);
-            this.setStat(row.symbol, 'avg', row.avg, row.divisor, row.precision);
+            this.setStat(row.symbol, 'min', row.min, row.divisor, row.precision, row.minDisplay);
+            this.setStat(row.symbol, 'max', row.max, row.divisor, row.precision, row.maxDisplay);
+            this.setStat(row.symbol, 'avg', row.avg, row.divisor, row.precision, row.avgDisplay);
         }
     },
 
@@ -114,9 +114,9 @@ export default ({ url, interval = 15000 }) => ({
         badge.className = 'num text-xs ' + (up ? 'text-up' : down ? 'text-down' : 'text-muted-2');
     },
 
-    setStat(symbol, kind, value, divisor, precision) {
+    setStat(symbol, kind, value, divisor, precision, display) {
         const el = this.$root.querySelector(`[data-stat="${symbol}:${kind}"]`);
-        if (el && value !== null && value !== undefined) el.textContent = this.fmt(value * divisor, divisor, precision);
+        if (el && value !== null && value !== undefined) el.textContent = display ?? this.fmt(value * divisor, divisor, precision);
     },
 
     flash(el, up) {

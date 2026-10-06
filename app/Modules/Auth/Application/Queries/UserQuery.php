@@ -10,6 +10,7 @@ use App\Modules\Common\Helpers\Money;
 use App\Modules\Common\Helpers\PhoneHelper;
 use App\Modules\Common\Helpers\StringHelper;
 use App\Modules\Common\Queries\BaseQuery;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,32 @@ use Illuminate\Support\Facades\DB;
 final readonly class UserQuery extends BaseQuery
 {
     public const PER_PAGE = 25;
+
+    /** @return array<string, mixed> */
+    public function profile(int $id): array
+    {
+        $user = $this->findOrFail($id);
+
+        return [...($user->identity_profile ?? []), 'id' => $user->id, 'phone' => $user->phone, 'name' => $user->name, 'email' => $user->email, 'national_code' => $user->national_code, 'customer_type' => $user->customer_type->value, 'level' => $user->level->value];
+    }
+
+    /** @return array<int, string> */
+    public function ticketOwnerOptions(): array
+    {
+        return $this->query()->orderByDesc('id')->get(['id', 'name', 'phone'])->mapWithKeys(static fn (User $user): array => [$user->id => ($user->name ?? 'کاربر').' — '.(PhoneHelper::toLocal($user->phone) ?? $user->phone)])->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function profileAudit(int $id): array
+    {
+        return DB::table('user_profile_audits')->leftJoin('users as actor', 'actor.id', '=', 'user_profile_audits.actor_id')
+            ->where('user_id', $id)->orderByDesc('user_profile_audits.id')->limit(30)->get(['user_profile_audits.*', 'actor.name as actor_name'])
+            ->map(static fn ($row): array => ['id' => $row->id, 'actor' => $row->actor_name ?? '#'.$row->actor_id,
+                'at' => Jalali::dateTime(CarbonImmutable::parse($row->created_at)),
+                'before' => json_encode(json_decode($row->before, true), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+                'after' => json_encode(json_decode($row->after, true), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+            ])->all();
+    }
 
     protected function model(): string
     {
@@ -137,7 +164,7 @@ final readonly class UserQuery extends BaseQuery
             'status' => $user->status,
             'level' => $user->level,
             'customerType' => $user->customer_type,
-            'balanceToman' => $balance === null ? null : Money::rialToToman((int) $balance),
+            'balanceRial' => $balance === null ? null : Money::rialDisplay((int) $balance),
             'sitesCount' => (int) $user->getAttribute('sites_count'),
             'lastLoginAt' => Jalali::dateTime($user->last_login_at),
             'createdAt' => Jalali::date($user->created_at),

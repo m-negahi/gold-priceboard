@@ -9,6 +9,7 @@ use App\Modules\Pricing\Application\Actions\ProviderSpreadAction;
 use App\Modules\Pricing\Application\Actions\RecordProviderHealthAction;
 use App\Modules\Pricing\Application\Pipeline\Stages\EnrichStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\FetchStage;
+use App\Modules\Pricing\Application\Pipeline\Stages\ManualBackupStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\PersistStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\PublishStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\ValidateStage;
@@ -23,16 +24,18 @@ use App\Modules\Pricing\Console\Commands\PricingInfluxProvisionCommand;
 use App\Modules\Pricing\Console\Commands\PricingTickCommand;
 use App\Modules\Pricing\Domain\Ports\ClockPort;
 use App\Modules\Pricing\Domain\Ports\HotCachePort;
+use App\Modules\Pricing\Domain\Ports\ManualBackupPort;
 use App\Modules\Pricing\Domain\Ports\SnapshotStorePort;
 use App\Modules\Pricing\Domain\Ports\TimeSeriesPort;
 use App\Modules\Pricing\Domain\Ports\UpstreamLogPort;
 use App\Modules\Pricing\Infrastructure\Cache\RedisHotCache;
 use App\Modules\Pricing\Infrastructure\Monitoring\RedisUpstreamCallLog;
+use App\Modules\Pricing\Infrastructure\Persistence\EloquentManualBackup;
 use App\Modules\Pricing\Infrastructure\Persistence\EloquentSnapshotStore;
+use App\Modules\Pricing\Infrastructure\Sources\SourceManager;
 use App\Modules\Pricing\Infrastructure\Time\SystemClock;
 use App\Modules\Pricing\Infrastructure\TimeSeries\InfluxSpool;
 use App\Modules\Pricing\Infrastructure\TimeSeries\InfluxTimeSeries;
-use App\Modules\Pricing\Services\SourceManager;
 use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
@@ -66,6 +69,8 @@ final class PricingServiceProvider extends ServiceProvider
             TimeSeriesPort::class,
             static fn (): TimeSeriesPort => new InfluxTimeSeries((array) config('pricing.influx', [])),
         );
+
+        $this->app->singleton(ManualBackupPort::class, EloquentManualBackup::class);
 
         $this->app->singleton(ClockPort::class, static fn (): ClockPort => new SystemClock);
 
@@ -154,6 +159,7 @@ final class PricingServiceProvider extends ServiceProvider
                     series: $app->make(TimeSeriesPort::class),
                     spool: $app->make(InfluxSpool::class),
                 ),
+                new ManualBackupStage($app->make(ManualBackupPort::class)),
                 new PublishStage($app->make(HotCachePort::class)),
             ],
             logger: self::logger(),

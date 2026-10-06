@@ -1,6 +1,5 @@
 @php
     $b = $board;
-    $money = static fn (?float $major, int $precision): string => $major === null ? '—' : number_format($major, $precision);
     // Sar-tak e gruh az `groupLabel` e query miad (Instrument::groupLabel) —
     // `metal` meghdar e enum ast (`xau`/`xag`/`xcu`)، na 'gold'.
 @endphp
@@ -101,7 +100,7 @@
                                             @else
                                                 <div data-cell="{{ $row['symbol'] }}:{{ $provider['key'] }}" class="inline-flex flex-col items-center gap-0.5 rounded-lg px-2 py-1">
                                                     <span class="flex items-center gap-1">
-                                                        <span data-price @class(['num font-semibold text-ink', 'text-muted-2' => $cell['isStale']])>{{ $money($cell['sell'] / $row['divisor'], $row['precision']) }}</span>
+                                                        <span data-price @class(['num font-semibold text-ink', 'text-muted-2' => $cell['isStale']])>{{ $cell['sellDisplay'] }}</span>
                                                         @if ($cell['isDerived'])<span class="text-muted-3" title="نرخ محاسبه‌شده">*</span>@endif
                                                     </span>
                                                     <span data-change class="num text-xs {{ $cell['direction'] === 'up' ? 'text-up' : ($cell['direction'] === 'down' ? 'text-down' : 'text-muted-2') }}">
@@ -112,9 +111,9 @@
                                         </td>
                                     @endforeach
 
-                                    <td class="num px-4 py-3 text-center font-semibold text-up" data-stat="{{ $row['symbol'] }}:min">{{ $money($row['min'], $row['precision']) }}</td>
-                                    <td class="num px-4 py-3 text-center font-semibold text-down" data-stat="{{ $row['symbol'] }}:max">{{ $money($row['max'], $row['precision']) }}</td>
-                                    <td class="num px-4 py-3 text-center font-medium text-muted" data-stat="{{ $row['symbol'] }}:avg">{{ $money($row['avg'], $row['precision']) }}</td>
+                                    <td class="num px-4 py-3 text-center font-semibold text-up" data-stat="{{ $row['symbol'] }}:min">{{ $row['minDisplay'] ?? '—' }}</td>
+                                    <td class="num px-4 py-3 text-center font-semibold text-down" data-stat="{{ $row['symbol'] }}:max">{{ $row['maxDisplay'] ?? '—' }}</td>
+                                    <td class="num px-4 py-3 text-center font-medium text-muted" data-stat="{{ $row['symbol'] }}:avg">{{ $row['avgDisplay'] ?? '—' }}</td>
                                 </tr>
 
             @if ($loop->last || $b['rows'][$i + 1]['metal'] !== $metal)
@@ -130,7 +129,7 @@
         @endforelse
 
         <p class="mt-4 text-xs text-muted-2">
-            قیمت‌ها به تومان (نمادهای جهانی به دلار) است. * = نرخ خرید/فروش محاسبه‌شده از اسپرد، نه نرخ اعلامی منبع.
+            قیمت‌ها به ریال (نمادهای جهانی به دلار) است. * = نرخ خرید/فروش محاسبه‌شده از اسپرد، نه نرخ اعلامی منبع.
         </p>
     </div>
 

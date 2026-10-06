@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Media\Http\Requests;
 
-use App\Modules\Media\Actions\UploadMediaAction;
-use App\Modules\Media\Dto\UploadMediaDto;
+use App\Modules\Media\Application\Actions\UploadMediaAction;
+use App\Modules\Media\Application\Dto\UploadMediaDto;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;

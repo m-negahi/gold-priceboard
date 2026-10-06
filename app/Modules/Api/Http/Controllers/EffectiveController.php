@@ -24,12 +24,6 @@ final readonly class EffectiveController
     {
         $feed = $this->effective->feed();
 
-        $etag = sprintf('W/"e%d:s%d:%d"', $feed['version'], $feed['spreadVersion'], $feed['fallbackCount']);
-
-        if ($request->headers->get('If-None-Match') === $etag) {
-            return new JsonResponse(null, 304, ['ETag' => $etag]);
-        }
-
         $data = array_map(static fn (array $s): array => [
             'symbol' => $s['symbol'],
             'label' => $s['label'],
@@ -44,17 +38,26 @@ final readonly class EffectiveController
             'isStale' => $s['isStale'],
             'isDerived' => $s['isDerived'],
             'usingFallback' => $s['usingFallback'],
+            'manualOnly' => $s['manualOnly'],
             // `quotedAt` tu BoardRowDto az qabl reshte ye ISO ast.
             'quotedAt' => $s['quotedAt'],
         ], $feed['symbols']);
 
-        return new JsonResponse([
+        $payload = [
             'data' => $data,
             'degraded' => $feed['degraded'],
             // Alarm: age feed ru manba' e pushtiban oftade.
             'fallbackActive' => $feed['alarm'],
             'fallbackCount' => $feed['fallbackCount'],
-        ], 200, [
+        ];
+        // Gheymat e dasti/olaviat bedun tick-version ham avaz mishe.
+        $etag = 'W/"e'.hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR)).'"';
+
+        if ($request->headers->get('If-None-Match') === $etag) {
+            return new JsonResponse(null, 304, ['ETag' => $etag, 'X-Pb-Fallback' => $feed['alarm'] ? '1' : '0']);
+        }
+
+        return new JsonResponse($payload, 200, [
             'ETag' => $etag,
             'X-Pb-Fallback' => $feed['alarm'] ? '1' : '0',
         ]);

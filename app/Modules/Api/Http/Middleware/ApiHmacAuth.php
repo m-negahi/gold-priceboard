@@ -117,6 +117,10 @@ final class ApiHmacAuth
             return new JsonResponse(['message' => 'حساب کاربری صاحب این کلید غیرفعال است.'], 403);
         }
 
+        if ($client->status !== 'approved') {
+            return new JsonResponse(['message' => 'این سایت هنوز برای استفاده از API تأیید نشده است.'], 403);
+        }
+
         // ── Nonce (BA'D az emza: attacker e bi-emza nabayad betune ba
         // nonce haye ja'li cache ro por kone) ─────────────────────────
         try {

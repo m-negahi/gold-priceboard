@@ -210,7 +210,7 @@
                                         ]) x-text="cellText(row, @js($column))"></a>
                                 @else
                                     <span @class([
-                                            'num' => ($column['num'] ?? false) || in_array($column['type'] ?? 'text', ['money-toman', 'date-jalali'], true),
+                                            'num' => ($column['num'] ?? false) || in_array($column['type'] ?? 'text', ['date-jalali'], true),
                                             'ltr inline-block' => $column['ltr'] ?? false,
                                             'font-medium' => $column['strong'] ?? false,
                                             'text-muted' => $column['muted'] ?? false,

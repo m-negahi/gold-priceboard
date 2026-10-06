@@ -126,7 +126,7 @@ final class UserListPageTest extends TestCase
 
         $this->actingAs($admin)->get(route('panel.users.index', ['q' => '09121111111']))
             ->assertOk()
-            ->assertSee('123,456')
+            ->assertSee('1,234,560')
             ->assertSee('data-sites="2"', false);
     }
 

@@ -45,13 +45,16 @@ final class MonitorPagesTest extends TestCase
         ]));
     }
 
-    public function test_the_health_page_lists_every_provider(): void
+    public function test_the_old_health_page_redirects_to_provider_health_and_settings(): void
     {
         $this->seedMockProvider();
 
         $this->actingAs($this->admin())->get(route('panel.health'))
+            ->assertRedirect(route('panel.providers.index'));
+
+        $this->get(route('panel.providers.index'))
             ->assertOk()
-            ->assertSee('سلامت منابع')
+            ->assertSee('منابع قیمت')
             ->assertSee('آزمایشی');
     }
 

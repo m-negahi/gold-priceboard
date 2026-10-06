@@ -2,6 +2,7 @@
      (URL share-pazir)؛ montazer-e-admin ha (باز/در حال بررسی) aval. --}}
 
 <x-layouts.panel title="تیکت‌ها" current="tickets" :breadcrumbs="['پنل', 'تیکت‌ها']">
+    @can('tickets.manage')<a wire:navigate href="{{ route('panel.tickets.create') }}" class="inline-flex h-11 items-center text-sm font-semibold text-brand-700">تیکت جدید برای کاربر</a>@endcan
     <div>
         <h1 class="text-2xl font-extrabold text-ink md:text-3xl">تیکت‌ها</h1>
         <p class="mt-1 text-sm text-muted">همه درخواست‌های کاربران — ارتقای سطح، تأیید سایت و پشتیبانی.</p>

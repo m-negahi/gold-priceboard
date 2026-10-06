@@ -7,7 +7,9 @@ namespace Tests\Feature\Auth;
 use App\Modules\Auth\Domain\Exceptions\SmsException;
 use App\Modules\Auth\Domain\Ports\SmsPort;
 use App\Modules\Auth\Infrastructure\Sms\FakeSms;
+use App\Modules\Auth\Infrastructure\Sms\KavenegarSms;
 use App\Modules\Auth\Infrastructure\Sms\SmsManager;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
@@ -153,5 +155,14 @@ final class SmsDriversTest extends TestCase
                 $_SERVER['SMS_DRIVER'] = $backup[2];
             }
         }
+    }
+
+    public function test_ticket_status_uses_separate_template_without_sending_real_sms(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake(['https://api.kavenegar.com/v1/test-key/verify/lookup.json' => Http::response(['return' => ['status' => 200]])]);
+        (new KavenegarSms(['api_key' => 'test-key', 'template' => 'otp', 'ticket_template' => 'ticket-status']))->sendTicketStatus('+989121234567', 42, 'approved');
+        Http::assertSent(static fn ($request): bool => $request['receptor'] === '09121234567' && $request['token'] === '42' && $request['token2'] === 'approved' && $request['template'] === 'ticket-status');
+        Http::assertSentCount(1);
     }
 }

@@ -325,9 +325,6 @@ export default (config) => ({
         switch (column.type) {
             case 'badge':
                 return this.badge(column, value).label;
-            case 'money-toman':
-                // Rial-e integer miad (ADR-0008); toman faghat tu namayesh.
-                return `${this.faGrouped(Math.trunc(Number(value) / 10))} تومان`;
             case 'date-jalali':
                 // Server tarikh ro ba Common\Helpers\Jalali format karde; inja faghat num-e.
                 return String(value);

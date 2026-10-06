@@ -2,7 +2,7 @@
 #
 # Port ha amdan shift shodan ta ba projeh haye digar e hamin machine conflict nakhoran:
 #   livewire_learn → 8000/5173/5432/6379      hg → 8100/5173/55432/56379
-#   b2b            → 8200/5273/55433/56380    pb (ma) → 8300/5373/55434/56381/56382/8386
+#   b2b            → 8200/5273/55433/56380    pb (ma) → 8300/5373/55434/56381/8386
 # Ghabl az har taghir e port: `docker ps -a` + `docker inspect <name>`.
 
 x-logging: &logging
@@ -35,8 +35,6 @@ services:
       postgresql:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      redis-prices:
         condition: service_healthy
       influxdb:
         condition: service_healthy
@@ -135,7 +133,7 @@ services:
     depends_on:
       octane:
         condition: service_healthy
-      redis-prices:
+      redis:
         condition: service_healthy
       influxdb:
         condition: service_healthy
@@ -185,8 +183,8 @@ services:
     <<: *restart
     logging: *logging
 
-  # Redis e omumi: cache / session / queue. `allkeys-lru` inja bi-khatar ast chun
-  # har chizi ke evict beshe dobare sakhte mishe.
+  # Yek instance: db0 session/queue, db1 cache, db2 prices; noeviction ta
+  # na queue/session gom she na gheymat. AOF durability e hame ro hefz mikone.
   redis:
     image: redis:${REDIS_VERSION:-8}-alpine
     container_name: ${COMPOSE_PROJECT_NAME:-pb}_redis
@@ -194,8 +192,8 @@ services:
       - "${REDIS_EXTERNAL_PORT:-56381}:6379"
     command: >
       redis-server
-      --maxmemory 512mb
-      --maxmemory-policy allkeys-lru
+      --maxmemory ${REDIS_MAXMEMORY:-512mb}
+      --maxmemory-policy noeviction
       --appendonly yes
       --appendfsync everysec
       --requirepass ${REDIS_PASSWORD:-secret}
@@ -206,33 +204,6 @@ services:
     healthcheck:
       <<: *healthcheck
       test: [ "CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:-secret} ping 2>/dev/null | grep -q PONG" ]
-    <<: *restart
-    logging: *logging
-
-  # 🔴 Redis e makhsus e gheymat — JODA, va amdan `noeviction`.
-  # Ba `allkeys-lru` (Redis e bala) Redis tu feshar e memory har kelidi ro mindaze —
-  # SHAMEL e kelid haye gheymat — dar hali ke khodesh ro salem gozaresh mide, va board
-  # bedun e hich error khali mishe. Inja store e DAGH ast (na faghat cache), pas:
-  #   - noeviction + kelid haye BEDUN e TTL  → hich gheymati evict nemishe
-  #   - bedun e appendonly: durability e AOF baraye datayi ke 15 saniye-i az Postgres
-  #     backfill mishe arzesh nadare va `everysec` fsync faghat latency ezafe mikone.
-  redis-prices:
-    image: redis:${REDIS_VERSION:-8}-alpine
-    container_name: ${COMPOSE_PROJECT_NAME:-pb}_redis_prices
-    ports:
-      - "${REDIS_PRICES_EXTERNAL_PORT:-56382}:6379"
-    command: >
-      redis-server
-      --maxmemory 64mb
-      --maxmemory-policy noeviction
-      --save ""
-      --appendonly no
-      --requirepass ${REDIS_PRICES_PASSWORD:-secret}
-    networks:
-      - app_network
-    healthcheck:
-      <<: *healthcheck
-      test: [ "CMD-SHELL", "redis-cli -a ${REDIS_PRICES_PASSWORD:-secret} ping 2>/dev/null | grep -q PONG" ]
     <<: *restart
     logging: *logging
 

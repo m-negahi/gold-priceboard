@@ -1,58 +1,48 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PriceBoard
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Tablo e moghayese e gheymat e tala/noghre/mes va platform e foroosh e API. Laravel13/PHP8.5, PostgreSQL18, Redis8, InfluxDB2.7, Octane/Swoole, Alpine3/Tailwind4/Vite8.
 
-## About Laravel
+## Ejra e local
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```sh
+cp .env.example .env
+# credential ha va APP_KEY ra dar mohit e khodet tanzim kon.
+docker compose -f docker-compose.local.yml up -d --build
+npm install
+npm run build
+docker compose -f docker-compose.local.yml exec octane php artisan migrate --force
+docker compose -f docker-compose.local.yml exec octane php artisan db:seed
+docker compose -f docker-compose.local.yml exec octane php artisan octane:reload
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+App ru `http://localhost:8300`, dashboard ru `/dashboard`, hesab e customer ru `/account`. Login mobile/OTP ast. Seeder provider ha ro inactive misaze ta admin marja e motabar va source haye lazem ro entekhab kone. `.env` ra commit nakon; Zohal/Zibal/Kavenegar faghat ba credential/template e khodet faal mishan. `BYPASS_OTP` faghat baraye local ast.
 
-## Contributing
+Redis faghat yek service ru56381: DB0 session/queue/OTP, DB1 cache, DB2 prices; noeviction+AOF. PostgreSQL55434, Influx8386, Vite5373. Hame mabalegh rial-and; ons/quote e jahani USD mimune.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Bakhsh ha
 
-## Code of Conduct
+- Providers+salamat e zende; priorities+manual-only+backup+Excel.
+- Users haghighi/hoghoghi, estelam e Zohal, tickets ba madarek e private.
+- RBAC role/permission, audit, SEO editor, media library.
+- Mali e kol: wallet ledger, journal do-tarafe, trial balance, reversal/correction, settlement, invoice.
+- Customer: site/credentials, taeed e site, plans/subscription/quota, wallet/topup, usage va tickets.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Test
 
-## Security Vulnerabilities
+```sh
+docker compose -f docker-compose.local.yml exec -T octane php artisan test --compact
+npx playwright test
+vendor/bin/pint --dirty --format agent
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+PHP test ha SQLite e in-memory va Redis13/14/15 estefade mikonan. Test e PG e mali faghat ru database e disposable ba name e `priceboard_verify_*` va env e `PB_TEST_PG_DATABASE` ejra mishe; default DB ra reset nakon. Browser suite ba stack e local va assets e build-shode ejra mishe.
 
-## License
+## Mostanadat
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- [Task ha va vaziyat](docs/TASKS.md)
+- [Plan va tasmim ha](docs/PLAN.md)
+- [Meamari, mali/RBAC/KYC va migration runbook](docs/architecture.md)
+- [Dashboard kit va token ha](docs/dashboard-design.md)
+- [Workflow e repository](CLAUDE.md)
+
+Baseline e migration ha ba darkhast e sahebe proje consolidate shode. Database e ghadimi bayad aval upgrade e additive e pre-baseline ra daryaft karde bashe; `migrate:fresh` ru data e mojood mamnu ast.

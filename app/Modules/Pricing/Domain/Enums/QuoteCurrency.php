@@ -32,18 +32,18 @@ enum QuoteCurrency: string
     }
 
     /**
-     * Faghat baraye NAMAYESH: rial -> toman.
+     * Vahed e namayesh ba arz e asli yeki ast.
      * 🔴 Hargez tu storage estefade nashe — DB va Influx hamishe rial negah midaran.
      */
     public function displayDivisor(): int
     {
-        return $this === self::IRR ? 10 : 1;
+        return 1;
     }
 
-    /** Vahed e NAMAYESHI (ba'd az `displayDivisor`) — rial tu UI toman ast. */
+    /** Vahed e NAMAYESHI (ba'd az `displayDivisor`) — rial tu UI ham rial ast. */
     public function displayLabel(): string
     {
-        return $this === self::IRR ? 'تومان' : 'دلار';
+        return $this === self::IRR ? 'ریال' : 'دلار';
     }
 
     /** Chand raghame ashar tu UI neshun dade she. */

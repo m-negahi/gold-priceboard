@@ -36,7 +36,21 @@ final readonly class KavenegarSms implements SmsPort
         private int $timeout = 10,
     ) {}
 
+    public function sendTicketStatus(string $phone, int $ticketId, string $status): void
+    {
+        $template = trim((string) ($this->config['ticket_template'] ?? ''));
+        if ($template === '') {
+            throw SmsException::apiStatus(self::DRIVER, 0, 'template e ticket tanzim nashode');
+        }
+        $this->sendTemplate($phone, (string) $ticketId, $template, $status);
+    }
+
     public function sendOtp(string $phone, string $code): void
+    {
+        $this->sendTemplate($phone, $code, (string) ($this->config['template'] ?? 'verify'));
+    }
+
+    private function sendTemplate(string $phone, string $code, string $template, ?string $status = null): void
     {
         $key = trim((string) ($this->config['api_key'] ?? ''));
 
@@ -59,7 +73,8 @@ final readonly class KavenegarSms implements SmsPort
                 ->post("{$base}/{$key}/verify/lookup.json", [
                     'receptor' => $receptor,
                     'token' => $code,
-                    'template' => (string) ($this->config['template'] ?? 'verify'),
+                    'template' => $template,
+                    ...($status === null ? [] : ['token2' => $status]),
                 ]);
         } catch (Throwable) {
             // AMDAN hich chiz az exception e asli pass nemishe — payam esh

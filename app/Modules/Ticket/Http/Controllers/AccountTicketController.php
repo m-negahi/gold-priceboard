@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Ticket\Http\Controllers;
 
+use App\Modules\Auth\Http\Support\UserProfileRules;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
+use App\Modules\Ticket\Application\Actions\CreateTicketRequestAction;
 use App\Modules\Ticket\Application\Actions\OpenTicketAction;
 use App\Modules\Ticket\Application\Actions\ReplyTicketAction;
 use App\Modules\Ticket\Application\Queries\TicketQuery;
@@ -13,19 +15,21 @@ use App\Modules\Ticket\Domain\Exceptions\TicketException;
 use App\Modules\Ticket\Http\Support\AttachmentRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
  * Ticket haye KHOD e karbar (P7-01).
  *
  * 🔴 Har ticket az `findForOwnerOrFail` (filter e `user_id` e karbar e
- * login-shode) — ticket e digari 404. Noe e ticket az in masir HAMISHE
- * `support` ast: `kyc_upgrade` faghat az onboarding (P7-03) ba form e
- * sakhtar-dar sakhte mishe.
+ * login-shode) — ticket e digari 404. Darkhast e hoviat ba form e
+ * sakhtar-dar va madarek e ejbari sakhte mishe; field e ghadimi `type`
+ * az request e karbar masraf nemishe.
  */
 final readonly class AccountTicketController
 {
     public function __construct(
+        private CreateTicketRequestAction $createTicket,
         private TicketQuery $tickets,
         private OpenTicketAction $open,
         private ReplyTicketAction $reply,
@@ -46,12 +50,23 @@ final readonly class AccountTicketController
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
+            'request_type' => ['sometimes', Rule::in(['support', 'kyc_upgrade'])],
             'subject' => ['required', 'string', 'max:200'],
             'body' => ['required', 'string', 'max:5000'],
-            ...AttachmentRules::rules(),
+            ...AttachmentRules::rules($request->input('request_type') === 'kyc_upgrade'),
         ], AttachmentRules::messages());
 
-        $ticket = $this->open->execute($this->userId($request), TicketType::Support, $data['subject'], $data['body'], files: $request->file('files', []));
+        $profile = [];
+        $type = TicketType::from($data['request_type'] ?? 'support');
+        if ($type === TicketType::KycUpgrade) {
+            $request->merge(['phone' => $request->user()->phone, 'name' => $request->input('name') ?: $request->user()->name]);
+            $profile = UserProfileRules::validate($request, $this->userId($request));
+        }
+        try {
+            $ticket = $this->createTicket->execute($request->user(), $type, $data['subject'], $data['body'], $profile, $request->file('files', []));
+        } catch (TicketException $e) {
+            return back()->withErrors(['subject' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('account.tickets.show', $ticket->id)->with('status', 'تیکت ثبت شد؛ پاسخ پشتیبانی همین‌جا نمایش داده می‌شود.');
     }

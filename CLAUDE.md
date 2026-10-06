@@ -69,8 +69,7 @@ docker compose -f docker-compose.local.yml exec octane php artisan test
 | App (Octane) | http://localhost:8300 |
 | Vite HMR | http://localhost:5373 |
 | Postgres | `localhost:55434` |
-| Redis (cache/queue) | `localhost:56381` |
-| Redis (prices) | `localhost:56382` |
+| Redis (session/queue/cache/prices) | `localhost:56381` |
 | InfluxDB | http://localhost:8386 |
 | Panel | http://localhost:8300/dashboard |
 
@@ -104,7 +103,7 @@ Hālat e daghigh tu `docs/TASKS.md`.
 - **Hich hex / `style=""` / `<style>` tu Blade.** Hame Tailwind + token e `@theme`. → `resources/views/CLAUDE.md`
 - **Alpine baraye UI-only؛ Livewire baraye data ye server-driven.**
 - **Icon: faghat Tabler.**
-- **Migration hamishe ezafe-shi.** Hich `migrate:fresh` ru data ye vaghei.
+- **Migration e baadi ezafe-shi.** Baseline e 2026-10-07 ba darkhast e sarih e sahebe proje tajmi shode; hich `migrate:fresh` ru data ye vaghei.
 - **`wallet_transactions` append-only** — hich `update`، hich `delete`.
 - **Gheymat hamishe `bigint` e minor unit + `scale`** — hargez float. → `app/Modules/CLAUDE.md`
 - **Spread ru `read` e'mal mishe، hargez `write`.** Dalil tu `docs/PLAN.md` §1.7.

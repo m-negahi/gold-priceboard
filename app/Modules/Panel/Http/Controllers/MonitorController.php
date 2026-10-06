@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\Panel\Http\Controllers;
 
 use App\Modules\Api\Infrastructure\Monitoring\ApiRequestLog;
-use App\Modules\Pricing\Application\Queries\ProviderHealthQuery;
 use App\Modules\Pricing\Application\Queries\ProviderQuery;
 use App\Modules\Pricing\Application\Queries\TickReportQuery;
 use App\Modules\Pricing\Application\Queries\UpstreamCallQuery;
@@ -16,20 +15,11 @@ use Illuminate\View\View;
 final readonly class MonitorController
 {
     public function __construct(
-        private ProviderHealthQuery $health,
         private TickReportQuery $ticks,
         private ProviderQuery $providers,
         private ApiRequestLog $apiLog,
         private UpstreamCallQuery $upstreamCalls,
     ) {}
-
-    /** P3-08 — salamat e kamel e manba' ha. */
-    public function health(): View
-    {
-        return view('panel::monitor.health', [
-            'providers' => $this->health->overview(),
-        ]);
-    }
 
     /** P3-09/P4-12/P4-18 — «chi rad shod va chera» — safhe ye asli ye debug. */
     public function ticks(): View

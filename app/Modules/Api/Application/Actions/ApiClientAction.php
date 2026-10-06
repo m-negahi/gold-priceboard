@@ -19,7 +19,7 @@ final readonly class ApiClientAction
     /**
      * @return array{client: ApiClient, secret: string} secret FAGHAT hamin yek bar
      */
-    public function create(int $userId, string $name, ?int $priceGroupId = null): array
+    public function create(int $userId, string $name, ?int $priceGroupId = null, string $status = 'approved'): array
     {
         $secret = bin2hex(random_bytes(32));
 
@@ -27,6 +27,8 @@ final readonly class ApiClientAction
             'user_id' => $userId,
             'price_group_id' => $priceGroupId,
             'name' => $name,
+            'status' => $status,
+            'approved_at' => $status === 'approved' ? now() : null,
             // Gheyr e hads-pazir؛ prefix baraye tashkhis tu log ha.
             'client_id' => 'pb_'.bin2hex(random_bytes(12)),
             'secret_encrypted' => Crypt::encryptString($secret),

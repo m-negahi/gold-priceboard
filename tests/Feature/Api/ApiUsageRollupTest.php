@@ -212,9 +212,9 @@ final class ApiUsageRollupTest extends TestCase
             ->assertOk()
             ->assertSee('data-usage-chart', false)
             ->assertSee('مصرف API')
-            // 1,000 rial = 100 toman
+            // Hame meghdar ha be rial namayesh dade mishan.
             ->assertSee('data-usage-total-calls="1"', false)
-            ->assertSee('data-usage-total-cost="100"', false);
+            ->assertSee('data-usage-total-cost="1,000"', false);
     }
 
     public function test_the_rollup_is_scheduled(): void

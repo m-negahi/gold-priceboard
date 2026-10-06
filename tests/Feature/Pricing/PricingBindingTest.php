@@ -10,6 +10,7 @@ use App\Modules\Pricing\Application\Actions\ProviderSpreadAction;
 use App\Modules\Pricing\Application\Actions\RecordProviderHealthAction;
 use App\Modules\Pricing\Application\Pipeline\Stages\EnrichStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\FetchStage;
+use App\Modules\Pricing\Application\Pipeline\Stages\ManualBackupStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\PersistStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\PublishStage;
 use App\Modules\Pricing\Application\Pipeline\Stages\ValidateStage;
@@ -24,16 +25,18 @@ use App\Modules\Pricing\Console\Commands\PricingInfluxProvisionCommand;
 use App\Modules\Pricing\Console\Commands\PricingTickCommand;
 use App\Modules\Pricing\Domain\Ports\ClockPort;
 use App\Modules\Pricing\Domain\Ports\HotCachePort;
+use App\Modules\Pricing\Domain\Ports\ManualBackupPort;
 use App\Modules\Pricing\Domain\Ports\SnapshotStorePort;
 use App\Modules\Pricing\Domain\Ports\TimeSeriesPort;
 use App\Modules\Pricing\Domain\Ports\UpstreamLogPort;
 use App\Modules\Pricing\Infrastructure\Cache\RedisHotCache;
 use App\Modules\Pricing\Infrastructure\Monitoring\RedisUpstreamCallLog;
+use App\Modules\Pricing\Infrastructure\Persistence\EloquentManualBackup;
 use App\Modules\Pricing\Infrastructure\Persistence\EloquentSnapshotStore;
+use App\Modules\Pricing\Infrastructure\Sources\SourceManager;
 use App\Modules\Pricing\Infrastructure\Time\SystemClock;
 use App\Modules\Pricing\Infrastructure\TimeSeries\InfluxSpool;
 use App\Modules\Pricing\Infrastructure\TimeSeries\InfluxTimeSeries;
-use App\Modules\Pricing\Services\SourceManager;
 use Illuminate\Cache\ArrayStore;
 use Illuminate\Cache\NullStore;
 use Illuminate\Console\Scheduling\Schedule;
@@ -68,6 +71,7 @@ final class PricingBindingTest extends TestCase
     {
         return [
             'snapshot store' => [SnapshotStorePort::class, EloquentSnapshotStore::class],
+            'manual backup' => [ManualBackupPort::class, EloquentManualBackup::class],
             'hot cache' => [HotCachePort::class, RedisHotCache::class],
             'time series' => [TimeSeriesPort::class, InfluxTimeSeries::class],
             'clock' => [ClockPort::class, SystemClock::class],
@@ -171,6 +175,7 @@ final class PricingBindingTest extends TestCase
             ValidateStage::class,
             EnrichStage::class,
             PersistStage::class,
+            ManualBackupStage::class,
             PublishStage::class,
         ], array_map(static fn (object $stage): string => $stage::class, $stages));
     }

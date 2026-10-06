@@ -8,11 +8,11 @@ use App\Modules\Pricing\Application\Dto\ProviderHealthDto;
 use App\Modules\Pricing\Application\Dto\SnapshotDto;
 
 /**
- * Store e DAGH — chizi ke har bazdid-konande mikhune (Redis e `redis-prices`).
+ * Store e DAGH — chizi ke har bazdid-konande mikhune (Redis e vahed, DB2).
  *
  * ── 🔴 Do ghanun ─────────────────────────────────────────────────────
  * 1. Kelid haye gheymat **bedun e TTL** neveshte mishan.
- * 2. Ru instance e `redis-prices` (ba `noeviction`)، na Redis e omumi.
+ * 2. Ru DB2 e Redis e vahed (ba `noeviction`)، joda az connection e default/cache.
  *
  * Redis e omumi `allkeys-lru` ast: tu feshar e memory HAR kelidi ro mindaze —
  * shamel e gheymat ha — dar hali ke khodesh ro salem gozaresh mide. Natije:
@@ -83,7 +83,7 @@ interface HotCachePort
     /**
      * Zarabān e nevisande — «man ALAN tablo ro neveshtam».
      *
-     * 🔴 Chera lazem ast: bad tarin nou' e ghat'i e `redis-prices` un ast ke
+     * 🔴 Chera lazem ast: bad tarin nou' e ghat'i e connection e `prices` un ast ke
      * SALEM be nazar mirese. Vaghti memory por she (`noeviction`)، Redis
      * write ha ro ba `OOM command not allowed` rad mikone **vali read ha ro
      * kamel javab mide** va `PING` ham salem ast. Pas `isAvailable()` `true`

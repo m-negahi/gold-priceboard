@@ -38,6 +38,16 @@ return new class extends Migration
             $table->string('phone', 16)->unique();
             $table->timestampTz('phone_verified_at')->nullable();
             $table->boolean('is_admin')->default(false);
+            $table->string('status', 16)->default('active')->index();
+            $table->timestampTz('disabled_at')->nullable();
+            $table->string('disabled_reason', 255)->nullable();
+            $table->string('level', 24)->default('basic')->index();
+            $table->string('customer_type', 16)->default('individual');
+            $table->string('national_code', 11)->nullable();
+            $table->timestampTz('onboarded_at')->nullable();
+            $table->boolean('invoice_requested')->nullable();
+            $table->json('identity_profile')->nullable();
+            $table->json('invoice_profile')->nullable();
 
             // Baraye `CustomerList` e panel (Phase 4).
             $table->timestampTz('last_login_at')->nullable();

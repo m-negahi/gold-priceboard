@@ -58,10 +58,12 @@ return new class extends Migration
             $table->string('name_fa', 64);
             $table->string('website', 255)->nullable();
             $table->string('logo_path', 255)->nullable();
+            $table->foreignId('logo_media_id')->nullable();
 
             // Toggle haye admin — jodā, chun yek provider mitune manba' e
             // chart bashe vali ru tablo ye TV naiad (ya bar'aks).
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_trust_anchor')->default(false);
             $table->boolean('in_comparison')->default(true);
             $table->boolean('on_board')->default(true);
             $table->boolean('in_chart')->default(true);

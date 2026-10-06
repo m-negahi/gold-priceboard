@@ -68,6 +68,7 @@ final class GuardsTest extends TestCase
         return [
             'default (OTP، log ha، session e dev)' => ['default', 13],
             'prices (tablo)' => ['prices', 15],
+            'cache (session e dev)' => ['cache', 14],
         ];
     }
 

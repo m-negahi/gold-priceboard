@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Media;
 
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
-use App\Modules\Media\Actions\UploadMediaAction;
-use App\Modules\Media\Dto\UploadMediaDto;
+use App\Modules\Media\Application\Actions\UploadMediaAction;
+use App\Modules\Media\Application\Dto\UploadMediaDto;
 use App\Modules\Media\Infrastructure\Persistence\Models\Media;
 use App\Modules\Media\Infrastructure\Persistence\Models\MediaUsage;
 use Illuminate\Contracts\Filesystem\Factory;

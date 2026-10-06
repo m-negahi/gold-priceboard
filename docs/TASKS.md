@@ -12,7 +12,37 @@
 
 ---
 
+## Tavaqof ba darkhast e sahebe proje — 2026-10-06
+
+Sahebe proje be dalil e masraf e token goft kar hamin-ja baste she. In checkpoint tahvil e kamel e scope nist. Kar e jadid shoroo nemishe.
+
+- Piade/test shode: providers+health, priorities+manual-only/Excel/backup/trust-anchor; user haghighi/hoghoghi, Zohal/ticket attachment, RBAC va SEO; Redis e vahed ba DB0/1/2 va hefz e data; tajmi e migration ha; module haye wallet/subscription/payment/finance va invoice e avvaliye.
+- Verification: consolidated SQLite batch997 pass; pricing/panel browser10 + mobile4 pass; identity3 + Access/SEO2 browser pass; real PostgreSQL finance4 pass; root Media/Rial/Access37 pass. In adad ha batch haye mokhtalef-and, na full-suite e nahayi.
+- **Baghi-mande e mohem:** invoice e jadid bayad hame e hoviat ro faghat az approved invoice_profile begire (mix ba user e mutable hanuz review pending); refund e API dar shekast e DB be compensation e paydar niaz dare; finance E2E va full PHP/E2E e nahayi ejra nashode. Schema comparison e live/fresh PG va P1-30/public-format status dar gozaresh e agent/checkpoint sabt mishe.
+- Akharin batch e finance: 28 test/146 assertion pass; KYC invalidation 5/38 pass. Zibal result201 recovery ba Http fake test shode vali contract e inquiry hanuz niaz be taeed az docs e rasmi dare; hich pardakht e vaghei test nashode.
+- Mostanadat e architecture/README taghirat ra sharh midan; har daava e flow e mali bayad ba pending haye bala khande she. Asnad e vaghei reset/delete nashodan. `.env` dast nakhorde va testha hich pardakht/SMS e vaghei nazadan.
+
 ## Hala koja hastim
+
+**Scope e jadid e 2026-10-06 — dar hal e ejra (darkhast e sarih e sahebe proje):** takmil e backlog + daftar e mali, edgham e safhe ha, Zohal, yek Redis, cleanup/sakhtar, tajmi e migration ha va mostanadat e fani. Kar ba 3 agent e movazi va yek integrator pish mire:
+
+| Masir | Scope | Vaziat |
+|---|---|---|
+| Pricing/UX | P1-28, P9-02..05; providers+health; priorities+manual; manual-only | dar hal e piade-sazi |
+| KYC/Users/Tickets | P7-04..07, P9-06/P9-08; haghighi/hoghoghi + Zohal | dar hal e piade-sazi |
+| Mali/Billing | P8-01..08, P9-09; daftar e mali e kol | dar hal e piade-sazi |
+| Integration/Zirsakht | P5-09; Redis e vahed, cleanup, sakhtar, migration, docs, full checks | dar hal e ejra |
+
+Tartib e integration: contract haye moshtarak → piade-sazi/test e har masir → migration e gheyr-mokhareb ru dev → tajmi e schema haye avvaliye → build/E2E/full suite → docs/commit. Test haye Redis serial ejra mishan ta agent ha DB e test e ham ro flush nakonan. Ledger append-only, data e dev hefz, upstream/pardakht/SMS e vaghei az test ejra nemishe. RBAC P9-10 ba ta'eed e jadid fa'al ast. Hesabdari e do-tarafe + factor ejbari ast; hame e mablagh ha rial, quote haye USD e ons/jahani USD mimunan.
+
+### Task haye takmili e scope e jadid
+- [x] **P10-01** — Yek service e Redis ba database haye joda, noeviction/AOF, entegal e cache e gheymat va hefz e session/queue, test e isolation.
+- [ ] **P10-02** — Audit e import/reference va hazf e code/asset haye bi-masraf; eslah e namespace/jaygah haye khalaf e me'mari.
+- [ ] **P10-03** — Merge e migration haye add/modify/remove tu create haye asli; masir e nasb e taze va hefz e schema/data e mojud har do verify shan.
+- [ ] **P10-04** — Mostanadat e fani e schema/module/flow/ops/test; README va architecture/PLAN/TASKS motabegh ba code.
+- [ ] **P10-05** — Daftar e mali e kol tu dashboard: kholase, ledger e tamame karbaran, filter/export va sanad e bargasht/eslah ba audit.
+
+**Gozaresh e review e ghabli:**
 
 **Review e panel**: P9-01 va P9-07 tamam shod: filter haye bi-masraf e monitor hazf va esm e karbar link shod; Playwright e monitor+users: 18/18. OTP ham ba consume e atomic e Redis faghat yek bar ghabul mishe (Auth: 131 test, 358 assertion).
 
@@ -249,6 +279,17 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → Test e moghayese ba tgju: har do manba' ba'd az normalize bayad ta 2% be ham nazdik bashan (check e nahayi ye vahed).
   → Ru endpoint e **zende** test shod: 9 quote. ⚠️ **7.1 saniye** tool keshid.
 - [x] **P1-10** — `MockQuoteSource` (11 test)
+- [x] **P1-29** — `NerkhQuoteSource` (`GET live.nerkh.io/api/prices`) — darkhast e chat 2026-10-06
+  → 11 symbol e marja' (18/24 ayar، mesghal=`MESGHAL` na `MAZANEH` — tasmim e sahebe proje، 5 sekke، ons e tala/noghre، dollar). IRR ha **TOMAN**، ons ha USD — `unit` per-entry. `update` e har radif **JALALI** + vaght e Tehran (`1405-07-14 20:23:11` → `16:53:11Z`) ba `Jalali::toIso`؛ fallback be `timestamp` e epoch. `min/max.24hour` → dayLow/High، `ch_24h_percent` → upstreamChangePercent. Kelid haye map-nashode (crypto، platform ha) saket؛ faghat kelid e map-shode ye gom-shode gozaresh mishe (mesle tgju).
+  → Fixture e vaghei `tests/Fixtures/nerkh-prices.json`؛ 16 test e unit + radif e nerkh tu `SourceFixtureMatrixTest` (11 meghdar e daghigh + exhaustive + moghayese ba tgju zir e 3%). Mutation check: hazf e ×10 → 4 test ghermez؛ hazf e timezone e Tehran → 1 test ghermez. Seeder: `sort=30`، `timeout=10`، hamun override haye freshness e tgju. Tick e vaghei ru dev: healthy، 11 symbol، 0 rad، ~370ms.
+  → Feed hamchenin 18 ayar e platform ha ro mide (`MILLI_GOLD18K`، `TALASEA_GOLD_18K`، `TECHNOGOLD_GOLD_18K`، `GOLD18K_STOCK`) — amdan map nashodan؛ bebin P1-30.
+- [x] **P1-30** — Platform ha ba API e KHOD e site (na az nerkh) — 2026-10-06
+  → Barresi (agent): har 3 platform endpoint e JSON e omumi daran، bedun e login/UA e khass. `GOLD18K_STOCK` e nerkh platform NIST = «طلای دست دوم» (= `gold_mini_size` e tgju)؛ Instrument nadarim، map nashod.
+  → `MilliQuoteSource` (`GET milli.gold/api/v1/public/milli-price/external` — `price18` **RIAL/MILLIGRAM** ×1000؛ `date` ISO e Tehran-local)، `TalaseaQuoteSource` (`GET api.talasea.ir/api/market/getGoldPrice` — `price` **TOMAN/MILLIGRAM** string ×1000×10؛ bedun e timestamp)، `TechnogoldQuoteSource` (`GET api2.technogold.gold/customer/tradeables/only-price/1` — toman/g؛ **jofte vaghei**: `buy_price`=ask، `sell_price`=bid؛ bedun e timestamp). Hame `kind=platform` (sort 40/50/60).
+  → Fixture haye vaghei (3 file) + `PlatformQuoteSourcesTest` (17 test) + radif ha tu `SourceFixtureMatrixTest` (meghdar e daghigh + exhaustive + moghayese ba tgju zir e 3% + ask>bid). Tick e vaghei ru dev: har 3 healthy (milli 1، talasea 1، technogold 2 symbol، 0 rad، 170–330ms).
+  ⚠️ Nokte ye baz: `Instrument::hasNativeSides()` per-instrument ast؛ technogold jofte vaghei baraye 18 ayar mide vali `BoardQuery::isDerived` az `kind=platform` un ro vaghei mishnase — DB soton e `has_native_sides` ro hanuz az instrument minevise (false). Agar API bayad bid/ask e technogold ro «native» e'lam kone، un soton bayad per-(provider,symbol) beshe.
+- [x] **P1-31** — Tablo ye omumi be **TOMAN** (darkhast e chat 2026-10-06؛ DB rial mimune)
+  → Helper tu `Common/Helpers/Money`: `RIAL_PER_TOMAN`، `tomanDivisor(quote)` (IRR→10، USD→1)، `tomanDisplay(rial, precision)` (bcmath، nim-be-bala). `PublicBoardQuery` divisor e IRR ro 10 mide + `quoteLabel` — SSR (`$money`) va `board.js` har do az hamun `row.divisor` mikhunan، pas poll e Alpine ham toman mimune. Footnote e tablo «قیمت‌ها به تومان». Test: `MoneyTest` (+10)، `PublicBoardTest` (toman tu HTML + divisor tu JSON). Playwright ru dev: 18 ayar e tgju `26,738,300` ghabl va ba'd az poll e 15s yeki. Panel، TV (`/tv`) va API hamchenan RIAL-and (faghat home khaste shod).
   → **Bedun e halat**: gheymat yek TABE ye MAHZ az zaman ast (do mowj e sinusi + jitter e hash-based)، na «akharin meghdar tu Redis + delta ye random». Pas Source ghabl e test bedun e Redis ast va `final readonly` esh vaghe'an bi-halat mimune.
   → Har symbol faz e khodesh ro dare (ba `crc32`) ta kol e tablo ham-faz harekat nakone.
   → Jofte bid/ask e abshode ro ham taghlid mikone، vagarna mantegh e `is_derived` tu dev hichvaght test nemishe.
@@ -342,7 +383,7 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → `BoardQuery` agar zarabān az `pricing.board.freeze_after_seconds` (120s) ghadimi tar bashe، store e dagh ro ghabl e e'temad nemidune → Postgres + `degraded=true`. Bonus: **worker e morde** ro ham hamin tor mifahmim.
   → ⚠️ Zarabān tu `PublishStage` ast، na `PersistStage`: un yeki vaghti hich snapshot va hich hold nabashe FORI bar migarde — ya'ni har SHAB (bazaar e baste، hame `stale`) zarabān motevaghef mishod va false alarm mikhordim.
   → ⚠️ «Hame ye radif ha bayat-an» ba «hich kas nemineviseh» YEKI NIST — test e jodagane dare.
-- [ ] **P1-28** — «marja' e e'temad» (`trust anchor`). `P1-24` yek labe ye tiz dare ke test esh hast (`test_whoever_arrives_first_becomes_the_reference`): agar yek provider e GHALAT tu halat e bootstrap avval ja bioftad، provider e DOROST e ba'di rad mishe. Fe'lan jologiri AMALIATI-e (seeder `is_active=false`، roshan kardan e yeki-yeki + check e `TickMonitor`، va radd ba barchasb e `cross_provider:` tu panel ma'lum ast). Hall e code-i: yek flag e `is_trust_anchor` ru `providers` ke faghat un provider be onvan e marja' hesab beshe — ya ejaze ye «ta'eed e dasti» tu panel.
+- [x] **P1-28** — «marja' e e'temad» (`trust anchor`). `P1-24` yek labe ye tiz dare ke test esh hast (`test_whoever_arrives_first_becomes_the_reference`): agar yek provider e GHALAT tu halat e bootstrap avval ja bioftad، provider e DOROST e ba'di rad mishe. Fe'lan jologiri AMALIATI-e (seeder `is_active=false`، roshan kardan e yeki-yeki + check e `TickMonitor`، va radd ba barchasb e `cross_provider:` tu panel ma'lum ast). Hall e code-i: yek flag e `is_trust_anchor` ru `providers` ke faghat un provider be onvan e marja' hesab beshe — ya ejaze ye «ta'eed e dasti» tu panel.
 - [x] **P1-26** — tablo radif haye BAYAT ro negah midare، va `hide_after_seconds` ru READ e'mal mishe
   → `PersistStage::wholeBoard()`: tablo = **akharin-ma'lum e HAME** overlay shode ba chizi ke in tick umad. Ghablan faghat `snapshots` neveshte mishod، pas shab ha (bazaar e baste، aksar e quote ha `stale`) kelid e tablo AB MIRAFET dar hali ke Postgres akharin-ma'lum e hame ro dasht — do masiri ke bayad eyn e ham bashan، har shab vagera mishodan. Alan Redis BE SAKHT mirror e Postgres ast (test: `test_the_hot_board_and_postgres_hold_the_same_rows`).
   → 🔴 **`hide_after_seconds` NESBI ast، na motlagh**: `hide = effectiveFreshness(instrument) + hideAfterSeconds`. Do dalil ejbari: (a) default haye jadval MA'KUS-and (`freshness=900`، `hide_after=600`) — ba ma'ni ye motlagh radif tu 600s makhfi mishod GHABL az inke tu 900s «bayat» e'lam she، ya'ni badge e bayat HICHVAGHT dide nemishod؛ (b) tazegi PER-INSTRUMENT ast (`xau-oz-usd` e tgju 90,000s) — yek saghf e motlagh e 600s un symbol ro BARAYE HAMISHE makhfi mikard.
@@ -519,7 +560,7 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   + Mahdudiat e tabi'i ye zoom e gozashte: tick e kham 30 rooz، m5 180 rooz، h4/d1 ta abad — `availableFrom()` hamin ro be UI mige.
 - [x] **P5-05** — SEO: `seo_meta`، `SeoResolver`، JSON-LD، sitemap، `robots.txt` → bala (Darkhast haye sahebe proje).
 - [x] **P5-06** — Verify ba Playwright (+ check e **sefr request e biruni** tu network tab) → `public.spec.ts` va `tv.spec.ts` dar suite e 95/95 sabz-and.
-- [ ] **P5-09** — UI e panel baraye virayesh e `seo_meta` (title/description/robots/canonical/og_image e har safhe) — jadval + override ha alan faghat az DB/tinker ghabel e tanzim-and (P5-05 faghat zir-sakht ro sakht).
+- [x] **P5-09** — UI e panel baraye virayesh e `seo_meta` (title/description/robots/canonical/og_image e har safhe) — jadval + override ha alan faghat az DB/tinker ghabel e tanzim-and (P5-05 faghat zir-sakht ro sakht).
 
 ---
 
@@ -565,10 +606,10 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → Anjam shod (2026-10-06): tasmim = **attachment e sade** (na Media — Media register nashode va public-mehvar ast). Disk e `tickets` (`storage/app/tickets`، `visibility=private`، `serve=false`، bedun e `url` — birun az root e disk e `local` ke `serve` dare) + jadval e `ticket_attachments` (migration `2026_10_06_191000`، ru dev apply shod). `StoreTicketAttachmentsAction`: pasvand az mime e VAGHEI (finfo)، esm e ru disk `{ticket}/{uuid}.{ext}` (esm e karbar faghat namayeshi، basename + bedun e control char)، sha256، pak kardan e file haye neveshte-shode ru shekast؛ dakhel e transaction e `ReplyTicketAction`/`OpenTicketAction`. `AttachmentRules` (max 5 file، 5MB، `mimes`+`mimetypes`، payam e Farsi — proje `lang/fa` nadare). Download: `GET /tickets/attachments/{id}` ba `signed:relative` (30 daghighe) + saheb-ya-admin tu HAMUN query (`TicketQuery::attachmentForViewerOrFail`)، `Content-Disposition: attachment` + `nosniff` + `no-store`. Form haye javab (karbar/admin) + ticket e jadid `x-form.file` gereftan؛ peyvast ha zir e har payam (`x-panel.attachments`). Test: `TicketAttachmentTest` 9 (mutation: hazf e filter e saheb 1 test e IDOR، hazf e `signed` 1 test ghermez) + `e2e/tickets.spec.ts` 5/5 (upload e PNG e vaghei → download e admin byte-be-byte، bedun e emza 403؛ afterAll file haye disk ro ham pak mikone). Kol: 1126 PHP (4718 assertion).
 - [x] **P7-03** — **Onboarding** ba'd az avvalin login: «مایل به دریافت فاکتور رسمی هستید؟» → kheir: level e basic، edame. Bale: form e hoghoghi (shenase melli sherkat، code eghtesadi، esm e sabti، code posti، address، telephone، code melli + tarikh e tavalod e namayande) + upload → ticket e `kyc_upgrade`.
   → Anjam shod (2026-10-06): module e jadid e `Kyc` (`KycServiceProvider`، view e `kyc::onboarding`). Migration `2026_10_06_192000_add_onboarding_to_users_table` (`onboarded_at`، `invoice_requested`؛ backfill: faghat ADMIN ha onboarded — moshtari haye mojud yek bar soal ro mibinan؛ ru dev apply shod) + `User::needsOnboarding()`. `LoginController::verify` moshtari e onboard-nashode ro be `/onboarding` mifereste. Safhe: radio ye «بله/خیر» (Alpine faghat baraye namayesh e form)، «خیر» → `DeclineInvoiceAction` (basic، home)، «بله» → validate (shenase melli/code melli ba checksum e `NationalId`، code posti 10 ragham، tel، code eghtesadi، tarikh e Jalali e gozashte ba `Jalali::parse`، madrak ejbari ba `AttachmentRules`) + normalize e raghame Farsi + tarikh e canonical → `SubmitKycRequestAction` (lock e radif e karbar، yek darkhast e baz dar har lahze، ticket e `kyc_upgrade` ba `meta` = `KycRequestDto::toMeta()` + madarek؛ level AVAZ NEMISHE). Darkhast e baz → safhe vaziat neshun mide؛ karbar e basic ba'dan az link e «فاکتور رسمی / ارتقای سطح» e `/account/tickets` darkhast mide. Test: `OnboardingTest` 20 (mutation: hazf e check e darkhast e baz 1، hazf e redirect e onboarding 2 test ghermez) + `LoginFlowTest` be-rooz (karbar e taze → onboarding — taghir e raftar e amdi) + `e2e/onboarding.spec.ts` 3/3 (بله + PDF e vaghei → ticket؛ khata ye Farsi؛ خیر → home va login e ba'di bedun e onboarding) + `users.spec` (karbar e taze hala be `/onboarding` mire). Kol: 1146 PHP (4806 assertion)، e2e onboarding+tickets+users 22/22.
-- [ ] **P7-04** — **Adapter e Zohal** posht e yek Port (`IdentityVerificationPort`) ba `Http` (na SDK — hamun tasmim e Influx: client e mutable zire Octane bind nemishe) + fake + bind-test. Test ha **hich network** nemizanan (fixture az shekl e envelope). Dev ru **sandbox**. Token: `ZOHAL_TOKEN` tu `.env` — sahebe proje mizare.
-- [ ] **P7-05** — **Gozaresh e sanjesh e khodkar** ru ticket: shahkar (mobile ↔ code melli)، hoviat، sherkat (vojud + fa'al budan + tatbigh e esm)، code posti (tatbigh ba address e sherkat). Har check: ✅/❌/⚠️ khata + javab e kham. **Har call pul dare** → faghat yek bar ba'd az ersal ejra mishe + dokme ye «اجرای دوباره» baraye admin.
-- [ ] **P7-06** — **Ta'eed/rad e admin** tu ticket → `users.level = invoice_verified` + zakhire ye etela'at e factor؛ rad ba dalil.
-- [ ] **P7-07** — **Etela'resani** be karbar (SMS e Kavenegar e mojud) ru taghir e vaziat e ticket.
+- [x] **P7-04** — **Adapter e Zohal** posht e yek Port (`IdentityVerificationPort`) ba `Http` (na SDK — hamun tasmim e Influx: client e mutable zire Octane bind nemishe) + fake + bind-test. Test ha **hich network** nemizanan (fixture az shekl e envelope). Dev ru **sandbox**. Token: `ZOHAL_TOKEN` tu `.env` — sahebe proje mizare.
+- [x] **P7-05** — **Gozaresh e sanjesh e khodkar** ru ticket: shahkar (mobile ↔ code melli)، hoviat، sherkat (vojud + fa'al budan + tatbigh e esm)، code posti (tatbigh ba address e sherkat). Har check: ✅/❌/⚠️ khata + javab e kham. **Har call pul dare** → faghat yek bar ba'd az ersal ejra mishe + dokme ye «اجرای دوباره» baraye admin.
+- [x] **P7-06** — **Ta'eed/rad e admin** tu ticket → `users.level = invoice_verified` + zakhire ye etela'at e factor؛ rad ba dalil.
+- [x] **P7-07** — **Etela'resani** be karbar (SMS e Kavenegar e mojud) ru taghir e vaziat e ticket.
 
 ## Phase 8 — Site + plan e eshteraki + pardakht
 
@@ -600,7 +641,7 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 6. **Tarikh e tavalod** e namayande tu onboarding e hoghoghi porsideh mishe (baraye estelam e hoviat).
 
 ### Tartib e pishnahadi
-Bakhsh haye shoroo-shode va review e bug ha tamam-and. Baraye scope e jadid: `P7-04..07` (estelam/tasmim/notification) → **Phase 8** (site/plan/pardakht); `P5-09` (UI e SEO) va task haye baz e Phase 9 backlog-and. P9-10 hamchenan be darkhast e sahebe proje moghol ast.
+Bakhsh haye shoroo-shode va review e bug ha tamam-and. Baraye scope e jadid: `P7-04..07` (estelam/tasmim/notification) → **Phase 8** (site/plan/pardakht); `P5-09` (UI e SEO) va task haye baz e Phase 9 backlog-and. P9-10 ba taeed e jadid piade va test shode ast.
 
 ---
 
@@ -609,22 +650,25 @@ Bakhsh haye shoroo-shode va review e bug ha tamam-and. Baraye scope e jadid: `P7
 > P9-01/P9-07 tu review e bakhsh haye mojud tamam shodan. Baghi task ha scope e jadid-and; tartib e ghabli ba'd az Phase 8 mimune. Hadaf: safhe haye kamtar، UX e vazeh-tar.
 
 - [x] **P9-01** — `/dashboard/monitor` (پایش tick): filter haye **«نماد»** va **«دلیل رد»** karbordi nistan → **hazf**. (Filter e provider، «فقط مشکل‌دار»، toggle e «بدون اجرا» va nama ye «جدول ردها» mimunan.) `filterOptions` e `TickReportQuery` age masraf e digari nadasht hazf she + test/e2e e marbut be-rooz.
-- [ ] **P9-02** — **Edgham e `/dashboard/providers` + `/dashboard/health`** dar YEK safhe ye «منابع قیمت»: har provider yek kart/radif ba tanzimat (fa'al، tartib، spread، …) + salamat e zende (vaziat، latency، akharin khata، shekast haye poshte sar e ham) kenar e ham. Route e `/dashboard/health` be safhe ye jadid **redirect** she (link haye ghadimi nashkanan)؛ sidebar yek item.
-- [ ] **P9-03** — **Edgham e `/dashboard/priorities` + `/dashboard/manual`** dar YEK safhe: har symbol yek radif ba zanjire ye olaviat + gheymat e dasti + vaziat e fallback. Route e ghadimi redirect.
-- [ ] **P9-04** — **Import e Excel** baraye gheymat e dasti (+ **download e nemune ye Excel** ba soton haye symbol/label/gheymat). Validate e har radif (symbol e nashenas، adad e na-motabar، vahed e toman/dollar) ba gozaresh e radif-be-radif ghabl az zakhire (preview → ta'eed). Gheymat ba string/bcmath parse she (na float — parser e `setFromDisplay` dar review fix shod).
-- [ ] **P9-05** — 🔴 **Be-rooz-resani ye KHODKAR e gheymat e dasti az tick ha**: baraye har symbol tanzim «gheymat e dasti az chi por she»: **(a) hichi** (faghat dasti — raftar e fe'li)، **(b) zanjire ye olaviat** (avvalin provider e TAZE)، **(c) yek provider e moshakhas**. Har tick: age manba' e entekhabi taze bud → gheymat e dasti ba gheymat e KHAM e un be-rooz mishe؛ age khata dad/bayat bud → gheymat e dasti **dast nemikhore** (akharin gheymat e salem mimune)، va vaghti provider resolve shod dobare be-rooz mishe. `source_hint` + `updated_at` neshun midan az koja va kay. Piade-sazi ru masir e tick (ba'd az Persist، isolated — shekastesh tick ro nemikoshe) ya scheduler — tasmim tu task؛ test e «provider e bayat → dasti dast nakhord» + «resolve shod → be-rooz shod» + mutation.
+- [x] **P9-02** — **Edgham e `/dashboard/providers` + `/dashboard/health`** dar YEK safhe ye «منابع قیمت»: har provider yek kart/radif ba tanzimat (fa'al، tartib، spread، …) + salamat e zende (vaziat، latency، akharin khata، shekast haye poshte sar e ham) kenar e ham. Route e `/dashboard/health` be safhe ye jadid **redirect** she (link haye ghadimi nashkanan)؛ sidebar yek item.
+- [x] **P9-03** — **Edgham e `/dashboard/priorities` + `/dashboard/manual`** dar YEK safhe: har symbol yek radif ba zanjire ye olaviat + gheymat e dasti + vaziat e fallback. Route e ghadimi redirect.
+- [x] **P9-04** — **Import e Excel** baraye gheymat e dasti (+ **download e nemune ye Excel** ba soton haye symbol/label/gheymat). Validate e har radif (symbol e nashenas، adad e na-motabar، vahed e toman/dollar) ba gozaresh e radif-be-radif ghabl az zakhire (preview → ta'eed). Gheymat ba string/bcmath parse she (na float — parser e `setFromDisplay` dar review fix shod).
+- [x] **P9-05** — 🔴 **Be-rooz-resani ye KHODKAR e gheymat e dasti az tick ha**: baraye har symbol tanzim «gheymat e dasti az chi por she»: **(a) hichi** (faghat dasti — raftar e fe'li)، **(b) zanjire ye olaviat** (avvalin provider e TAZE)، **(c) yek provider e moshakhas**. Har tick: age manba' e entekhabi taze bud → gheymat e dasti ba gheymat e KHAM e un be-rooz mishe؛ age khata dad/bayat bud → gheymat e dasti **dast nemikhore** (akharin gheymat e salem mimune)، va vaghti provider resolve shod dobare be-rooz mishe. `source_hint` + `updated_at` neshun midan az koja va kay. Piade-sazi ru masir e tick (ba'd az Persist، isolated — shekastesh tick ro nemikoshe) ya scheduler — tasmim tu task؛ test e «provider e bayat → dasti dast nakhord» + «resolve shod → be-rooz shod» + mutation.
 
 ### Ezafe be Phase 9 (chat 2026-10-06، ba'd az Phase 6)
-- [ ] **P9-06** — **Sakht e ticket ba chand file (multiple upload)**: karbar va admin (baraye yek karbar) ticket besazan ba **chand** peyvast. Az uploader e mojud e proje estefade she (kit: `x-form.media-picker` / `alpine/media-upload.js`) — na yek uploader e jadid. Hamun disk e PRIVATE va download e emza-dar e `P7-02`؛ validate e tedad/hajm/mime har file + kol.
+- [x] **P9-06** — **Sakht e ticket ba chand file (multiple upload)**: karbar va admin (baraye yek karbar) ticket besazan ba **chand** peyvast. Az uploader e mojud e proje estefade she (kit: `x-form.media-picker` / `alpine/media-upload.js`) — na yek uploader e jadid. Hamun disk e PRIVATE va download e emza-dar e `P7-02`؛ validate e tedad/hajm/mime har file + kol.
 - [x] **P9-07** — `/dashboard/users`: **esm e karbar link** be safhe ye jozyat esh (`/dashboard/users/{id}`).
-- [ ] **P9-08** — **Virayesh e karbar** tu panel: esm، email، noe e moshtari، code/shenase melli، sath (+ taghir e mobile ba ehtiat — unique). Har taghir audit she (ki، kay، ghabl/ba'd).
+- [x] **P9-08** — **Virayesh e karbar** tu panel: esm، email، noe e moshtari، code/shenase melli، sath (+ taghir e mobile ba ehtiat — unique). Har taghir audit she (ki، kay، ghabl/ba'd).
 - [ ] **P9-09** — **Eslah/hazf e sanad e sharj e kif pool** — 🔴 `wallet_transactions` **append-only** ast (ghanun e non-negotiable + trigger e DB e `P6-07`)، pas «virayesh/hazf» be shekl e **sanad e BARGASHT** piade mishe: dokme ye «ابطال» ru har tarakonesh → yek tarakonesh e mokhalef (reason `admin_reversal`، `reference` = id e sanad e asli، dalil + admin)؛ «اصلاح» = ebtal + sanad e jadid e dorost. Sanad e asli dar list «ابطال‌شده» neshun dade mishe. Ebtal e dobare ye yek sanad mamnu' (idempotent)؛ mande nabayad manfi she (ya sarih ejaze ba hoshdar).
-- [ ] ⏸ **P9-10** — **Naghsh/dastresi (RBAC) baraye admin ha**: sahebe proje khodesh naghsh (role) ta'rif kone va be har naghsh permission bede (didan/virayesh e har bakhsh e panel: karbaran، kif pool، ticket، manba' ha، …)؛ middleware/gate ru har route va dokme. **MOGHOL — sahebe proje goft fe'lan anjam nade** (2026-10-06)؛ ta dastur e sarih dast nakhore. Ta un moghe `is_admin` hamun dastresi ye kamel ast.
+- [x] **P9-10** — **Naghsh/dastresi (RBAC) baraye admin ha**: sahebe proje khodesh naghsh (role) ta'rif kone va be har naghsh permission bede (didan/virayesh e har bakhsh e panel: karbaran، kif pool، ticket، manba' ha، …)؛ middleware/gate ru har route va dokme. Ba taeed e jadid piade shod: role/permission, audit, last-manager guard va UI; Access/SEO browser test pass.
 
 ## Tasmim haye vasat e rah
 
 | Tarikh | Tasmim | Chera |
 |---|---|---|
+| 2026-10-06 | Tablo ye omumi toman، DB/panel/TV/API rial؛ tabdil faghat ba `Money::tomanDivisor` tu `PublicBoardQuery` (yek `divisor` baraye SSR+JS) | DB rial mimune (architecture §8)؛ do masir e format (bcmath e SSR vs float e JS) ba ham fargh mikardan |
+| 2026-10-06 | Platform ha az API e khodeshun، na az feed e nerkh؛ `kind=platform`؛ milligram→gram tu khod e Source (scale 3 e parser) na `UpstreamUnit` e jadid | nerkh vaset ast va 90s lag dare؛ enum e unit ro ba case e milligram shollugh nakonim ta vaghti yek provider e dige lazem dashte bashe |
+| 2026-10-06 | nerkh: `MESGHAL` → `xau-mesghal-irr` (na `MAZANEH`)؛ kelid haye map-nashode ye feed (crypto/platform) log NEMISHAN، faghat kelid e map-shode ye gom-shode | tasmim e sahebe proje؛ 40 label e bi-rabt har tick log ro bi-masraf mikard |
 | 2026-10-06 | Media/logo az kit e Alpine/controller e mojud peyravi mikone (estesna e P3-00a); relation e logo ba FK + usage dar yek transaction negahdari mishe | do uploader ya do state e UI nasazim; media e dar hal e estefade nabayad hazf she |
 | 2026-10-06 | Retry e API per-client + fingerprint e method/URI/body/ETag, replay e 24-sa'ate, charge e retry sefr; lost cache/reuse = 409; nonce har talash taze | request e motefavet nabayad az debit e ghabli data begire ya un ro refund kone; reference e hash-shode mahdudiat e ledger ro hefz mikone |
 | 2026-10-04 | `tests/Fixtures/` ghabl az Laravel sakhte shod | payload haye vaghei hamun lahze ke verify shodan zakhire shodan — ba'dan gereftaneshun mitune fargh kone |

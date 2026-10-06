@@ -59,9 +59,9 @@ final class TvBoardTest extends TestCase
         $this->get('/tv')
             ->assertOk()
             ->assertSee('طلای 18 عیار')
-            ->assertSee('26,640,000')
+            ->assertSee('266,400,000')
             ->assertSee('data-tv-tile="xau-18k-g-irr"', false)
-            ->assertSee('تومان')
+            ->assertSee('ریال')
             // Gheymat e taze -> kashi «قدیمی» nist.
             ->assertDontSee('data-stale', false)
             // Poll e 15s be `/tv.json` (na `/board.json`).
@@ -84,14 +84,14 @@ final class TvBoardTest extends TestCase
         $this->getJson('/tv.json')
             ->assertOk()
             ->assertJsonPath('rows.0.symbol', 'xau-18k-g-irr')
-            ->assertJsonPath('rows.0.display', '26,640,000')
+            ->assertJsonPath('rows.0.display', '266,400,000')
             ->assertJsonPath('rows.0.value', 266_400_000);
 
         // Olaviat e per-symbol (P5-07): estjt aval -> TV ham estjt.
         $this->app->make(SymbolPriorityAction::class)->set(Instrument::Gold18Gram, ['estjt', 'tgju']);
 
-        $this->getJson('/tv.json')->assertJsonPath('rows.0.display', '27,000,000');
-        $this->get('/tv')->assertSee('27,000,000')->assertDontSee('26,820,000');
+        $this->getJson('/tv.json')->assertJsonPath('rows.0.display', '270,000,000');
+        $this->get('/tv')->assertSee('270,000,000')->assertDontSee('268,200,000');
     }
 
     public function test_change_direction_and_usd_precision_are_shown(): void

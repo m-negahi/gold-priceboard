@@ -77,7 +77,7 @@ return [
      * bashe، `BoardQuery` store e dagh ro ghabl e e'temad nemidune va be
      * Postgres fallback mikone + `degraded` e'lam mikone.
      *
-     * 🔴 Chera lazem ast: `redis-prices` ba `noeviction` vaghti por she
+     * 🔴 Chera lazem ast: `redis` e vahed ba `noeviction` vaghti por she
      * write ha ro rad mikone VALI read ha ro salem javab mide va `PING` ham
      * salem ast — ya'ni tablo yakh mizane va hich khata-i ham nist.
      *
@@ -129,9 +129,8 @@ return [
      * zakhire kardan daghighan aks e hadaf ast. `file` ham zire Octane ba
      * chand worker bi-ma'ni-e.
      *
-     * ⚠️ In store e `redis` e OMUMI-e (ba `allkeys-lru`)، na `redis-prices`.
-     * Baraye cache e candle DOROST ast ke evict beshe — un yek cache e
-     * vaghei-e، bar khalaf e tablo ye dagh ke manba' e khundan ast.
+     * Connection e cache (DB1) e Redis e vahed ast. TTL haye cache ba
+     * prices (DB2, bedun e TTL) joda-and; policy e hame noeviction ast.
      */
     'cache_store' => env('PRICING_CACHE_STORE'),
 

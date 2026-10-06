@@ -20,7 +20,7 @@ use Throwable;
  * Store e dagh — chizi ke har bazdid-konande mikhune.
  *
  * ── 🔴 Se ghanun ─────────────────────────────────────────────────────
- * 1. Ru connection e `prices` (instance e `redis-prices`), na Redis e omumi.
+ * 1. Ru connection e `prices` (DB2 e Redis e vahed), joda az connection e default/cache.
  *    Redis e omumi `allkeys-lru` ast: tu feshar e memory HAR kelidi ro
  *    mindaze — shamel e gheymat ha — dar hali ke khodesh ro salem gozaresh
  *    mide, va tablo bedun e hich error khali mishe.

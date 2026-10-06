@@ -11,7 +11,7 @@ use Throwable;
 
 /**
  * Daftarche ye call haye ma be provider ha (P4-14) — ru Redis e DEFAULT
- * (hamun ja ye `ApiRequestLog`)، na `redis-prices`: monitoring e gozara-st
+ * (hamun ja ye `ApiRequestLog`)، na connection e `prices`: monitoring e gozara-st
  * va `allkeys-lru` mitune evict esh kone — zarar nadare.
  *
  * Har khata saket ghurt dade mishe: log-i ke tick ro beshkane az nabudan e

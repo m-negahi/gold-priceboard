@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Panel\Http\Controllers;
 
+use App\Modules\Pricing\Application\Actions\SymbolPriceSettingsAction;
 use App\Modules\Pricing\Application\Actions\SymbolPriorityAction;
+use App\Modules\Pricing\Application\Queries\PricingSettingsQuery;
 use App\Modules\Pricing\Application\Queries\SymbolPriorityQuery;
 use App\Modules\Pricing\Domain\Enums\Instrument;
 use Illuminate\Http\JsonResponse;
@@ -23,14 +25,13 @@ final readonly class PriorityController
     public function __construct(
         private SymbolPriorityQuery $priorities,
         private SymbolPriorityAction $action,
+        private PricingSettingsQuery $settings,
+        private SymbolPriceSettingsAction $settingsAction,
     ) {}
 
     public function index(): View
     {
-        return view('panel::priorities.index', [
-            'rows' => $this->priorities->panelRows(),
-            'names' => $this->priorities->providerNames(),
-        ]);
+        return view('panel::priorities.index', $this->settings->present());
     }
 
     public function update(Request $request): JsonResponse
@@ -54,7 +55,7 @@ final readonly class PriorityController
         }
 
         return new JsonResponse([
-            'rows' => $this->priorities->panelRows(),
+            'rows' => $this->settings->present()['rows'],
             'toast' => [
                 'kind' => 'success',
                 'title' => 'انجام شد',
@@ -63,5 +64,28 @@ final readonly class PriorityController
                     : 'اولویت '.$instrument->label().' ذخیره شد.',
             ],
         ]);
+    }
+
+    public function settings(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'symbol' => ['required', 'string', 'max:32'],
+            'manualOnly' => ['required', 'boolean'],
+            'manualFallbackEnabled' => ['required', 'boolean'],
+            'manualAutoSource' => ['required', 'string', 'max:32'],
+        ]);
+        $instrument = Instrument::tryFrom($data['symbol']);
+
+        if ($instrument === null) {
+            return new JsonResponse(['message' => 'نماد ناشناخته است.'], 422);
+        }
+
+        try {
+            $this->settingsAction->set($instrument, (bool) $data['manualOnly'], (bool) $data['manualFallbackEnabled'], $data['manualAutoSource']);
+        } catch (InvalidArgumentException $exception) {
+            return new JsonResponse(['message' => $exception->getMessage()], 422);
+        }
+
+        return new JsonResponse($this->settings->present() + ['toast' => ['kind' => 'success', 'title' => 'ذخیره شد', 'message' => 'تنظیم قیمت '.$instrument->label().' ذخیره شد.']]);
     }
 }

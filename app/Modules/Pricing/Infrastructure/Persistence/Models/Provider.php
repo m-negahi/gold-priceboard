@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $website
  * @property int|null $logo_media_id
  * @property string|null $logo_path
+ * @property bool $is_trust_anchor
  * @property bool $is_active
  * @property bool $in_comparison
  * @property bool $on_board
@@ -57,7 +58,7 @@ class Provider extends Model
 
     protected $fillable = [
         'key', 'driver', 'kind', 'name', 'name_fa', 'website', 'logo_path', 'logo_media_id',
-        'is_active', 'in_comparison', 'on_board', 'in_chart',
+        'is_trust_anchor', 'is_active', 'in_comparison', 'on_board', 'in_chart',
         'timeout', 'poll_interval_seconds', 'next_poll_at',
         'freshness_seconds', 'hide_after_seconds', 'upstream_unit', 'sort', 'options',
         'last_attempt_at', 'last_success_at', 'last_failure_at', 'last_error',
@@ -69,6 +70,7 @@ class Provider extends Model
     protected function casts(): array
     {
         return [
+            'is_trust_anchor' => 'boolean',
             'is_active' => 'boolean',
             'in_comparison' => 'boolean',
             'on_board' => 'boolean',

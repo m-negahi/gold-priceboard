@@ -55,10 +55,17 @@ final readonly class ProviderQuery
                 options: $provider->options ?? [],
                 pollIntervalSeconds: $provider->poll_interval_seconds,
                 hideAfterSeconds: $provider->hide_after_seconds,
+                isTrustAnchor: (bool) $provider->is_trust_anchor,
             );
         }
 
         return $configs;
+    }
+
+    /** @return list<string> */
+    public function trustAnchorKeys(): array
+    {
+        return Provider::query()->active()->where('is_trust_anchor', true)->where('key', '!=', 'manual')->pluck('key')->all();
     }
 
     /** @return array<string, ProviderConfigDto> */
@@ -79,6 +86,7 @@ final readonly class ProviderQuery
                 options: $provider->options ?? [],
                 pollIntervalSeconds: $provider->poll_interval_seconds,
                 hideAfterSeconds: $provider->hide_after_seconds,
+                isTrustAnchor: (bool) $provider->is_trust_anchor,
             );
         }
 
@@ -106,6 +114,7 @@ final readonly class ProviderQuery
                 'website' => $provider->website,
                 'logo_media_id' => $provider->logo_media_id,
                 'isActive' => (bool) $provider->is_active,
+                'isTrustAnchor' => (bool) $provider->is_trust_anchor,
                 'inComparison' => (bool) $provider->in_comparison,
                 'onBoard' => (bool) $provider->on_board,
                 'inChart' => (bool) $provider->in_chart,
@@ -149,6 +158,7 @@ final readonly class ProviderQuery
             'website' => $provider->website,
             'logo_media_id' => $provider->logo_media_id,
             'is_active' => (bool) $provider->is_active,
+            'is_trust_anchor' => (bool) $provider->is_trust_anchor,
             'in_comparison' => (bool) $provider->in_comparison,
             'on_board' => (bool) $provider->on_board,
             'in_chart' => (bool) $provider->in_chart,

@@ -2,6 +2,9 @@
      Blade faghat namayesh. --}}
 
 <x-layouts.panel :title="$profile['name'] ?? $profile['phone']" current="customers" :breadcrumbs="['پنل', 'مشتریان', $profile['name'] ?? $profile['phone']]">
+    @if (auth()->user()->can('users.manage') && (! $profile['isAdmin'] || auth()->user()->can('access.manage')))
+        <a wire:navigate href="{{ route('panel.users.edit', $profile['id']) }}" class="inline-flex h-11 items-center text-sm font-semibold text-brand-700">ویرایش اطلاعات و استعلام زحل</a>
+    @endif
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="min-w-0">
             <a href="{{ route('panel.users.index') }}" class="inline-flex items-center gap-1 text-xs text-muted hover:text-ink">
@@ -18,6 +21,7 @@
         </div>
 
         {{-- Taghir e naghsh (P6-04) — POST e sade؛ mohafez e lockout tu Action. --}}
+        @can('access.manage')
         <form method="POST" action="{{ route('panel.users.role', $profile['id']) }}" data-role-form>
             @csrf
             <input type="hidden" name="role" value="{{ $profile['isAdmin'] ? 'customer' : 'admin' }}">
@@ -27,6 +31,7 @@
                 {{ $profile['isAdmin'] ? 'تبدیل به مشتری' : 'ارتقا به ادمین' }}
             </button>
         </form>
+        @endcan
     </div>
 
     @if ($errors->any())
@@ -62,6 +67,7 @@
             </dl>
 
             {{-- Dastresi (P6-05): disable = login + session haye baz + HAME ye site ha ru API. --}}
+            @if (auth()->user()->can('users.manage') && (! $profile['isAdmin'] || auth()->user()->can('access.manage')))
             <div class="mt-5 border-t border-line-2 pt-4" data-user-access>
                 @if ($profile['status']->value === 'disabled')
                     <form method="POST" action="{{ route('panel.users.enable', $profile['id']) }}">
@@ -88,8 +94,10 @@
                     </form>
                 @endif
             </div>
+            @endif
         </section>
 
+        @can('finance.view')
         {{-- ── Wallet ──────────────────────────────────────────────── --}}
         <section class="rounded-2xl bg-surface card-p shadow-xs xl:col-span-2" aria-labelledby="wallet-title" data-wallet>
             <div class="flex flex-wrap items-start justify-between gap-3">
@@ -97,7 +105,7 @@
                     <h2 id="wallet-title" class="text-base font-bold text-ink">کیف پول</h2>
                     @if ($wallet !== null)
                         <p class="mt-2 text-sm text-muted">موجودی</p>
-                        <p class="num text-3xl font-extrabold text-ink" data-wallet-balance>{{ $wallet['balanceToman'] }} <span class="text-sm font-medium text-muted">تومان</span></p>
+                        <p class="num text-3xl font-extrabold text-ink" data-wallet-balance>{{ $wallet['balanceRial'] }} <span class="text-sm font-medium text-muted">ریال</span></p>
                         @if ($wallet['isBlocked'])
                             <x-panel.pill tone="down" class="mt-2">مسدود</x-panel.pill>
                         @endif
@@ -107,6 +115,7 @@
 
             {{-- Sharj/kasr e dasti (P6-06) — radif e JADID e ledger (`admin_adjust` + admin + dalil).
                  `idempotency_key` ba har render taze: ersal e dobare ye hamin form yek radif misaze. --}}
+            @can('finance.manage')
             <form method="POST" action="{{ route('panel.users.wallet.adjust', $profile['id']) }}"
                   class="mt-4 grid gap-3 rounded-xl bg-surface-2 p-3 sm:grid-cols-[8rem_10rem_1fr_auto] sm:items-end" data-wallet-adjust>
                 @csrf
@@ -114,7 +123,7 @@
                 <x-form.field name="direction" label="نوع">
                     <x-form.select name="direction" :options="['credit' => 'شارژ (+)', 'debit' => 'کسر (−)']" :value="old('direction', 'credit')" />
                 </x-form.field>
-                <x-form.field name="amount" label="مبلغ (تومان)" required>
+                <x-form.field name="amount" label="مبلغ (ریال)" required>
                     <x-form.input name="amount" ltr inputmode="decimal" autocomplete="off" :value="old('amount')" maxlength="32" placeholder="125,000" />
                 </x-form.field>
                 <x-form.field name="note" label="دلیل" required>
@@ -126,6 +135,7 @@
                     ثبت
                 </button>
             </form>
+            @endcan
 
             @if ($wallet === null)
                 <p class="mt-4 rounded-xl bg-surface-3 px-4 py-6 text-center text-sm text-muted">هنوز کیف پولی ساخته نشده است.</p>
@@ -136,7 +146,7 @@
                             <tr class="border-b border-line text-xs font-semibold text-muted">
                                 <th class="px-3 py-2 text-start font-semibold">زمان</th>
                                 <th class="px-3 py-2 text-start font-semibold">نوع</th>
-                                <th class="px-3 py-2 text-start font-semibold">مبلغ (تومان)</th>
+                                <th class="px-3 py-2 text-start font-semibold">مبلغ (ریال)</th>
                                 <th class="px-3 py-2 text-start font-semibold">مانده</th>
                                 <th class="px-3 py-2 text-start font-semibold">مرجع</th>
                             </tr>
@@ -156,9 +166,9 @@
                                     </td>
                                     <td @class(['num whitespace-nowrap px-3 py-2 font-semibold', 'text-ok' => $tx['credit'], 'text-down' => ! $tx['credit']])>
                                         {{-- `ltr`: vagarna alamat e −/+ tu RTL be TAH e adad mipare. --}}
-                                        <span class="ltr num">{{ $tx['credit'] ? '+' : '−' }}{{ $tx['amountToman'] }}</span>
+                                        <span class="ltr num">{{ $tx['credit'] ? '+' : '−' }}{{ $tx['amountRial'] }}</span>
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-2 text-muted"><span class="ltr num">{{ $tx['balanceAfterToman'] }}</span></td>
+                                    <td class="whitespace-nowrap px-3 py-2 text-muted"><span class="ltr num">{{ $tx['balanceAfterRial'] }}</span></td>
                                     <td class="px-3 py-2 text-xs text-muted-3"><span class="ltr block max-w-32 truncate" title="{{ $tx['reference'] }}">{{ $tx['reference'] }}</span></td>
                                 </tr>
                             @empty
@@ -171,11 +181,13 @@
                 </div>
             @endif
         </section>
+        @endcan
     </div>
 
+    @can('finance.view')
     {{-- ── Usage e API (P6-08) — az `api_usage_daily` (rollup e har 15 daghighe). ── --}}
     <section class="mt-4 rounded-2xl bg-surface card-p shadow-xs" aria-labelledby="usage-title"
-             data-usage-chart data-usage-total-calls="{{ $usage['totalCalls'] }}" data-usage-total-cost="{{ $usage['totalCostToman'] }}">
+             data-usage-chart data-usage-total-calls="{{ $usage['totalCalls'] }}" data-usage-total-cost="{{ $usage['totalCostRial'] }}">
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div>
                 <h2 id="usage-title" class="text-base font-bold text-ink">مصرف API</h2>
@@ -187,13 +199,14 @@
                     <dd class="num text-lg font-bold text-ink">{{ $usage['totalCalls'] }}</dd>
                 </div>
                 <div>
-                    <dt class="text-xs text-muted">هزینه (تومان)</dt>
-                    <dd class="num text-lg font-bold text-ink">{{ $usage['totalCostToman'] }}</dd>
+                    <dt class="text-xs text-muted">هزینه (ریال)</dt>
+                    <dd class="num text-lg font-bold text-ink">{{ $usage['totalCostRial'] }}</dd>
                 </div>
             </dl>
         </div>
         <x-panel.bar-chart :bars="$usage['bars']" gap="gap-0.5 sm:gap-1.5" spill-labels class="mt-4" aria-label="نمودار فراخوانی روزانه" />
     </section>
+    @endcan
 
     {{-- ── Site ha (api_clients) ──────────────────────────────────── --}}
     <section class="mt-4 overflow-hidden rounded-2xl bg-surface shadow-xs" aria-labelledby="sites-title">
@@ -222,7 +235,7 @@
                             <td class="px-5 py-3">
                                 @if ($site['plan'])
                                     <p class="text-ink">{{ $site['plan']['name'] }}</p>
-                                    <p class="num mt-0.5 text-xs text-muted">{{ $site['plan']['callsPerDay'] }} فراخوانی/روز · {{ $site['plan']['costPerCallToman'] }} تومان/فراخوانی</p>
+                                    <p class="num mt-0.5 text-xs text-muted">{{ $site['plan']['callsPerDay'] }} فراخوانی/روز · {{ $site['plan']['costPerCallRial'] }} ریال/فراخوانی</p>
                                 @else
                                     <span class="text-xs text-muted">بدون پلن (نرخ پیش‌فرض)</span>
                                 @endif

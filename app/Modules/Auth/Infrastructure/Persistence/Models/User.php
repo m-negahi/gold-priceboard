@@ -45,6 +45,8 @@ use Illuminate\Notifications\Notifiable;
  * @property CustomerType $customer_type
  * @property string|null $national_code
  * @property CarbonImmutable|null $onboarded_at
+ * @property array<string, mixed>|null $identity_profile
+ * @property array<string, mixed>|null $invoice_profile
  * @property bool|null $invoice_requested
  */
 class User extends Authenticatable
@@ -97,6 +99,8 @@ class User extends Authenticatable
             'customer_type' => CustomerType::class,
             'onboarded_at' => 'immutable_datetime',
             'invoice_requested' => 'boolean',
+            'identity_profile' => 'array',
+            'invoice_profile' => 'array',
         ];
     }
 

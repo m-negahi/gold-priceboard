@@ -45,7 +45,7 @@ function attempt(callable $probe): mixed
 
 $out = [];
 
-// ── Spool (ru `redis-prices`) ───────────────────────────────────────
+// ── Spool (ru connection e `prices`, database e 2 e Redis) ───────────────────────────────────────
 $out['spool_size'] = attempt(static fn (): int => $app->make(InfluxSpool::class)->size());
 
 // ── Tablo az masir e VAGHEI (Redis -> fallback e Postgres) ──────────

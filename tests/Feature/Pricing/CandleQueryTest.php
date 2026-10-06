@@ -241,7 +241,7 @@ final class CandleQueryTest extends TestCase
 
         $this->assertSame('IRR', $payload['quote']);
         $this->assertSame(0, $payload['precision']);
-        $this->assertSame(10, $payload['displayDivisor']);
+        $this->assertSame(1, $payload['displayDivisor']);
         $this->assertArrayHasKey('degraded', $payload);
     }
 

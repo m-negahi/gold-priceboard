@@ -22,6 +22,7 @@ final class ApiEffectiveTest extends TestCase
     {
         parent::setUp();
         Redis::connection()->flushdb();
+        Redis::connection('prices')->flushdb();
     }
 
     public function test_effective_feed_returns_one_price_per_symbol_with_fallback_flag(): void
