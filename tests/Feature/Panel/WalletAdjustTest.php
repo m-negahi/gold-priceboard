@@ -11,6 +11,7 @@ use App\Modules\Wallet\Infrastructure\Persistence\Models\Wallet;
 use App\Modules\Wallet\Infrastructure\Persistence\Models\WalletTransaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -97,6 +98,52 @@ final class WalletAdjustTest extends TestCase
 
         $this->assertSame(1, WalletTransaction::query()->count());
         $this->assertSame(1_250_000, $this->wallet()->balance_minor);
+    }
+
+    /**
+     * 🔴 Kelid e TEKRARI ba darkhast e MOTEFAVET (Back e morurgar form ro ba
+     * hamun kelid bar migardune، admin jahat/mablagh/dalil ro avaz mikone):
+     * radif e ghabli bayad «movaffagh» gozaresh NASHE — vagarna kasr e 500
+     * toman bi-seda gom mishe va toast e «کسر شد» doroogh mige.
+     *
+     * @return iterable<string, array{0: array<string, string>}>
+     */
+    public static function changedResubmissions(): iterable
+    {
+        yield 'jahat + mablagh e avaz-shode' => [['direction' => 'debit', 'amount' => '500']];
+        // Faghat jahat: mablagh barabar e ta check e jahat be tanhayi sabt beshe.
+        yield 'faghat jahat e avaz-shode' => [['direction' => 'debit']];
+        yield 'mablagh e avaz-shode' => [['amount' => '130,000']];
+        yield 'dalil e avaz-shode' => [['note' => 'دلیل دیگر']];
+    }
+
+    /** @param array<string, string> $changed */
+    #[DataProvider('changedResubmissions')]
+    public function test_a_reused_key_with_a_different_request_is_refused_not_reported_as_success(array $changed): void
+    {
+        $this->postAdjust()->assertSessionHasNoErrors();
+
+        $this->postAdjust($changed)
+            ->assertRedirect(route('panel.users.show', $this->customer->id))
+            ->assertSessionHasErrors(['amount' => 'این فرم قبلاً ثبت شده است؛ صفحه را تازه کنید و دوباره ثبت کنید.'])
+            ->assertSessionMissing('toast');
+
+        // Ledger va mande dast nakhordan.
+        $this->assertSame(1, WalletTransaction::query()->count());
+        $this->assertSame(1_250_000, $this->wallet()->balance_minor);
+    }
+
+    /** Radif e ghabli be esm e admin e DIGAR sabt shode — javab e in admin nist. */
+    public function test_a_reused_key_from_another_admin_is_refused(): void
+    {
+        $this->postAdjust()->assertSessionHasNoErrors();
+
+        $other = User::factory()->admin()->create(['phone' => '+989120000001']);
+        $this->postAdjust([], $other)
+            ->assertSessionHasErrors(['amount' => 'این فرم قبلاً ثبت شده است؛ صفحه را تازه کنید و دوباره ثبت کنید.']);
+
+        $this->assertSame(1, WalletTransaction::query()->count());
+        $this->assertSame($this->admin->id, WalletTransaction::query()->sole()->meta['admin_id']);
     }
 
     public function test_a_debit_above_the_balance_is_refused(): void

@@ -198,6 +198,9 @@ final readonly class UserController
             $message = match ($e->getCode()) {
                 WalletException::INSUFFICIENT => 'موجودی کیف پول کافی نیست.',
                 WalletException::BLOCKED => 'کیف پول مسدود است.',
+                // Back e morurgar + taghir e form ba hamun kelid: radif e ghabli
+                // javab e in darkhast nist — success e doroogh nemidim.
+                WalletException::REFERENCE_REUSED => 'این فرم قبلاً ثبت شده است؛ صفحه را تازه کنید و دوباره ثبت کنید.',
                 default => 'ثبت تراکنش ممکن نشد.',
             };
 

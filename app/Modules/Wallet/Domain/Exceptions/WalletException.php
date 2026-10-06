@@ -23,6 +23,8 @@ final class WalletException extends RuntimeException
 
     public const BLANK_REFERENCE = 4;
 
+    public const REFERENCE_REUSED = 5;
+
     public static function insufficientBalance(int $balance, int $amount): self
     {
         return new self("mande kafi nist: {$balance} < {$amount}.", self::INSUFFICIENT);
@@ -41,5 +43,15 @@ final class WalletException extends RuntimeException
     public static function blankReference(): self
     {
         return new self('reference e tarakonesh nemitune khali bashe (idempotency).', self::BLANK_REFERENCE);
+    }
+
+    /**
+     * Reference (kelid e idempotency) ghablan baraye yek darkhast e DIGAR
+     * (jahat/mablagh/dalil e motefavet) masraf shode — radif e ghabli
+     * javab e in darkhast NIST va nabayad «movaffagh» gozaresh beshe.
+     */
+    public static function referenceReused(string $reference): self
+    {
+        return new self("reference e {$reference} ghablan ba darkhast e digari sabt shode.", self::REFERENCE_REUSED);
     }
 }
