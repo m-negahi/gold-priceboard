@@ -99,6 +99,9 @@ abstract class TestCase extends BaseTestCase
         // masiri ke yek bar DB e dev ro pak kard. Test ha nabayad be tanzim
         // e dev vabaste bashan، makhsusan bypass e OTP.
         $config->set('otp.bypass', false);
+        // 🔴 Rate limit tu test HAMISHE roshan — `OtpHttpHardeningTest` un
+        // ro misanje، va driver e `fake` e test nabayad khamoosh esh kone.
+        $config->set('otp.throttle', true);
         $config->set('otp.ttl_seconds', 120);
         $config->set('otp.resend_cooldown_seconds', 60);
         $config->set('otp.max_attempts', 3);

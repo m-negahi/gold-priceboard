@@ -1,0 +1,62 @@
+- generic [active] [ref=f1e1]:
+  - text: "[09:19:23] cannot read lifecycle rule for 'attachments' (EndpointConnectionError('Could not connect to the endpoint URL: \"http://minio:9000/attachments?lifecycle\"')); falling back to RETENTION_DAYS=90"
+  - generic [ref=f1e2]:
+    - generic [ref=f1e3]: English message · 3 files
+    - generic [ref=f1e4]:
+      - generic [ref=f1e5]: Hi,Please find the files below.
+      - generic [ref=f1e6]: 3 Files Attached
+      - text: PSD
+      - link "piro_upscaled.png_2K_202608091102.psd" [ref=f1e8] [cursor=pointer]:
+        - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/13e148a1/a.psd
+      - generic [ref=f1e10]:
+        - text: 11.3 MB ·
+        - link "Download" [ref=f1e11] [cursor=pointer]:
+          - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/13e148a1/a.psd
+      - text: PDF
+      - link "Sina Kazemi - Farsi.pdf" [ref=f1e13] [cursor=pointer]:
+        - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/de3930bc/b.pdf
+      - generic [ref=f1e15]:
+        - text: 784.0 KB ·
+        - link "Download" [ref=f1e16] [cursor=pointer]:
+          - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/de3930bc/b.pdf
+      - text: ZIP
+      - link "pelak.zip" [ref=f1e18] [cursor=pointer]:
+        - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/9c70e753/c.zip
+      - generic [ref=f1e20]:
+        - text: 811.0 KB ·
+        - link "Download" [ref=f1e21] [cursor=pointer]:
+          - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/9c70e753/c.zip
+      - generic [ref=f1e22]: These links expire 90 days after sending.
+  - generic [ref=f1e23]:
+    - generic [ref=f1e24]: Persian message · RTL · 2 files
+    - generic [ref=f1e25]:
+      - generic [ref=f1e26]: سلام،فایل‌های پیوست را ببینید.
+      - generic [ref=f1e27]: 2 Files Attached
+      - text: PDF
+      - link "قرارداد-همکاری-۱۴۰۴.pdf" [ref=f1e29] [cursor=pointer]:
+        - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/aa11bb22/d.pdf
+      - generic [ref=f1e31]:
+        - text: 2.0 MB ·
+        - link "Download" [ref=f1e32] [cursor=pointer]:
+          - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/aa11bb22/d.pdf
+      - text: PSD
+      - link "طرح-نهایی-کمپین.psd" [ref=f1e34] [cursor=pointer]:
+        - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/cc33dd44/e.psd
+      - generic [ref=f1e36]:
+        - text: 57.0 MB ·
+        - link "Download" [ref=f1e37] [cursor=pointer]:
+          - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/cc33dd44/e.psd
+      - generic [ref=f1e38]: These links expire 90 days after sending.
+  - generic [ref=f1e39]:
+    - generic [ref=f1e40]: Single file · very long name
+    - generic [ref=f1e41]:
+      - generic [ref=f1e42]: Hi,Please find the files below.
+      - generic [ref=f1e43]: 1 File Attached
+      - text: MP4
+      - link "Trend_Media_Q3_2026_Campaign_Master_Final_v7_APPROVED_by_client_20260815.mp4" [ref=f1e45] [cursor=pointer]:
+        - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/ee55ff66/f.mp4
+      - generic [ref=f1e47]:
+        - text: 96.0 MB ·
+        - link "Download" [ref=f1e48] [cursor=pointer]:
+          - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/ee55ff66/f.mp4
+      - generic [ref=f1e49]: These links expire 90 days after sending.

@@ -33,6 +33,13 @@ final readonly class OtpThrottle
         private int $verifyPerIp = 20,
         /** Panjare — pish-farz yek saat. */
         private int $decaySeconds = 3_600,
+        /**
+         * 🔴 `false` = rate limit KAMELAN khamoosh (dev/demo ba driver e
+         * fake — khaste ye sahebe proje: login e dev nabayad throttle she).
+         * Hame ye `blockedFor`/`hit` be no-op tabdil mishan. Tu production
+         * (driver e vaghei) HAMISHE true-ast.
+         */
+        private bool $enabled = true,
     ) {}
 
     /** `null` = mojaz؛ adad = saniye ta azad shodan. */
@@ -52,6 +59,10 @@ final readonly class OtpThrottle
      */
     public function hitSend(string $phone, string $ip): void
     {
+        if (! $this->enabled) {
+            return;
+        }
+
         $this->limiter->hit("otp:send:phone:{$phone}", $this->decaySeconds);
         $this->limiter->hit("otp:send:ip:{$ip}", $this->decaySeconds);
     }
@@ -71,6 +82,10 @@ final readonly class OtpThrottle
      */
     public function hitVerify(string $phone, string $ip): void
     {
+        if (! $this->enabled) {
+            return;
+        }
+
         $this->limiter->hit("otp:verify:phone:{$phone}", $this->decaySeconds);
         $this->limiter->hit("otp:verify:ip:{$ip}", $this->decaySeconds);
     }
@@ -90,6 +105,10 @@ final readonly class OtpThrottle
     /** @param array<int, array{0: string, 1: int}> $checks */
     private function blockedFor(array $checks): ?int
     {
+        if (! $this->enabled) {
+            return null;
+        }
+
         foreach ($checks as [$key, $max]) {
             if ($this->limiter->tooManyAttempts($key, $max)) {
                 return max(1, $this->limiter->availableIn($key));

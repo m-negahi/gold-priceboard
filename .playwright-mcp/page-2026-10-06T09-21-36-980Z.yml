@@ -1,0 +1,262 @@
+- generic [active] [ref=f2e1]:
+  - text: "[09:21:27] cannot read lifecycle rule for 'attachments' (EndpointConnectionError('Could not connect to the endpoint URL: \"http://minio:9000/attachments?lifecycle\"')); falling back to RETENTION_DAYS=90"
+  - generic [ref=f2e2]:
+    - generic [ref=f2e3]: English message · 3 files
+    - table [ref=f2e4]:
+      - rowgroup [ref=f2e5]:
+        - row [ref=f2e6]:
+          - cell "NOW (live) 3 Files Attached PSD piro_upscaled.png_2K_202608091102.psd 11.3 MB · Download PDF Sina Kazemi - Farsi.pdf 784.0 KB · Download ZIP pelak.zip 811.0 KB · Download These links expire 90 days after sending." [ref=f2e7]:
+            - generic [ref=f2e8]: NOW (live)
+            - generic [ref=f2e9]:
+              - generic [ref=f2e10]: 3 Files Attached
+              - text: PSD
+              - link "piro_upscaled.png_2K_202608091102.psd" [ref=f2e12] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/13e148a1/a.psd
+              - generic [ref=f2e14]:
+                - text: 11.3 MB ·
+                - link "Download" [ref=f2e15] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/13e148a1/a.psd
+              - text: PDF
+              - link "Sina Kazemi - Farsi.pdf" [ref=f2e17] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/de3930bc/b.pdf
+              - generic [ref=f2e19]:
+                - text: 784.0 KB ·
+                - link "Download" [ref=f2e20] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/de3930bc/b.pdf
+              - text: ZIP
+              - link "pelak.zip" [ref=f2e22] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/9c70e753/c.zip
+              - generic [ref=f2e24]:
+                - text: 811.0 KB ·
+                - link "Download" [ref=f2e25] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/9c70e753/c.zip
+              - generic [ref=f2e26]: These links expire 90 days after sending.
+          - cell "A — cards + pill button 3 Files Attached · 12.8 MB PSD piro_upscaled.png_2K_202608091102.psd 11.3 MB Download PDF Sina Kazemi - Farsi.pdf 784.0 KB Download ZIP pelak.zip 811.0 KB Download These links expire 90 days after sending." [ref=f2e27]:
+            - generic [ref=f2e28]: A — cards + pill button
+            - generic [ref=f2e29]:
+              - generic [ref=f2e30]: 3 Files Attached · 12.8 MB
+              - text: PSD
+              - generic [ref=f2e31]: piro_upscaled.png_2K_202608091102.psd
+              - generic [ref=f2e32]: 11.3 MB
+              - link "Download" [ref=f2e33] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/13e148a1/a.psd
+              - text: PDF
+              - generic [ref=f2e34]: Sina Kazemi - Farsi.pdf
+              - generic [ref=f2e35]: 784.0 KB
+              - link "Download" [ref=f2e36] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/de3930bc/b.pdf
+              - text: ZIP
+              - generic [ref=f2e37]: pelak.zip
+              - generic [ref=f2e38]: 811.0 KB
+              - link "Download" [ref=f2e39] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/9c70e753/c.zip
+              - generic [ref=f2e40]: These links expire 90 days after sending.
+          - cell "B — minimal list 3 Files Attached · 12.8 MB PSD piro_upscaled.png_2K_202608091102.psd 11.3 MB · Download PDF Sina Kazemi - Farsi.pdf 784.0 KB · Download ZIP pelak.zip 811.0 KB · Download These links expire 90 days after sending." [ref=f2e41]:
+            - generic [ref=f2e42]: B — minimal list
+            - generic [ref=f2e43]:
+              - generic [ref=f2e44]: 3 Files Attached · 12.8 MB
+              - text: PSD
+              - generic [ref=f2e45]: piro_upscaled.png_2K_202608091102.psd
+              - generic [ref=f2e47]:
+                - text: 11.3 MB ·
+                - link "Download" [ref=f2e48] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/13e148a1/a.psd
+              - text: PDF
+              - generic [ref=f2e49]: Sina Kazemi - Farsi.pdf
+              - generic [ref=f2e51]:
+                - text: 784.0 KB ·
+                - link "Download" [ref=f2e52] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/de3930bc/b.pdf
+              - text: ZIP
+              - generic [ref=f2e53]: pelak.zip
+              - generic [ref=f2e55]:
+                - text: 811.0 KB ·
+                - link "Download" [ref=f2e56] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/9c70e753/c.zip
+              - generic [ref=f2e57]: These links expire 90 days after sending.
+  - generic [ref=f2e58]:
+    - generic [ref=f2e59]: Persian message · RTL · 2 files
+    - table [ref=f2e60]:
+      - rowgroup [ref=f2e61]:
+        - row [ref=f2e62]:
+          - cell "NOW (live) 2 Files Attached PDF قرارداد-همکاری-۱۴۰۴.pdf 2.0 MB · Download PSD طرح-نهایی-کمپین.psd 57.0 MB · Download These links expire 90 days after sending." [ref=f2e63]:
+            - generic [ref=f2e64]: NOW (live)
+            - generic [ref=f2e65]:
+              - generic [ref=f2e66]: 2 Files Attached
+              - text: PDF
+              - link "قرارداد-همکاری-۱۴۰۴.pdf" [ref=f2e68] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/aa11bb22/d.pdf
+              - generic [ref=f2e70]:
+                - text: 2.0 MB ·
+                - link "Download" [ref=f2e71] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/aa11bb22/d.pdf
+              - text: PSD
+              - link "طرح-نهایی-کمپین.psd" [ref=f2e73] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/cc33dd44/e.psd
+              - generic [ref=f2e75]:
+                - text: 57.0 MB ·
+                - link "Download" [ref=f2e76] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/cc33dd44/e.psd
+              - generic [ref=f2e77]: These links expire 90 days after sending.
+          - cell "A — cards + pill button 2 Files Attached · 59.0 MB PDF قرارداد-همکاری-۱۴۰۴.pdf 2.0 MB Download PSD طرح-نهایی-کمپین.psd 57.0 MB Download These links expire 90 days after sending." [ref=f2e78]:
+            - generic [ref=f2e79]: A — cards + pill button
+            - generic [ref=f2e80]:
+              - generic [ref=f2e81]: 2 Files Attached · 59.0 MB
+              - text: PDF
+              - generic [ref=f2e82]: قرارداد-همکاری-۱۴۰۴.pdf
+              - generic [ref=f2e83]: 2.0 MB
+              - link "Download" [ref=f2e84] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/aa11bb22/d.pdf
+              - text: PSD
+              - generic [ref=f2e85]: طرح-نهایی-کمپین.psd
+              - generic [ref=f2e86]: 57.0 MB
+              - link "Download" [ref=f2e87] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/cc33dd44/e.psd
+              - generic [ref=f2e88]: These links expire 90 days after sending.
+          - cell "B — minimal list 2 Files Attached · 59.0 MB PDF قرارداد-همکاری-۱۴۰۴.pdf 2.0 MB · Download PSD طرح-نهایی-کمپین.psd 57.0 MB · Download These links expire 90 days after sending." [ref=f2e89]:
+            - generic [ref=f2e90]: B — minimal list
+            - generic [ref=f2e91]:
+              - generic [ref=f2e92]: 2 Files Attached · 59.0 MB
+              - text: PDF
+              - generic [ref=f2e93]: قرارداد-همکاری-۱۴۰۴.pdf
+              - generic [ref=f2e95]:
+                - text: 2.0 MB ·
+                - link "Download" [ref=f2e96] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/aa11bb22/d.pdf
+              - text: PSD
+              - generic [ref=f2e97]: طرح-نهایی-کمپین.psd
+              - generic [ref=f2e99]:
+                - text: 57.0 MB ·
+                - link "Download" [ref=f2e100] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/cc33dd44/e.psd
+              - generic [ref=f2e101]: These links expire 90 days after sending.
+  - generic [ref=f2e102]:
+    - generic [ref=f2e103]: Single file · very long name
+    - table [ref=f2e104]:
+      - rowgroup [ref=f2e105]:
+        - row [ref=f2e106]:
+          - cell "NOW (live) 1 File Attached MP4 Trend_Media_Q3_2026_Campaign_Master_Final_v7_APPROVED_by_client_20260815.mp4 96.0 MB · Download These links expire 90 days after sending." [ref=f2e107]:
+            - generic [ref=f2e108]: NOW (live)
+            - generic [ref=f2e109]:
+              - generic [ref=f2e110]: 1 File Attached
+              - text: MP4
+              - link "Trend_Media_Q3_2026_Campaign_Master_Final_v7_APPROVED_by_client_20260815.mp4" [ref=f2e112] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/ee55ff66/f.mp4
+              - generic [ref=f2e114]:
+                - text: 96.0 MB ·
+                - link "Download" [ref=f2e115] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/ee55ff66/f.mp4
+              - generic [ref=f2e116]: These links expire 90 days after sending.
+          - cell "A — cards + pill button 1 File Attached · 96.0 MB MP4 Trend_Media_Q3_2026_Campaign_Master_Final_v7_APPROVED_by_client_20260815.mp4 96.0 MB Download These links expire 90 days after sending." [ref=f2e117]:
+            - generic [ref=f2e118]: A — cards + pill button
+            - generic [ref=f2e119]:
+              - generic [ref=f2e120]: 1 File Attached · 96.0 MB
+              - text: MP4
+              - generic [ref=f2e121]: Trend_Media_Q3_2026_Campaign_Master_Final_v7_APPROVED_by_client_20260815.mp4
+              - generic [ref=f2e122]: 96.0 MB
+              - link "Download" [ref=f2e123] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/ee55ff66/f.mp4
+              - generic [ref=f2e124]: These links expire 90 days after sending.
+          - cell "B — minimal list 1 File Attached · 96.0 MB MP4 Trend_Media_Q3_2026_Campaign_Master_Final_v7_APPROVED_by_client_20260815.mp4 96.0 MB · Download These links expire 90 days after sending." [ref=f2e125]:
+            - generic [ref=f2e126]: B — minimal list
+            - generic [ref=f2e127]:
+              - generic [ref=f2e128]: 1 File Attached · 96.0 MB
+              - text: MP4
+              - generic [ref=f2e129]: Trend_Media_Q3_2026_Campaign_Master_Final_v7_APPROVED_by_client_20260815.mp4
+              - generic [ref=f2e131]:
+                - text: 96.0 MB ·
+                - link "Download" [ref=f2e132] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/ee55ff66/f.mp4
+              - generic [ref=f2e133]: These links expire 90 days after sending.
+  - generic [ref=f2e134]:
+    - generic [ref=f2e135]: Mixed types · 4 files
+    - table [ref=f2e136]:
+      - rowgroup [ref=f2e137]:
+        - row [ref=f2e138]:
+          - cell "NOW (live) 4 Files Attached HTML ترند CRM.html 212.5 KB · Download PNG Screenshot 2026-10-05 at 11.14.56 PM.png 223.3 KB · Download XLSX Q3-budget.xlsx 88.0 KB · Download PDF فلسفه علم روان_شناسی.pdf 274.5 KB · Download These links expire 90 days after sending." [ref=f2e139]:
+            - generic [ref=f2e140]: NOW (live)
+            - generic [ref=f2e141]:
+              - generic [ref=f2e142]: 4 Files Attached
+              - text: HTML
+              - link "ترند CRM.html" [ref=f2e144] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/11112222/g.html
+              - generic [ref=f2e146]:
+                - text: 212.5 KB ·
+                - link "Download" [ref=f2e147] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/11112222/g.html
+              - text: PNG
+              - link "Screenshot 2026-10-05 at 11.14.56 PM.png" [ref=f2e149] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/33334444/h.png
+              - generic [ref=f2e151]:
+                - text: 223.3 KB ·
+                - link "Download" [ref=f2e152] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/33334444/h.png
+              - text: XLSX
+              - link "Q3-budget.xlsx" [ref=f2e154] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/55556666/i.xlsx
+              - generic [ref=f2e156]:
+                - text: 88.0 KB ·
+                - link "Download" [ref=f2e157] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/55556666/i.xlsx
+              - text: PDF
+              - link "فلسفه علم روان_شناسی.pdf" [ref=f2e159] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/77778888/j.pdf
+              - generic [ref=f2e161]:
+                - text: 274.5 KB ·
+                - link "Download" [ref=f2e162] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/77778888/j.pdf
+              - generic [ref=f2e163]: These links expire 90 days after sending.
+          - cell "A — cards + pill button 4 Files Attached · 798.3 KB HTML ترند CRM.html 212.5 KB Download PNG Screenshot 2026-10-05 at 11.14.56 PM.png 223.3 KB Download XLSX Q3-budget.xlsx 88.0 KB Download PDF فلسفه علم روان_شناسی.pdf 274.5 KB Download These links expire 90 days after sending." [ref=f2e164]:
+            - generic [ref=f2e165]: A — cards + pill button
+            - generic [ref=f2e166]:
+              - generic [ref=f2e167]: 4 Files Attached · 798.3 KB
+              - text: HTML
+              - generic [ref=f2e168]: ترند CRM.html
+              - generic [ref=f2e169]: 212.5 KB
+              - link "Download" [ref=f2e170] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/11112222/g.html
+              - text: PNG
+              - generic [ref=f2e171]: Screenshot 2026-10-05 at 11.14.56 PM.png
+              - generic [ref=f2e172]: 223.3 KB
+              - link "Download" [ref=f2e173] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/33334444/h.png
+              - text: XLSX
+              - generic [ref=f2e174]: Q3-budget.xlsx
+              - generic [ref=f2e175]: 88.0 KB
+              - link "Download" [ref=f2e176] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/55556666/i.xlsx
+              - text: PDF
+              - generic [ref=f2e177]: فلسفه علم روان_شناسی.pdf
+              - generic [ref=f2e178]: 274.5 KB
+              - link "Download" [ref=f2e179] [cursor=pointer]:
+                - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/77778888/j.pdf
+              - generic [ref=f2e180]: These links expire 90 days after sending.
+          - cell "B — minimal list 4 Files Attached · 798.3 KB HTML ترند CRM.html 212.5 KB · Download PNG Screenshot 2026-10-05 at 11.14.56 PM.png 223.3 KB · Download XLSX Q3-budget.xlsx 88.0 KB · Download PDF فلسفه علم روان_شناسی.pdf 274.5 KB · Download These links expire 90 days after sending." [ref=f2e181]:
+            - generic [ref=f2e182]: B — minimal list
+            - generic [ref=f2e183]:
+              - generic [ref=f2e184]: 4 Files Attached · 798.3 KB
+              - text: HTML
+              - generic [ref=f2e185]: ترند CRM.html
+              - generic [ref=f2e187]:
+                - text: 212.5 KB ·
+                - link "Download" [ref=f2e188] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/11112222/g.html
+              - text: PNG
+              - generic [ref=f2e189]: Screenshot 2026-10-05 at 11.14.56 PM.png
+              - generic [ref=f2e191]:
+                - text: 223.3 KB ·
+                - link "Download" [ref=f2e192] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/33334444/h.png
+              - text: XLSX
+              - generic [ref=f2e193]: Q3-budget.xlsx
+              - generic [ref=f2e195]:
+                - text: 88.0 KB ·
+                - link "Download" [ref=f2e196] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/55556666/i.xlsx
+              - text: PDF
+              - generic [ref=f2e197]: فلسفه علم روان_شناسی.pdf
+              - generic [ref=f2e199]:
+                - text: 274.5 KB ·
+                - link "Download" [ref=f2e200] [cursor=pointer]:
+                  - /url: https://files.trendmedia.ai/attachments/hamed@trendmedia.ai/77778888/j.pdf
+              - generic [ref=f2e201]: These links expire 90 days after sending.

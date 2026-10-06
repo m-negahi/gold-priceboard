@@ -9,16 +9,16 @@ use App\Modules\Pricing\Application\Queries\EffectivePriceQuery;
 use App\Modules\Pricing\Application\Queries\ManualPriceQuery;
 use App\Modules\Pricing\Application\Queries\ProviderQuery;
 use App\Modules\Pricing\Domain\Enums\Instrument;
-use App\Modules\Pricing\Services\SourceManager;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
  * Gheymat haye DASTI (fallback) — panel e admin (Phase 4/5).
  *
- * Admin gheymat ha ro dasti migzare ya az yek provider seed mikone؛ feed e
- * mo'asser (olaviat + fallback) ham inja neshun dade mishe ba alarm.
+ * ⚠️ update/seed/remove JSON bar migardunan (safhe ba Alpine be-rooz
+ * mishe — hich reload/scroll، khaste ye sahebe proje). Progressive: age
+ * expectsJson nabud، redirect e classic.
  */
 final readonly class ManualPriceController
 {
@@ -31,23 +31,10 @@ final readonly class ManualPriceController
 
     public function index(): View
     {
-        // Source haye-i ke mishe azashun seed kard (gheyr e khod e manual).
-        $seedSources = [];
-
-        foreach ($this->providers->panelRows() as $row) {
-            if ($row['key'] !== 'manual' && ! $row['deleted']) {
-                $seedSources[$row['key']] = $row['name'];
-            }
-        }
-
-        return view('panel::manual.index', [
-            'rows' => $this->manual->rows(),
-            'seedSources' => $seedSources,
-            'effective' => $this->effective->feed(),
-        ]);
+        return view('panel::manual.index', $this->payload());
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request): JsonResponse
     {
         $data = $request->validate([
             'symbol' => ['required', 'string', 'max:32'],
@@ -57,41 +44,27 @@ final readonly class ManualPriceController
         $instrument = Instrument::tryFrom((string) $data['symbol']);
 
         if ($instrument === null) {
-            return back()->withErrors(['symbol' => 'نماد ناشناخته است.']);
+            return new JsonResponse(['message' => 'نماد ناشناخته است.'], 422);
         }
 
         $this->action->setFromDisplay($instrument, (float) $data['value'], $this->editor($request));
 
-        return back()->with('toast', [
-            'kind' => 'success',
-            'title' => 'ثبت شد',
-            'message' => $instrument->label().' به‌روز شد.',
-        ]);
+        return $this->json($instrument->label().' به‌روز شد.');
     }
 
-    public function seed(Request $request): RedirectResponse
+    public function seed(Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'provider' => ['required', 'string', 'max:32'],
-        ]);
-
-        if (! in_array($data['provider'], SourceManager::drivers(), true)
-            && $this->providers->panelRows() === []) {
-            return back()->withErrors(['provider' => 'منبع نامعتبر است.']);
-        }
+        $data = $request->validate(['provider' => ['required', 'string', 'max:32']]);
 
         $count = $this->action->seedFromProvider((string) $data['provider'], $this->editor($request));
 
-        return back()->with('toast', [
-            'kind' => $count > 0 ? 'success' : 'warning',
-            'title' => $count > 0 ? 'پر شد' : 'چیزی پر نشد',
-            'message' => $count > 0
-                ? "{$count} نماد از منبع انتخابی کپی شد. حالا می‌توانید دستی اصلاح کنید."
-                : 'آن منبع هنوز قیمتی ندارد.',
-        ]);
+        return $this->json(
+            $count > 0 ? "{$count} نماد از منبع انتخابی کپی شد." : 'آن منبع هنوز قیمتی ندارد.',
+            $count > 0 ? 'success' : 'warning',
+        );
     }
 
-    public function remove(Request $request): RedirectResponse
+    public function remove(Request $request): JsonResponse
     {
         $instrument = Instrument::tryFrom((string) $request->string('symbol'));
 
@@ -99,7 +72,41 @@ final readonly class ManualPriceController
             $this->action->remove($instrument);
         }
 
-        return back()->with('toast', ['kind' => 'success', 'title' => 'حذف شد', 'message' => 'قیمت دستی برداشته شد.']);
+        return $this->json('قیمت دستی برداشته شد.');
+    }
+
+    /** Payload e moshtarak: rows + source ha + vaziat e feed e mo'asser. */
+    private function payload(): array
+    {
+        $seedSources = [];
+
+        foreach ($this->providers->panelRows() as $row) {
+            if ($row['key'] !== 'manual' && ! $row['deleted']) {
+                $seedSources[$row['key']] = $row['name'];
+            }
+        }
+
+        $effective = $this->effective->feed();
+
+        return [
+            'rows' => $this->manual->rows(),
+            'seedSources' => $seedSources,
+            'effective' => [
+                'alarm' => $effective['alarm'],
+                'fallbackCount' => $effective['fallbackCount'],
+            ],
+        ];
+    }
+
+    private function json(string $message, string $kind = 'success'): JsonResponse
+    {
+        $payload = $this->payload();
+
+        return new JsonResponse([
+            'rows' => $payload['rows'],
+            'effective' => $payload['effective'],
+            'toast' => ['kind' => $kind, 'title' => $kind === 'success' ? 'انجام شد' : 'توجه', 'message' => $message],
+        ]);
     }
 
     private function editor(Request $request): ?string

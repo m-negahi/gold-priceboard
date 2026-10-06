@@ -443,7 +443,14 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 - [ ] **P4-09** — Model e karbari: **website + plan** — karbar website ezafe mikone (masalan tala.ir)، baraye HAR website yek client_id/secret migire، bad **plan** mikhare (masalan 1200 call/rooz): kharid e plan wallet ro be andaze ye gheymat e plan SHARJ mikone va masraf pay-as-you-go kasr mishe. Saghf e ruzane ye plan tu `ChargeApiCall` e'mal mishe (429).
 - [ ] **P4-10** — Panel e CUSTOMER (self-serve): lista ye website ha، sakht e website (credential yek bar namayesh)، kharid e plan، mande/ledger e wallet.
 - [ ] **P4-11** — **API inspector** (mini-Telescope): har call e API ba request/response/payload/khata/hazine/duration sabt she va tu panel dide she.
-- [ ] **P4-12** — UX e behtar e `/dashboard/monitor`: tozihat e tick mafhoomi-tar (provider/symbol/zaman/driver/dalil e daghigh e har rad ba MEGHDAR)، + tozih e saghf haye enheraf tu rahnama (5% USD / 10% IRR / ta'eed e do-tayi / 20% e cross-provider).
+- [x] **P4-12** — UX e behtar e `/dashboard/monitor` (anjam shod).
+- [x] **P4-13** — **Manba' e DASTI (fallback) + feed e mo'asser** (khaste ye sahebe proje، 2026-10-06): age hame provider ha ghat' shan، API/tablo ghat' nashe.
+  → `ManualQuoteSource` (upstreamAt null — hargez stale rad nemishe) + `manual_prices` + provider e `manual` (sort 80، khamoosh). `ManualPriceAction` (set/seedFromProvider) + `ManualPriceQuery` (alarm e >24h). `EffectivePriceQuery`: har symbol → avvalin provider e taze be tartib e `sort`؛ hame stale → manual؛ `usingFallback`+alarm. Panel «قیمت دستی» (seed + virayesh + alarm). `GET /api/v1/effective` (+ `X-Pb-Fallback`).
+- [x] **P5-01/02/06** — Site e omumi: tablo ye moghayese (SSR + `/board.json` + poll e 15s + flash)، chrome، **sefr request e biruni** (e2e).
+- [x] **P5-04** — Chart e KLineCharts 10 (modal ru board، `/candles.json`، lazy-import، rang az token).
+- [ ] **P5-03** — Board e TV (full-screen، font e bozorg، flash) — MANDE.
+- [ ] **P5-05** — SEO (JSON-LD، sitemap، robots.txt) — MANDE.
+- ✅ **Login hall shod** (2026-10-06): cookie e yekta `pb8300_session` + lifetime 24h + rebuild e image. Ta'eed: 6 refresh → 0 drop.
 
 ---
 

@@ -39,6 +39,14 @@ return [
     'connection' => env('OTP_REDIS_CONNECTION', 'default'),
 
     /*
+     * 🔴 Rate limit roshan e ya na. Default: FAGHAT vaghti driver e vaghei
+     * (kavenegar) ast — ba driver e `fake` (dev/demo) khamoosh، ta login e
+     * dev throttle nashe (khaste ye sahebe proje). Tu production (kavenegar)
+     * hamishe roshan. Test ha un ro sarih true mikonan (`TestCase`).
+     */
+    'throttle' => (bool) env('OTP_THROTTLE', env('SMS_DRIVER', 'kavenegar') !== 'fake'),
+
+    /*
      * Rate limit — PHONE **va** IP، jodagane (dalil tu `OtpThrottle`).
      * ⚠️ Limit e IP faghat ba `TrustProxies` e salem ma'ni dare.
      */

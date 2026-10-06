@@ -63,6 +63,7 @@ final class AuthServiceProvider extends ServiceProvider
             verifyPerPhone: (int) config('otp.limits.verify_per_phone', 5),
             verifyPerIp: (int) config('otp.limits.verify_per_ip', 20),
             decaySeconds: (int) config('otp.limits.decay_seconds', 3_600),
+            enabled: (bool) config('otp.throttle', true),
         ));
 
         $this->app->singleton(SendOtpAction::class, static fn ($app): SendOtpAction => new SendOtpAction(
