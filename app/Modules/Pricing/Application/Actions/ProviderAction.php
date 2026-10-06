@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Pricing\Application\Actions;
 
+use App\Modules\Media\Actions\SyncMediaUsageAction;
+use App\Modules\Media\Infrastructure\Persistence\Models\Media;
 use App\Modules\Pricing\Application\Dto\ProviderInputDto;
 use App\Modules\Pricing\Domain\Enums\HealthState;
 use App\Modules\Pricing\Domain\Exceptions\InvalidProviderException;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\Provider;
 use App\Modules\Pricing\Services\SourceManager;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * CRUD e provider — tanha masir e neveshtan ru jadval e `providers`.
@@ -56,7 +60,7 @@ final readonly class ProviderAction
         // `scopeDueForPoll` null ro due hesab mikone.
         $columns['next_poll_at'] = null;
 
-        return Provider::query()->create($columns);
+        return $this->persist(new Provider, $input, $columns);
     }
 
     public function update(Provider $provider, ProviderInputDto $input): Provider
@@ -91,9 +95,7 @@ final readonly class ProviderAction
             $columns['last_error'] = null;
         }
 
-        $provider->fill($columns)->save();
-
-        return $provider->refresh();
+        return $this->persist($provider, $input, $columns);
     }
 
     /**
@@ -172,6 +174,35 @@ final readonly class ProviderAction
         $provider->restore();
 
         return $this->setFlags($provider, ['is_active' => true]);
+    }
+
+    /** Logo va estefade-ash bayad ba provider tu yek transaction sabt shan. */
+    private function persist(Provider $provider, ProviderInputDto $input, array $columns): Provider
+    {
+        return DB::transaction(function () use ($provider, $input, $columns): Provider {
+            if ($provider->exists) {
+                $provider = Provider::query()->lockForUpdate()->findOrFail($provider->id);
+                if ($input->logoPath === null) {
+                    unset($columns['logo_path']);
+                }
+            }
+
+            if ($input->logoSpecified) {
+                $media = $input->logoMediaId === null ? null : Media::query()->lockForUpdate()->find($input->logoMediaId);
+                if ($input->logoMediaId !== null && $media === null) {
+                    throw ValidationException::withMessages(['logo_media_id' => 'تصویر انتخاب‌شده دیگر موجود نیست.']);
+                }
+                $columns['logo_media_id'] = $media?->id;
+                $columns['logo_path'] = $media?->path;
+            }
+
+            $provider->fill($columns)->save();
+            if ($input->logoSpecified) {
+                app(SyncMediaUsageAction::class)->handle($provider, ['logo' => $input->logoMediaId]);
+            }
+
+            return $provider->refresh();
+        });
     }
 
     private function validate(ProviderInputDto $input): void

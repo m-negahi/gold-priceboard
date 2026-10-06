@@ -104,6 +104,7 @@ final readonly class ProviderQuery
                 'driver' => $provider->driver,
                 'kind' => $provider->kind,
                 'website' => $provider->website,
+                'logo_media_id' => $provider->logo_media_id,
                 'isActive' => (bool) $provider->is_active,
                 'inComparison' => (bool) $provider->in_comparison,
                 'onBoard' => (bool) $provider->on_board,
@@ -146,6 +147,7 @@ final readonly class ProviderQuery
                 ? $provider->kind->value
                 : (string) $provider->kind,
             'website' => $provider->website,
+            'logo_media_id' => $provider->logo_media_id,
             'is_active' => (bool) $provider->is_active,
             'in_comparison' => (bool) $provider->in_comparison,
             'on_board' => (bool) $provider->on_board,

@@ -1,6 +1,6 @@
 {{-- Form e sakht/virayesh e manba' (P3-06). Classic POST + redirect؛ khata
      ha az `$errors` miad (x-form.field khodesh neshun mide).
-     ⚠️ Logo be P3-00b (Media) mokul shod — field esh hanuz nist. --}}
+     Logo az ketabkhane e Media entekhab mishe. --}}
 
 @php
     $editing = $mode === 'edit';
@@ -22,6 +22,10 @@
             @if ($editing)
                 @method('PUT')
             @endif
+
+            <x-form.field name="logo_media_id" label="لوگوی منبع">
+                <x-form.media-picker name="logo_media_id" :label="null" :value="$old('logo_media_id')" :media="$logo" />
+            </x-form.field>
 
             <section class="rounded-2xl bg-surface card-p-lg shadow-xs">
                 <h2 class="text-base font-bold text-ink">شناسه و نام</h2>
@@ -118,4 +122,5 @@
             </div>
         </form>
     </div>
+    <x-panel.media-library />
 </x-layouts.panel>

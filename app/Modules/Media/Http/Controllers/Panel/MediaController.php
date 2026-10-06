@@ -14,7 +14,6 @@ use App\Modules\Media\Exceptions\UnsupportedMediaException;
 use App\Modules\Media\Http\Requests\UpdateMediaRequest;
 use App\Modules\Media\Http\Requests\UploadMediaRequest;
 use App\Modules\Media\Http\Resources\MediaRow;
-use App\Modules\Media\Models\Media;
 use App\Modules\Media\Queries\MediaQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -58,17 +57,17 @@ final readonly class MediaController
         return new JsonResponse(['data' => MediaRow::from($this->media->withUsages($media->id) ?? $media), 'message' => 'تصویر بارگذاری شد.'], 201);
     }
 
-    public function update(UpdateMediaRequest $request, Media $media): JsonResponse
+    public function update(UpdateMediaRequest $request, int $media): JsonResponse
     {
-        $media = $this->update->handle($media, $request->dto());
+        $media = $this->update->handle($this->media->findOrFail($media), $request->dto());
 
         return new JsonResponse(['data' => MediaRow::from($this->media->withUsages($media->id) ?? $media), 'message' => 'رسانه ذخیره شد.']);
     }
 
-    public function destroy(Media $media): JsonResponse
+    public function destroy(int $media): JsonResponse
     {
         try {
-            $this->delete->handle($media);
+            $this->delete->handle($this->media->findOrFail($media));
         } catch (MediaInUseException $e) {
             return new JsonResponse(['message' => $e->getMessage(), 'errors' => ['media' => [$e->getMessage()]]], 422);
         }

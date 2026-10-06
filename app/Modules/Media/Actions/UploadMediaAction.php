@@ -8,12 +8,14 @@ use App\Modules\Common\Actions\BaseAction;
 use App\Modules\Common\Helpers\SvgSanitizer;
 use App\Modules\Media\Dto\UploadMediaDto;
 use App\Modules\Media\Exceptions\UnsupportedMediaException;
-use App\Modules\Media\Models\Media;
+use App\Modules\Media\Infrastructure\Persistence\Models\Media;
 use App\Modules\Media\Support\ImageProcessor;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use RuntimeException;
+use Throwable;
 
 /**
  * Tanha rah-e vorood-e yek file be ketabkhane. Mime az fileinfo miad na az pasvand; file zir-e
@@ -60,13 +62,21 @@ final readonly class UploadMediaAction extends BaseAction
         if ($mime === 'image/svg+xml') {
             // SVG rooye hamin origin serve mishe: script/handler/href-e kharji ghabl az zakhire pak mishe.
             try {
-                $disk->put($relative, SvgSanitizer::clean((string) file_get_contents((string) $dto->file->getRealPath())));
+                $written = $disk->put($relative, SvgSanitizer::clean((string) file_get_contents((string) $dto->file->getRealPath())));
             } catch (InvalidArgumentException) {
                 throw UnsupportedMediaException::mime($mime);
             }
         } else {
-            $disk->putFileAs($directory, $dto->file, "{$base}.".self::ALLOWED[$mime]);
+            $written = $disk->putFileAs($directory, $dto->file, "{$base}.".self::ALLOWED[$mime]);
         }
+        if ($written === false) {
+            throw new RuntimeException('File ru disk zakhire nashod.');
+        }
+
+        $derivedPaths = array_merge(["{$directory}/{$base}.webp"], array_map(
+            static fn (int $width): string => "{$directory}/{$base}-{$width}.webp",
+            ImageProcessor::SRCSET_WIDTHS,
+        ));
         $absolute = $disk->path($relative);
         $dimensions = ImageProcessor::dimensions($absolute, $mime);
 
@@ -75,17 +85,18 @@ final readonly class UploadMediaAction extends BaseAction
         if (in_array($mime, ImageProcessor::RASTER_MIMES, true)) {
             try {
                 $derivatives = ImageProcessor::derivatives($absolute, $mime, $disk->path("{$directory}/{$base}"), "{$directory}/{$base}");
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
+                $disk->delete(array_values(array_diff($derivedPaths, [$relative])));
                 report($e);
             }
         }
 
-        return Media::query()->create([
+        $media = new Media([
             'disk' => self::DISK,
             'path' => $relative,
             'name' => Str::limit((string) $dto->file->getClientOriginalName(), 200, ''),
             'mime' => $mime,
-            'size' => (int) $dto->file->getSize(),
+            'size' => $disk->size($relative),
             'width' => $dimensions['width'] ?? null,
             'height' => $dimensions['height'] ?? null,
             'alt' => trim($dto->alt),
@@ -93,5 +104,14 @@ final readonly class UploadMediaAction extends BaseAction
             'derivatives' => $derivatives,
             'uploaded_by' => $dto->uploadedBy,
         ]);
+
+        try {
+            $media->save();
+        } catch (Throwable $exception) {
+            $disk->delete(array_values(array_unique([$relative, ...$derivedPaths])));
+            throw $exception;
+        }
+
+        return $media;
     }
 }

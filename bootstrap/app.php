@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Auth\Http\Middleware\EnsureActiveUser;
+use App\Modules\Common\Exceptions\InvalidTableRequestException;
 use App\Modules\Common\Http\Middleware\LatinizeDigits;
 use App\Modules\Common\Http\Middleware\NormalizePhoneMiddleware;
 use App\Modules\Common\Http\Middleware\NormalizeRouteParamsMiddleware;
@@ -13,6 +14,7 @@ use App\Modules\Panel\Http\Middleware\EnsureLocalEnvironment;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Middleware\TrustProxies as FrameworkTrustProxies;
 use Illuminate\Http\Request;
 
@@ -111,6 +113,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(static fn (InvalidTableRequestException $exception): JsonResponse => new JsonResponse([
+            'message' => $exception->getMessage(),
+            'errors' => [$exception->field() => [$exception->getMessage()]],
+        ], 422));
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

@@ -53,7 +53,7 @@ export function format(value, options = {}) {
     let formatter = formatters.get(key);
 
     if (!formatter) {
-        formatter = new Intl.NumberFormat('fa-IR', options);
+        formatter = new Intl.NumberFormat('fa-IR-u-nu-latn', options);
         formatters.set(key, formatter);
     }
 

@@ -6,7 +6,7 @@ namespace App\Modules\Media\Actions;
 
 use App\Modules\Common\Actions\BaseAction;
 use App\Modules\Media\Dto\MediaDto;
-use App\Modules\Media\Models\Media;
+use App\Modules\Media\Infrastructure\Persistence\Models\Media;
 
 /**
  * Faghat matn-ha (alt/title) avaz mishan; file va masir hich vaght. Form hamishe har do ro

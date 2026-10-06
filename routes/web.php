@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Auth\Http\Controllers\LoginController;
 use App\Modules\Auth\Http\Middleware\EnsureAdmin;
 use App\Modules\Kyc\Http\Controllers\OnboardingController;
+use App\Modules\Media\Http\Controllers\Panel\MediaController;
 use App\Modules\Panel\Http\Controllers\ChartController;
 use App\Modules\Panel\Http\Controllers\DashboardController;
 use App\Modules\Panel\Http\Controllers\KitController;
@@ -65,6 +66,12 @@ Route::middleware(['auth', EnsureAdmin::class])
     ->name('panel.')
     ->group(function (): void {
         Route::get('/', [DashboardController::class, 'show'])->name('dashboard');
+
+        Route::get('/media', [MediaController::class, 'index'])->name('media.index');
+        Route::get('/media/table', [MediaController::class, 'table'])->name('media.table');
+        Route::post('/media', [MediaController::class, 'store'])->name('media.store');
+        Route::put('/media/{media}', [MediaController::class, 'update'])->whereNumber('media')->name('media.update');
+        Route::delete('/media/{media}', [MediaController::class, 'destroy'])->whereNumber('media')->name('media.destroy');
 
         // ── Manba' ha (P3-06) ───────────────────────────────────────
         Route::get('/providers', [ProviderController::class, 'index'])->name('providers.index');

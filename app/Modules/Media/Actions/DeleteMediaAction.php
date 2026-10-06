@@ -6,7 +6,7 @@ namespace App\Modules\Media\Actions;
 
 use App\Modules\Common\Actions\BaseAction;
 use App\Modules\Media\Exceptions\MediaInUseException;
-use App\Modules\Media\Models\Media;
+use App\Modules\Media\Infrastructure\Persistence\Models\Media;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 
 /**

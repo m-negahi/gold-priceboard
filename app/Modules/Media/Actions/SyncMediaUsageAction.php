@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Media\Actions;
 
 use App\Modules\Common\Actions\BaseAction;
-use App\Modules\Media\Models\Media;
-use App\Modules\Media\Models\MediaUsage;
+use App\Modules\Media\Infrastructure\Persistence\Models\Media;
+use App\Modules\Media\Infrastructure\Persistence\Models\MediaUsage;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Database\Eloquent\Model;
 

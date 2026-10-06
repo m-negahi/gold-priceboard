@@ -25,6 +25,7 @@ final class ProviderSaveRequest extends FormRequest
             'name_fa' => ['required', 'string', 'max:120'],
             'kind' => ['required', 'in:reference,platform'],
             'website' => ['nullable', 'url', 'max:190'],
+            'logo_media_id' => ['nullable', 'integer', 'exists:media,id'],
             'upstream_unit' => ['required', 'in:rial,toman,none'],
             'timeout' => ['required', 'integer', 'min:1', 'max:60'],
             'poll_interval_seconds' => ['required', 'integer', 'min:5', 'max:3600'],
@@ -46,6 +47,7 @@ final class ProviderSaveRequest extends FormRequest
             'name_fa.required' => 'نام فارسی منبع را وارد کنید.',
             'driver.required' => 'درایور را انتخاب کنید.',
             'website.url' => 'نشانی وب‌سایت معتبر نیست.',
+            'logo_media_id.exists' => 'تصویر انتخاب‌شده دیگر موجود نیست.',
         ];
     }
 

@@ -6,7 +6,7 @@ namespace App\Modules\Media\Http\Resources;
 
 use App\Modules\Common\Helpers\Jalali;
 use App\Modules\Media\Actions\UploadMediaAction;
-use App\Modules\Media\Models\Media;
+use App\Modules\Media\Infrastructure\Persistence\Models\Media;
 
 /**
  * Yek radif-e رسانه be shekl-e JSON-e panel — yek shekl baraye jadval, picker, javab-e upload/virayesh
@@ -29,7 +29,7 @@ final readonly class MediaRow
             'width' => $media->width,
             'height' => $media->height,
             'dimensions' => $media->width !== null && $media->height !== null
-                ? Jalali::toPersianDigits($media->width.'×'.$media->height)
+                ? $media->width.'×'.$media->height
                 : ($media->isSvg() ? 'برداری' : '—'),
             'url' => $media->url(),
             'thumb_url' => $media->thumbUrl(),
@@ -47,6 +47,6 @@ final readonly class MediaRow
             ? number_format($bytes / (1024 * 1024), 1).' مگابایت'
             : number_format(max(1, (int) round($bytes / 1024))).' کیلوبایت';
 
-        return Jalali::toPersianDigits($value);
+        return $value;
     }
 }

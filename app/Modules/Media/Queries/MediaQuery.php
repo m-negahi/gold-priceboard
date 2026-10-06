@@ -6,7 +6,7 @@ namespace App\Modules\Media\Queries;
 
 use App\Modules\Common\Queries\TableQuery;
 use App\Modules\Media\Actions\UploadMediaAction;
-use App\Modules\Media\Models\Media;
+use App\Modules\Media\Infrastructure\Persistence\Models\Media;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Panel\Http\Controllers;
 
+use App\Modules\Media\Http\Resources\MediaRow;
+use App\Modules\Media\Queries\MediaQuery;
 use App\Modules\Panel\Http\Requests\ProviderSaveRequest;
 use App\Modules\Pricing\Application\Actions\ProviderAction;
 use App\Modules\Pricing\Application\Dto\ProviderInputDto;
@@ -27,6 +29,7 @@ final readonly class ProviderController
     public function __construct(
         private ProviderQuery $providers,
         private ProviderAction $action,
+        private MediaQuery $media,
     ) {}
 
     public function index(): View
@@ -41,6 +44,7 @@ final readonly class ProviderController
         return view('panel::providers.form', [
             'mode' => 'create',
             'values' => [],
+            'logo' => $this->logoRow(),
             'drivers' => SourceManager::drivers(),
             'kinds' => ProviderKind::labels(),
             'units' => UpstreamUnit::labels(),
@@ -64,9 +68,12 @@ final readonly class ProviderController
 
     public function edit(string $key): View
     {
+        $values = $this->providers->formValues($key);
+
         return view('panel::providers.form', [
             'mode' => 'edit',
-            'values' => $this->providers->formValues($key),
+            'values' => $values,
+            'logo' => $this->logoRow($values['logo_media_id']),
             'drivers' => SourceManager::drivers(),
             'kinds' => ProviderKind::labels(),
             'units' => UpstreamUnit::labels(),
@@ -113,5 +120,14 @@ final readonly class ProviderController
             'title' => 'اعمال شد',
             'message' => 'وضعیت منبع تغییر کرد.',
         ]);
+    }
+
+    /** @return array<string, mixed>|null */
+    private function logoRow(?int $default = null): ?array
+    {
+        $id = (int) old('logo_media_id', $default);
+        $media = $id > 0 ? $this->media->find($id) : null;
+
+        return $media === null ? null : MediaRow::from($media);
     }
 }

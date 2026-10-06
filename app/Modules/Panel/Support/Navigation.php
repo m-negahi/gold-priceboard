@@ -69,7 +69,7 @@ final class Navigation
             [
                 'label' => 'سایت', // Phase 5 + P3-00 (Media)
                 'items' => [
-                    ['key' => 'media', 'label' => 'رسانه', 'icon' => 'image', 'route' => null],
+                    ['key' => 'media', 'label' => 'رسانه', 'icon' => 'image', 'route' => 'panel.media.index'],
                     ['key' => 'seo', 'label' => 'سئو', 'icon' => 'search', 'route' => null],
                 ],
             ],

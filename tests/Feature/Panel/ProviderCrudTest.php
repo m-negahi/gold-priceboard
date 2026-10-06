@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Panel;
 
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
+use App\Modules\Media\Infrastructure\Persistence\Models\Media;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\Provider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -118,5 +119,30 @@ final class ProviderCrudTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->get(route('panel.providers.index'))
             ->assertNotFound();
+    }
+
+    public function test_logo_selection_tracks_usage_and_can_be_replaced_or_removed(): void
+    {
+        $first = Media::factory()->create();
+        $second = Media::factory()->create();
+        $this->actingAs($this->admin())->post(route('panel.providers.store'), $this->payload(['logo_media_id' => $first->id]))->assertRedirect();
+        $provider = Provider::where('key', 'wallgold')->firstOrFail();
+        $this->assertDatabaseHas('providers', ['id' => $provider->id, 'logo_media_id' => $first->id, 'logo_path' => $first->path]);
+        $this->assertDatabaseHas('media_usages', ['media_id' => $first->id, 'usable_id' => $provider->id, 'field' => 'logo']);
+        $this->deleteJson('/dashboard/media/'.$first->id)->assertUnprocessable();
+        $this->get(route('panel.providers.edit', 'wallgold'))->assertOk()->assertSee('logo_media_id');
+        $this->put(route('panel.providers.update', 'wallgold'), $this->payload(['logo_media_id' => $second->id]))->assertRedirect();
+        $this->assertDatabaseMissing('media_usages', ['media_id' => $first->id]);
+        $this->assertDatabaseHas('media_usages', ['media_id' => $second->id, 'usable_id' => $provider->id]);
+        $this->put(route('panel.providers.update', 'wallgold'), $this->payload(['logo_media_id' => null]))->assertRedirect();
+        $this->assertDatabaseHas('providers', ['id' => $provider->id, 'logo_media_id' => null, 'logo_path' => null]);
+        $this->assertDatabaseMissing('media_usages', ['media_id' => $second->id]);
+    }
+
+    public function test_missing_logo_is_rejected_without_creating_a_provider(): void
+    {
+        $this->actingAs($this->admin())->post(route('panel.providers.store'), $this->payload(['logo_media_id' => 999999]))
+            ->assertSessionHasErrors('logo_media_id');
+        $this->assertDatabaseMissing('providers', ['key' => 'wallgold']);
     }
 }

@@ -16,7 +16,15 @@ export default ({ url, maxBytes = 5 * 1024 * 1024 }) => ({
     uploading: false,
     dragging: false,
 
+    destroy() { this.releasePreview(); },
+
+    releasePreview() {
+        if (this.preview) URL.revokeObjectURL(this.preview);
+        this.preview = null;
+    },
+
     reset() {
+        this.releasePreview();
         this.file = null;
         this.preview = null;
         this.alt = '';
@@ -38,6 +46,7 @@ export default ({ url, maxBytes = 5 * 1024 * 1024 }) => ({
     },
 
     take(file) {
+        this.releasePreview();
         this.errors = {};
         this.file = file;
         this.preview = null;

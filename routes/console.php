@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Schedule;
+use Laravel\Telescope\Telescope;
 
 /*
  * ⚠️ `pricing:tick` AMDAN inja NIST.
@@ -37,3 +38,10 @@ Schedule::command('api:usage:rollup')
     ->everyFifteenMinutes()
     ->withoutOverlapping()
     ->name('api-usage-rollup');
+
+// Metrik e queue faghat ba snapshot por mishe.
+Schedule::command('horizon:snapshot')->everyFiveMinutes()->withoutOverlapping();
+
+if (class_exists(Telescope::class) && config('telescope.enabled')) {
+    Schedule::command('telescope:prune --hours=48')->daily()->withoutOverlapping();
+}

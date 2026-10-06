@@ -123,7 +123,7 @@ abstract readonly class TableQuery extends BaseQuery
 
         $builder->where(function (Builder $query) use ($needle): void {
             foreach ($this->searchable() as $column) {
-                $query->orWhere($column, 'ilike', $needle);
+                $query->orWhereLike($column, $needle);
             }
         });
     }

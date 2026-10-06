@@ -35,10 +35,8 @@
     </x-form.field>
 
     <div x-show="uploading" x-cloak class="space-y-1" role="status" aria-live="polite">
-        <div class="h-2 overflow-hidden rounded-full bg-surface-3">
-            <div class="h-full rounded-full bg-brand transition-[width] duration-(--bp-dur-fast)" :style="`width:${progress}%`"></div>
-        </div>
-        <p class="num text-xs text-muted">در حال بارگذاری… <span x-text="new Intl.NumberFormat('fa-IR').format(progress)"></span>٪</p>
+        <progress max="100" :value="progress" aria-label="پیشرفت بارگذاری" class="h-2 w-full accent-brand"></progress>
+        <p class="num text-xs text-muted">در حال بارگذاری… <span x-text="new Intl.NumberFormat('fa-IR-u-nu-latn').format(progress)"></span>٪</p>
     </div>
 
     <div class="flex justify-end gap-2">

@@ -38,6 +38,8 @@ final class ProviderInputDto
         public UpstreamUnit $upstreamUnit = UpstreamUnit::Rial,
         public int $sort = 0,
         public array $options = [],
+        public ?int $logoMediaId = null,
+        public bool $logoSpecified = false,
     ) {}
 
     /**
@@ -71,6 +73,8 @@ final class ProviderInputDto
                 ?? UpstreamUnit::Rial,
             sort: (int) ($data['sort'] ?? 0),
             options: (array) ($data['options'] ?? []),
+            logoMediaId: empty($data['logo_media_id']) ? null : (int) $data['logo_media_id'],
+            logoSpecified: array_key_exists('logo_media_id', $data),
         );
     }
 

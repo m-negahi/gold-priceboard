@@ -58,9 +58,9 @@
         @if ($searchable)
             <label class="relative block w-full sm:w-72">
                 <span class="sr-only">جستجو</span>
-                <x-icon name="search" class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-2" />
+                <x-icon name="search" class="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-2" />
                 <input type="search" x-model="q" placeholder="{{ $searchPlaceholder }}" autocomplete="off"
-                       class="h-10 w-full rounded-lg border border-line bg-surface pr-9 pl-3 text-sm placeholder:text-muted-2 focus:border-brand">
+                       class="h-10 w-full rounded-lg border border-line bg-surface ps-9 pe-3 text-sm placeholder:text-muted-2 focus:border-brand">
             </label>
         @endif
 
@@ -81,7 +81,7 @@
             <x-icon name="close" class="size-4" /> پاک کردن
         </button>
 
-        <div class="mr-auto flex items-center gap-2">
+        <div class="ms-auto flex items-center gap-2">
             <label class="flex h-10 items-center gap-2 rounded-lg border border-line bg-surface px-3 text-sm">
                 <span class="text-muted">در صفحه</span>
                 <select x-model.number="perPage" class="num bg-transparent text-sm text-ink focus:outline-none" aria-label="تعداد در صفحه">
@@ -111,12 +111,12 @@
                     {{ $action['label'] }}
                 </button>
             @endforeach
-            <button type="button" @click="selected = []" class="mr-auto text-sm text-muted hover:text-ink">لغو انتخاب</button>
+            <button type="button" @click="selected = []" class="ms-auto text-sm text-muted hover:text-ink">لغو انتخاب</button>
         </div>
     @endif
 
     {{-- ── Jadval ── --}}
-    <div class="overflow-x-auto rounded-card border border-line bg-surface" :aria-busy="loading">
+    <div class="relative overflow-x-auto rounded-card border border-line bg-surface" :aria-busy="loading">
         <table class="w-full text-sm" :class="loading && loaded && 'opacity-60'">
             <caption class="sr-only">{{ $caption }}</caption>
             <thead class="bg-surface-2 text-xs text-muted">

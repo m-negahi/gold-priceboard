@@ -7,23 +7,27 @@
     <x-panel.modal x-model="libraryOpen" title="کتابخانه‌ی رسانه" description="تصویری را انتخاب کنید یا تصویر تازه‌ای بارگذاری کنید." size="xl">
         <div class="mb-4 flex gap-1 border-b border-line" role="tablist" aria-label="کتابخانه">
             <button type="button" role="tab" :aria-selected="tab === 'library'" @click="tab = 'library'"
-                    class="-mb-px h-10 border-b-2 px-3 text-sm font-medium" :class="tab === 'library' ? 'border-brand text-brand-2' : 'border-transparent text-muted hover:text-ink'">کتابخانه</button>
+                    class="-mb-px min-h-11 border-b-2 px-3 text-sm font-medium" :class="tab === 'library' ? 'border-brand text-brand-2' : 'border-transparent text-muted hover:text-ink'">کتابخانه</button>
             <button type="button" role="tab" :aria-selected="tab === 'upload'" @click="tab = 'upload'"
-                    class="-mb-px h-10 border-b-2 px-3 text-sm font-medium" :class="tab === 'upload' ? 'border-brand text-brand-2' : 'border-transparent text-muted hover:text-ink'" data-media-library-upload-tab>بارگذاری</button>
+                    class="-mb-px min-h-11 border-b-2 px-3 text-sm font-medium" :class="tab === 'upload' ? 'border-brand text-brand-2' : 'border-transparent text-muted hover:text-ink'" data-media-library-upload-tab>بارگذاری</button>
         </div>
 
         <div x-show="tab === 'library'" role="tabpanel">
             <div class="relative mb-3">
-                <x-icon name="search" class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-2" />
+                <x-icon name="search" class="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-2" />
                 <input type="search" x-model="q" placeholder="جستجو در نام، alt یا عنوان…" aria-label="جستجوی رسانه"
-                       class="{{ \App\Modules\Panel\Support\FormControl::classes('sm') }} pr-9">
+                       class="{{ \App\Modules\Panel\Support\FormControl::classes('sm') }} ps-9">
             </div>
 
+            <div x-show="error" x-cloak role="alert" class="mb-3 rounded-xl bg-danger-soft p-3 text-sm text-danger">
+                <span x-text="error"></span>
+                <button type="button" @click="load(meta.page)" class="min-h-11 px-3 underline">تلاش دوباره</button>
+            </div>
             <div x-show="loading" class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6" aria-hidden="true">
                 <template x-for="i in 12" :key="i"><div class="aspect-square animate-pulse rounded-lg bg-surface-3"></div></template>
             </div>
 
-            <div x-show="!loading && rows.length === 0" x-cloak class="rounded-xl border border-dashed border-line-3 p-8 text-center text-sm text-muted">
+            <div x-show="!loading && !error && rows.length === 0" x-cloak class="rounded-xl border border-dashed border-line-3 p-8 text-center text-sm text-muted">
                 <span x-show="q === ''">هنوز تصویری در کتابخانه نیست.</span>
                 <span x-show="q !== ''">چیزی پیدا نشد.</span>
                 <button type="button" class="ms-1 text-brand hover:underline" @click="tab = 'upload'">بارگذاری کنید</button>

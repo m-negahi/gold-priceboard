@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Media\Models;
+namespace App\Modules\Media\Infrastructure\Persistence\Models;
 
 use App\Modules\Media\Database\Factories\MediaFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,14 +31,14 @@ use Illuminate\Support\Facades\Storage;
  * @property Carbon|null $updated_at
  * @property-read int|null $usages_count
  */
-final class Media extends Model
+class Media extends Model
 {
     /** @use HasFactory<MediaFactory> */
     use HasFactory;
 
     protected $table = 'media';
 
-    protected $guarded = [];
+    protected $fillable = ['disk', 'path', 'name', 'mime', 'size', 'width', 'height', 'alt', 'title', 'derivatives', 'uploaded_by'];
 
     /** @return array<string, string> */
     protected function casts(): array
