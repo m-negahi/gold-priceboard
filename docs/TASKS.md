@@ -475,14 +475,14 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 - [x] **P4-04** — HMAC auth middleware (canonical، skew ±30s، nonce yek-bar-masraf fail-closed، decoy-HMAC) → `4224dde`، 9 test
 - [x] **P4-05** — Debit e atomic ba Lua + refund ru error/304 — **fail-CLOSED** → `4224dde`
 - [x] **P4-06** — Endpoint ha (`prices`/`candles`/`instruments`/`providers`/`wallet`) + `ETag` → `4224dde`، 7 test
-- [ ] **P4-07** — `CustomerList` + `WalletLedger` tu panel e ADMIN (model/Query amade — faghat UI) e ADMIN
+- [ ] ~~**P4-07** — `CustomerList` + `WalletLedger` tu panel e ADMIN (model/Query amade — faghat UI)~~ → edgham shod tu **P6-02/P6-03/P6-06** (2026-10-06)
 - [x] **P4-08** — Test: debit e dobare mamnu'، refund، fail-closed vaghti Redis down ast
   → Tu `ApiChargeTest`/`ApiHmacAuthTest`/`WalletLedgerTest` (bala).
 
 **Darkhast haye sahebe proje (2026-10-06، vasat e session):**
-- [ ] **P4-09** — Model e karbari: **website + plan** — karbar website ezafe mikone (masalan tala.ir)، baraye HAR website yek client_id/secret migire، bad **plan** mikhare (masalan 1200 call/rooz): kharid e plan wallet ro be andaze ye gheymat e plan SHARJ mikone va masraf pay-as-you-go kasr mishe. Saghf e ruzane ye plan tu `ChargeApiCall` e'mal mishe (429).
-- [ ] **P4-10** — Panel e CUSTOMER (self-serve): lista ye website ha، sakht e website (credential yek bar namayesh)، kharid e plan، mande/ledger e wallet.
-- [ ] **P4-11** — **API inspector** (mini-Telescope): har call e API ba request/response/payload/khata/hazine/duration sabt she va tu panel dide she.
+- [x] **P4-09** — Model e karbari: **website + plan** — karbar website ezafe mikone (masalan tala.ir)، baraye HAR website yek client_id/secret migire، bad **plan** mikhare (masalan 1200 call/rooz): kharid e plan wallet ro be andaze ye gheymat e plan SHARJ mikone va masraf pay-as-you-go kasr mishe. Saghf e ruzane ye plan tu `ChargeApiCall` e'mal mishe (429).
+- [ ] ~~**P4-10** — Panel e CUSTOMER (self-serve): lista ye website ha، sakht e website (credential yek bar namayesh)، kharid e plan، mande/ledger e wallet.~~ → jabeja shod be **P8-08** (ba'd az ticket/ta'eed e site، 2026-10-06)
+- [x] **P4-11** — **API inspector** (mini-Telescope): har call e API ba request/response/payload/khata/hazine/duration sabt she va tu panel dide she.
 - [x] **P4-12** — UX e behtar e `/dashboard/monitor` (anjam shod).
 - [x] **P4-13** — **Manba' e DASTI (fallback) + feed e mo'asser** (khaste ye sahebe proje، 2026-10-06): age hame provider ha ghat' shan، API/tablo ghat' nashe.
   → `ManualQuoteSource` (upstreamAt null — hargez stale rad nemishe) + `manual_prices` + provider e `manual` (sort 80، khamoosh). `ManualPriceAction` (set/seedFromProvider) + `ManualPriceQuery` (alarm e >24h). `EffectivePriceQuery`: har symbol → avvalin provider e taze be tartib e `sort`؛ hame stale → manual؛ `usingFallback`+alarm. Panel «قیمت دستی» (seed + virayesh + alarm). `GET /api/v1/effective` (+ `X-Pb-Fallback`).
@@ -505,6 +505,67 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   + Mahdudiat e tabi'i ye zoom e gozashte: tick e kham 30 rooz، m5 180 rooz، h4/d1 ta abad — `availableFrom()` hamin ro be UI mige.
 - [ ] **P5-05** — SEO: `seo_meta`، `SeoResolver`، JSON-LD، sitemap، `robots.txt`
 - [ ] **P5-06** — Verify ba Playwright (+ check e **sefr request e biruni** tu network tab)
+
+---
+
+## Phase 6 — Karbaran (CRUD e admin) + wallet + usage
+
+> Darkhast e sahebe proje (chat 2026-10-06): «CRUD e karbaran kojast؟ admin ya customer ezafe konim، wallet + site + usage + plan hayi ke kharidan ro bebinim، disable/enable konim». **Vaziat e fe'li (inventory e code)**: CRUD e karbar AASLAN nist — tanha naghsh `is_admin`، hich status/level/disable؛ admin faghat ba `AdminSeeder` sakhte mishe. `P4-07` (CustomerList + WalletLedger) inja edgham mishe.
+
+- [ ] **P6-01** — Migration e ezafe-shi ru `users`: `status` (active/disabled)، `disabled_at`، `disabled_reason`، `level` (basic / invoice_verified)، `customer_type` (individual / legal)، `national_code` (nullable). Backfill: hame active + basic.
+- [ ] **P6-02** — Panel: **lista ye karbaran** (search ba mobile/esm، filter e naghsh/vaziat/level) — `UserQuery` + jadval e server-side.
+- [ ] **P6-03** — Panel: **safhe ye karbar**: profile، wallet (mande + ledger)، site ha (api_client) ba vaziat، plan/subscription haye fa'al، **usage** (chart e call/rooz)، ticket ha.
+- [ ] **P6-04** — Panel: **sakht e karbar** (admin ya customer، ba mobile) + taghir e naghsh. `is_admin` faghat ba `forceFill` (hamun gharardad e mojud).
+- [ ] **P6-05** — **Disable/Enable**: karbar e disable login nemitune bokone (session haye baz ham bayad bioftan) va HAME ye site hash ru API 403 migiran (`ApiHmacAuth` alan faghat `api_clients.is_active` ro check mikone). Test e har do masir.
+- [ ] **P6-06** — Wallet tu panel: sharj/kasr e **dasti** ba dalil (reason `admin_adjust` + kodam admin) — append-only.
+- [ ] **P6-07** — 🔴 Negahban e **append-only** e `wallet_transactions` dar sath e DB (trigger e Postgres ke UPDATE/DELETE ro rad kone). Alan faghat ghanun e neveshtari-st (`UPDATED_AT = null`)، hich chiz jologiri nemikone.
+- [ ] **P6-08** — **Usage e paydar**: shomarande ye ruzane fe'lan faghat yek kelid e Redis e 2-rooze-st. Rollup e ruzane be jadval e `api_usage_daily` (client، rooz، call، hazine) + Query + chart tu safhe ye karbar.
+
+## Phase 7 — Ticket + onboarding + KYC (Zohal)
+
+> Darkhast: «har darkhast e karbar ticket beshe». Ba'd az avvalin login (OTP) safhe ye **onboarding** miporse «مایل به دریافت فاکتور رسمی هستید؟»؛ age bale: etela'at e hoghoghi + upload e javaz e kasb / sanad e kasb-o-kar → ticket e «ارتقای سطح». Etela'at ba API e Zohal sanjide mishe؛ admin tu ticket ta'eed mikone → level e karbar bala mire.
+
+**API e Zohal (barresi shod 2026-10-06 — az source e SDK e rasmi-shabih `vahidkaargar/zohal-php-sdk`، chun `zohal.io/documents` client-render ast):**
+- Base `https://service.zohal.io/api/v0` · sandbox `https://sandbox.zohal.io/api/v0` · `POST` JSON · header `Authorization: Bearer <token>`.
+- Envelope: `{"result": int, "response_body": {"data": {...}, "error_code": ?string, "message": string}}` — khata ye business ba **2xx + `error_code`** miad (na status e HTTP).
+- `services/inquiry/shahkar` (`mobile`، `national_code`) → `matched` — **code e melli ↔ mobile**.
+- `services/inquiry/national_identity_inquiry` (`national_code`، `birth_date`) → `matched`، esm، esm e pedar، `alive`.
+- `services/inquiry/postal_code_inquiry` (`postal_code`) → address (ostan، shahr، khiaban، pelak، tabaghe…).
+- `services/inquiry/company_inquiry` (`national_id`) → esm، shomare sabt، noe، address، `postal_code`، `activity_end_date`. (+ `…/board_members`)
+- `services/inquiry/enamad_inquiry` (`website`) → `domain`، `expired`، `expiry_date`، `logolevel` — baraye Phase 8.
+- ⚠️ **Javaz e kasb estelam NADARE** → upload + barresi ye dasti. ⚠️ API e gheymat e tala/dolar ham nadare.
+
+- [ ] **P7-01** — Module e **Ticket**: `tickets` (user، `type`: kyc_upgrade / site_approval / support، `status`: open / in_review / approved / rejected / closed، subject)، `ticket_messages` (nevisande، matn، peyvast)، `ticket_events` (audit e har taghir e vaziat). Inbox e admin (filter e noe/vaziat) + safhe ye ticket.
+- [ ] **P7-02** — **Upload e madarek** ru disk e **private** (na public): validate e mime/size، download e emza-dar faghat baraye admin + saheb. (Media module e copy-shode ya yek attachment e sade — tasmim tu hamin task.)
+- [ ] **P7-03** — **Onboarding** ba'd az avvalin login: «مایل به دریافت فاکتور رسمی هستید؟» → kheir: level e basic، edame. Bale: form e hoghoghi (shenase melli sherkat، code eghtesadi، esm e sabti، code posti، address، telephone، code melli + tarikh e tavalod e namayande) + upload → ticket e `kyc_upgrade`.
+- [ ] **P7-04** — **Adapter e Zohal** posht e yek Port (`IdentityVerificationPort`) ba `Http` (na SDK — hamun tasmim e Influx: client e mutable zire Octane bind nemishe) + fake + bind-test. Test ha **hich network** nemizanan (fixture az shekl e envelope). Dev ru **sandbox**. Token: `ZOHAL_TOKEN` tu `.env` — sahebe proje mizare.
+- [ ] **P7-05** — **Gozaresh e sanjesh e khodkar** ru ticket: shahkar (mobile ↔ code melli)، hoviat، sherkat (vojud + fa'al budan + tatbigh e esm)، code posti (tatbigh ba address e sherkat). Har check: ✅/❌/⚠️ khata + javab e kham. **Har call pul dare** → faghat yek bar ba'd az ersal ejra mishe + dokme ye «اجرای دوباره» baraye admin.
+- [ ] **P7-06** — **Ta'eed/rad e admin** tu ticket → `users.level = invoice_verified` + zakhire ye etela'at e factor؛ rad ba dalil.
+- [ ] **P7-07** — **Etela'resani** be karbar (SMS e Kavenegar e mojud) ru taghir e vaziat e ticket.
+
+## Phase 8 — Site + plan e eshteraki + pardakht
+
+> Darkhast: karbar site ezafe mikone → **ticket**؛ api key/secret HAMUN moghe dade mishe vali ta ta'eed e site **kar nemikone**. Admin enamad ro check mikone va ta'eed mikone → az hamun lahze API fa'al. Plan haye eshteraki (moddat، gheymat، tedad e call، …) ro admin ta'rif mikone va karbar baraye har site mikhare؛ wallet sharj mishe va pay-as-you-go kasr mishe.
+
+- [ ] **P8-01** — Migration e ezafe-shi ru `api_clients`: `status` (pending / approved / rejected / suspended) + `approved_at`/`approved_by`. 🔴 **Backfill: client haye mojud `approved`** — vagarna ba deploy hame ye moshtari haye fe'li ghat' mishan. `ApiHmacAuth` faghat `approved` + karbar e active ro ghabul kone (401/403 e sarih).
+- [ ] **P8-02** — Karbar site ezafe mikone → client (key/secret yek bar namayesh) ba `pending` + **ticket e `site_approval`** khodkar.
+- [ ] **P8-03** — Ru ticket e site: **estelam e enamad** (Zohal) — domain tatbigh dare؟ monghazi nashode؟ level? → admin ta'eed → `approved_at` → API fa'al.
+- [ ] **P8-04** — **Plan ha tu admin (CRUD)**: migration e ezafe-shi ru `api_plans`: `duration_days`، `calls_included` (kol)، `calls_per_day`، `price_minor`، `cost_per_call_minor` (ezafe bar sahmie).
+- [ ] **P8-05** — **Eshterak** (`site_subscriptions`: client، plan، `starts_at`، `ends_at`، sahmie/masraf، gheymat e pardakhti) — kharid az wallet **kasr** mishe؛ monghazi shodan؛ tamdid.
+- [ ] **P8-06** — Mantegh e kasr: ⚠️ **montazer e tasmim e sahebe proje** (soal e 1 e paeen). `P4-09` (kharid = sharj e wallet) ba in tarahi fargh dare.
+- [ ] **P8-07** — **Sharj e wallet ba dargah e pardakht** (callback + verify e idempotent) + **factor e rasmi** baraye karbar e `invoice_verified`.
+- [ ] **P8-08** — **Panel e customer** (self-serve — jaye `P4-10`): dashboard، site ha + key ha، eshterak ha، wallet، usage، ticket ha.
+
+### ❓ Soal haye baz baraye sahebe proje (ghabl az Phase 6–8)
+1. **Plan + pay-as-you-go**: dakhel e sahmie ye eshterak call ha majani-and va faghat **bishtar az sahmie** az wallet kasr mishe؟ ya eshterak faghat «haghe dastresi»-e va HAR call kasr mishe؟
+2. **Dargah e pardakht**: kodum؟ (Zohal «Powered by Zibal» ast — Zibal؟) merchant id dar dastres-e؟
+3. **Token e Zohal** (+ sandbox) — lotfan `ZOHAL_TOKEN` ro khodet tu `.env` bezar (man `.env` ro nemikhunam).
+4. «ham tala ham dolar»: Zohal API e gheymat nadare — manzoor yek provider e gheymat e **digar** bud؟
+5. Karbar e **haghighi** (bedun e factor e rasmi) mitune site ezafe kone va plan bekhare؟ ya KYC ejbari-e؟
+6. Estelam e hoviat `birth_date` mikhad — tu onboarding beporsim؟
+
+### Tartib e pishnahadi
+Phase 5 (baghi: `P5-08` chart e admin، `P5-03` TV، `P5-05` SEO) → **Phase 6** (pish-niaz e hame: karbar/status) → **Phase 7** (ticket + KYC) → **Phase 8** (site/plan/pardakht). `P4-15..17` (Telescope/Horizon/queue) har vaght beyn e in ha.
 
 ---
 

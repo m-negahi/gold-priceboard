@@ -90,6 +90,9 @@ Panel aval، website e UI ba'd.
 | 3 | Panel e admin | — |
 | 4 | Wallet + API | — |
 | 5 | Website UI (board, chart, SEO) | — |
+| 6 | Karbaran (CRUD e admin، disable، wallet، usage) | — |
+| 7 | Ticket + onboarding + KYC (Zohal) | — |
+| 8 | Site (ta'eed + enamad) + plan e eshteraki + pardakht | — |
 
 Hālat e daghigh tu `docs/TASKS.md`.
 

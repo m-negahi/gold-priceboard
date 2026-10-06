@@ -525,6 +525,17 @@ meta jsonb · created_at · unique(wallet_id, reason, reference)   // kasr e dob
 
 ---
 
+## Phase 6 — Karbaran · Phase 7 — Ticket + KYC · Phase 8 — Site + plan + pardakht
+
+Ezafe shod 2026-10-06 (darkhast e sahebe proje). **Task ha، API e Zohal va soal haye baz: `docs/TASKS.md` (Phase 6/7/8)** — inja faghat osul:
+
+- **Har darkhast e karbar = ticket** (ertegha ye sath/KYC، ta'eed e site، poshtibani) ba audit e har taghir e vaziat.
+- **KYC ba Zohal** posht e yek Port (shahkar، hoviat، sherkat، code posti، enamad)؛ har call pul dare → yek bar ejra + «اجرای دوباره» e admin. Test ha bedun e network (fixture)، dev ru sandbox.
+- **Site ta ta'eed kar nemikone**: key/secret hamun moghe dade mishe vali `ApiHmacAuth` faghat site e `approved` + karbar e active ro ghabul mikone. Client haye mojud ba backfill `approved` mimunan.
+- **Karbar e disable** = na login، na API.
+- **Madarek ru disk e private**، download e emza-dar.
+- Mantegh e kasr e plan va pay-as-you-go **montazer e tasmim e sahebe proje** (soal e 1 tu TASKS).
+
 ## `CLAUDE.md` (se file)
 1. `/CLAUDE.md` — entry: brand، stack، port ha، Docker، workflow.
 2. `/app/Modules/CLAUDE.md` — marz e `Domain`/`Application`/`Infrastructure`، Port & Adapter، Action/Query/Dto/Enum.
