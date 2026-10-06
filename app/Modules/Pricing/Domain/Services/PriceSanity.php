@@ -64,7 +64,7 @@ final readonly class PriceSanity
      * Saghf e ekhtelaf ba provider haye DIGAR، baraye avvalin tick.
      *
      * ── Chera 20% va na 10% ─────────────────────────────────────────
-     * Provider ha VAGHE'AN ba ham farg daran: estjt (Esfahan) va tgju
+     * Provider ha VAGHE'AN ba ham farg daran: estjt (etehadiye ye Tehran) va tgju
      * (Tehran) do bazaar e motefavet-and va har maghaze nerkh e khodesh ro
      * dare. Andaze-giri ye zende: ons 0.27% ekhtelaf، tala ye 18 ayar
      * 0.26%.

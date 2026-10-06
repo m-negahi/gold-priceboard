@@ -30,7 +30,10 @@ return [
     |
     */
 
-    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+    // Default 24 saat (1440 daghighe): panel e admin nabayad vasat e kar
+    // logout she. Remember-cookie e login (`remember: true`) ham poshtibani
+    // ye boland-moddat mikone، vali session e tulani UX ro behtar mikone.
+    'lifetime' => (int) env('SESSION_LIFETIME', 1440),
 
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 

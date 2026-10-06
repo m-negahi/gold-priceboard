@@ -97,8 +97,8 @@ final class ProviderSeeder extends Seeder
         $this->provider([
             'key' => 'estjt',
             'driver' => 'estjt',
-            'name' => 'Esfahan Gold Union',
-            'name_fa' => 'اتحادیه طلا و جواهر اصفهان',
+            'name' => 'Tehran Gold Union',
+            'name_fa' => 'اتحادیه طلا و جواهر تهران',
             'website' => 'https://www.estjt.ir',
             'kind' => 'reference',
             'sort' => 20,

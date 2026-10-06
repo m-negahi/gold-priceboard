@@ -35,7 +35,7 @@ final class DashboardPageTest extends TestCase
             ->assertSee('سلامت منابع')
             ->assertSee('قیمت فروش منابع')
             // Provider haye seed-shode tu lista ye salamat (hatta khamoosh).
-            ->assertSee('اتحادیه طلا و جواهر اصفهان');
+            ->assertSee('اتحادیه طلا و جواهر تهران');
     }
 
     public function test_the_dashboard_renders_with_an_empty_database(): void
