@@ -49,28 +49,47 @@ final class ProviderSeeder extends Seeder
             'upstream_unit' => 'rial',
         ], [
             /*
-             * 🔴 In chahar symbol tu feed e tgju faghat RUZANE be-rooz
-             * mishan (`ts` = nime-shab e rooz e ghabl)، na zende.
-             *
-             * `Instrument::freshnessSeconds()` baraye jahani 180s mide —
-             * bedun e in override، har tick radeshun mikone va chahar radif
-             * az tablo gom mishan bedun e hich error.
-             *
-             * (Tu `TgjuQuoteSourceTest::test_global_metals_are_only_updated_
-             * daily_in_this_feed` sabt shode.)
+             * 🔴 Jahani ha (ons/mes): tu feed e tgju faghat RUZANE be-rooz
+             * mishan (`ts` = nime-shab e rooz e ghabl). Default e 180s
+             * radeshun mikone.
              */
             Instrument::GoldOunce->value => 90_000,
             Instrument::SilverOunce->value => 90_000,
             Instrument::CopperPound->value => 90_000,
-            Instrument::CoinGerami->value => 90_000,
             /*
-             * 🔴 Dollar (`price_dollar_rl`): tu sa'at e bazaar e arz zende
-             * update mishe (fixture: ts e hamun lahze)، vali shab/ta'til
-             * YAKH mizane — andaze-giri ye vaghei (2026-10-06): 124,005s
-             * (~1.4 rooz) bedun e update. Default e 180s e `Instrument`
-             * un ro tu bootstrap ba'd az har ta'tili kamel hazf mikard.
-             * 2 rooz: gap e akhare-hafte ro pushesh mide vali dollar e
-             * yek-hafte-i ro «taze» ja nemizane.
+             * 🔴 GOLD/SEKKE/NOGHRE ye IRR — override ejbari (2026-10-06،
+             * khaste ye sahebe proje: «tgju ham hame symbol ha ro biar»).
+             *
+             * In ha tu sa'at e bazaar ZENDE-and (`ts` har daghighe) VALI
+             * default e 900s (sekke/tala) / 1800s (noghre) ya'ni baraye
+             * bazaar e baste (shab/jom'e/ta'til) ke tgju timestamp e rooz e
+             * ghabl ro mide، HAR TICK rad mishan va az board gom mishan —
+             * dar hali ke estjt (ke timestamp NADARE) hamun gheymat ha ro
+             * neshun mide. Hamin asymmetry bud ke karbar did «faghat estjt
+             * hame symbol ha ro migire».
+             *
+             * 4 rooz (345,600s): close e char-shanbe ta avval e shanbe (do
+             * rooz ta'til + yek ta'til e miyane) salem mimune؛ board ba
+             * badge e «کهنه» akharin gheymat ro negah midare (bazaar e baste
+             * = akharin nerkh، na gap — bebin §1.8 PLAN). Hafte-i yek bar
+             * provider zende shod، gheymat e taze jaygozin mishe.
+             */
+            Instrument::Gold18Gram->value => 345_600,
+            Instrument::Gold24Gram->value => 345_600,
+            Instrument::GoldMeltedGram->value => 345_600,
+            Instrument::GoldMesghal->value => 345_600,
+            Instrument::CoinEmami->value => 345_600,
+            Instrument::CoinBahar->value => 345_600,
+            Instrument::CoinHalf->value => 345_600,
+            Instrument::CoinQuarter->value => 345_600,
+            Instrument::CoinGerami->value => 345_600,
+            Instrument::Silver999Gram->value => 345_600,
+            Instrument::Silver925Gram->value => 345_600,
+            /*
+             * Dollar: zende tu sa'at e bazaar e arz، shab/ta'til yakh.
+             * Andaze-giri (2026-10-06): 124,005s bi-update. 2 rooz: gap e
+             * akhare-hafte pushesh mishe، dollar e yek-hafte-i «taze» ja
+             * zade nemishe.
              */
             Instrument::UsdIrr->value => 172_800,
         ]);

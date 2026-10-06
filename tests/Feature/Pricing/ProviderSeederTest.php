@@ -62,18 +62,27 @@ final class ProviderSeederTest extends TestCase
             ->pluck('freshness_seconds', 'symbol')
             ->all();
 
-        // Bedun e in ha، `Instrument::freshnessSeconds()` (180s baraye
-        // jahani) har tick in chahar radif ro rad mikone va az tablo gom
-        // mishan — bedun e hich error.
+        // Jahani ha (faghat ruzane be-rooz mishan): default e 180s radeshun
+        // mikone.
         $this->assertSame(90_000, (int) $overrides[Instrument::GoldOunce->value]);
         $this->assertSame(90_000, (int) $overrides[Instrument::SilverOunce->value]);
         $this->assertSame(90_000, (int) $overrides[Instrument::CopperPound->value]);
-        $this->assertSame(90_000, (int) $overrides[Instrument::CoinGerami->value]);
 
-        // Dollar: shab/ta'til yakh mizane (andaze-giri: 124,005s bedun e
-        // update) — 2 rooz ta gap e akhare-hafte radesh nakone vali dollar
-        // e yek-hafte-i «taze» e'lam nashe. (Khaste ye sahebe proje،
-        // 2026-10-06: «dolar e tgju ro ham biar».)
+        // 🔴 Gold/sekke/noghre ye IRR — 4 rooz (khaste ye sahebe proje،
+        // 2026-10-06): tgju in ha ro ba timestamp mide va bazaar e baste
+        // (shab/jom'e) default e 900s/1800s radeshun mikard، pas «faghat
+        // estjt hame symbol ha ro migereft». 4 rooz = close e char-shanbe
+        // ta shanbe salem mimune.
+        foreach ([
+            Instrument::Gold18Gram, Instrument::Gold24Gram, Instrument::GoldMeltedGram,
+            Instrument::GoldMesghal, Instrument::CoinEmami, Instrument::CoinBahar,
+            Instrument::CoinHalf, Instrument::CoinQuarter, Instrument::CoinGerami,
+            Instrument::Silver999Gram, Instrument::Silver925Gram,
+        ] as $instrument) {
+            $this->assertSame(345_600, (int) $overrides[$instrument->value], $instrument->value);
+        }
+
+        // Dollar: 2 rooz (gap e akhare-hafte، na yek-hafte-i).
         $this->assertSame(172_800, (int) $overrides[Instrument::UsdIrr->value]);
     }
 
