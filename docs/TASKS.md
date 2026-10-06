@@ -581,6 +581,16 @@ Phase 5 (baghi: `P5-08` chart e admin، `P5-03` TV، `P5-05` SEO) → **Phase 6*
 
 ---
 
+## Phase 9 — Sade-sazi va edgham e safhe haye panel (darkhast e chat 2026-10-06)
+
+> Ba'd az Phase 8 ejra mishe (workflow e Phase 5–8 dar hal e ejra bud). Hadaf: safhe haye kamtar، UX e vazeh-tar.
+
+- [ ] **P9-01** — `/dashboard/monitor` (پایش tick): filter haye **«نماد»** va **«دلیل رد»** karbordi nistan → **hazf**. (Filter e provider، «فقط مشکل‌دار»، toggle e «بدون اجرا» va nama ye «جدول ردها» mimunan.) `filterOptions` e `TickReportQuery` age masraf e digari nadasht hazf she + test/e2e e marbut be-rooz.
+- [ ] **P9-02** — **Edgham e `/dashboard/providers` + `/dashboard/health`** dar YEK safhe ye «منابع قیمت»: har provider yek kart/radif ba tanzimat (fa'al، tartib، spread، …) + salamat e zende (vaziat، latency، akharin khata، shekast haye poshte sar e ham) kenar e ham. Route e `/dashboard/health` be safhe ye jadid **redirect** she (link haye ghadimi nashkanan)؛ sidebar yek item.
+- [ ] **P9-03** — **Edgham e `/dashboard/priorities` + `/dashboard/manual`** dar YEK safhe: har symbol yek radif ba zanjire ye olaviat + gheymat e dasti + vaziat e fallback. Route e ghadimi redirect.
+- [ ] **P9-04** — **Import e Excel** baraye gheymat e dasti (+ **download e nemune ye Excel** ba soton haye symbol/label/gheymat). Validate e har radif (symbol e nashenas، adad e na-motabar، vahed e toman/dollar) ba gozaresh e radif-be-radif ghabl az zakhire (preview → ta'eed). Gheymat ba string/bcmath parse she (na float — hamun yaft e baz e `setFromDisplay`).
+- [ ] **P9-05** — 🔴 **Be-rooz-resani ye KHODKAR e gheymat e dasti az tick ha**: baraye har symbol tanzim «gheymat e dasti az chi por she»: **(a) hichi** (faghat dasti — raftar e fe'li)، **(b) zanjire ye olaviat** (avvalin provider e TAZE)، **(c) yek provider e moshakhas**. Har tick: age manba' e entekhabi taze bud → gheymat e dasti ba gheymat e KHAM e un be-rooz mishe؛ age khata dad/bayat bud → gheymat e dasti **dast nemikhore** (akharin gheymat e salem mimune)، va vaghti provider resolve shod dobare be-rooz mishe. `source_hint` + `updated_at` neshun midan az koja va kay. Piade-sazi ru masir e tick (ba'd az Persist، isolated — shekastesh tick ro nemikoshe) ya scheduler — tasmim tu task؛ test e «provider e bayat → dasti dast nakhord» + «resolve shod → be-rooz shod» + mutation.
+
 ## Tasmim haye vasat e rah
 
 | Tarikh | Tasmim | Chera |
