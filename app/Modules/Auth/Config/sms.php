@@ -8,13 +8,18 @@ declare(strict_types=1);
 |--------------------------------------------------------------------------
 | driver ha:
 |   kavenegar -> ersal e vaghei (fe'lan tanha driver e vaghei؛ fallback ba'dan)
-|   log       -> dev: code tu log e laravel chap mishe
-|   fake      -> test/demo: hich IO، tu hafeze sabt mishe
+|   fake      -> dev/test/demo: hich IO، tu hafeze sabt mishe + log mizane
+|
+| (`log` e joda HAZF shod — `fake` khodesh log mizane. 2026-10-05)
+|
+| 🔴 Default `kavenegar` ast، na `fake`: yek deploy e production ke
+| `SMS_DRIVER` ro faramush karde bayad BOLAND beterke (missingApiKey)،
+| na inke saket code ha ro tu log berize va hich SMS-i nare.
 */
 
 return [
 
-    'driver' => env('SMS_DRIVER', 'log'),
+    'driver' => env('SMS_DRIVER', 'kavenegar'),
 
     'timeout' => (int) env('SMS_TIMEOUT', 10),
 

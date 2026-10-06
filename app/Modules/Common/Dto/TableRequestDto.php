@@ -11,8 +11,13 @@ use Illuminate\Http\Request;
  * sort (ke Query ba whitelist-esh check mikone), direction-e faghat asc/desc, safhe va andaze-ye
  * safhe-ye clamp-shode, va filter-haye scalar. Ragham-e farsi ghablan tavassot-e middleware
  * ASCII shodan (ADR-0017), pas inja faghat cast mikonim.
+ *
+ * ⚠️ `extends Dto` HAZF shod (2026-10-06): `Dto` e in proje non-readonly ast
+ * va PHP ejaze nemide class e readonly azash ers bebare — avvalin autoload
+ * FATAL midad. In class hich chiz az `Dto` masraf nemikard (na `from`، na
+ * `setId`)، pas mostaghel shod va immutability esh hefz shod.
  */
-final readonly class TableRequestDto extends Dto
+final readonly class TableRequestDto
 {
     public const DEFAULT_PER_PAGE = 25;
 

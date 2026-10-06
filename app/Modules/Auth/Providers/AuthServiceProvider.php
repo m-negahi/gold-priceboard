@@ -51,7 +51,8 @@ final class AuthServiceProvider extends ServiceProvider
         ));
 
         $this->app->singleton(SmsPort::class, static fn ($app): SmsPort => SmsManager::make(
-            (string) config('sms.driver', 'log'),
+            // Fallback ba default e config yeki-e — `log` dige vojud nadare.
+            (string) config('sms.driver', 'kavenegar'),
             $app,
         ));
 

@@ -81,9 +81,10 @@ final readonly class BoardQuery
         }
 
         // Tartib e namayesh = tartib e `Instrument::cases()`، ba'd provider.
-        usort($rows, static function (BoardRowDto $a, BoardRowDto $b): int {
-            $order = array_flip(array_column(Instrument::cases(), 'value'));
+        // Jadval e tartib YEK bar sakhte mishe، na dakhel e har moghayese.
+        $order = array_flip(array_column(Instrument::cases(), 'value'));
 
+        usort($rows, static function (BoardRowDto $a, BoardRowDto $b) use ($order): int {
             return [$order[$a->instrument->value] ?? 99, $a->providerKey, $a->side->value]
                 <=> [$order[$b->instrument->value] ?? 99, $b->providerKey, $b->side->value];
         });

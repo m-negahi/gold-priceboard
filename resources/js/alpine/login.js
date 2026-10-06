@@ -5,7 +5,7 @@
  * dobare az server miporse. Timer-e samt-e client ba refresh az aval shoroo mishe va yek resend-e
  * majani mide — daghighan hamun sourakhi ke rate limit baraye bastanesh hast.
  */
-import { digitsOnly, toPersian } from '../lib/digits.js';
+import { digitsOnly } from '../lib/digits.js';
 
 export default ({ routes, initial = {} }) => ({
     // Step ro server tasmim migire (ADR-0021): ba'd az refresh, age code-e zende ya cooldown
@@ -181,16 +181,16 @@ export default ({ routes, initial = {} }) => ({
         }, 1000);
     },
 
-    /** m:ss ba ragham-e farsi — shekli ke adam az yek shomarande entezar dare. */
+    /**
+     * m:ss ba raghame LATIN — policy e proje «raghame Latin hame ja» ast
+     * (CLAUDE.md): server ham ba `LatinizeDigits` hame chiz ro Latin mikone،
+     * pas shomarande ye Farsi vasat e safhe ye Latin nakhana bud.
+     */
     clock(seconds) {
         const m = Math.floor(seconds / 60);
         const s = String(seconds % 60).padStart(2, '0');
 
-        return this.toPersian(`${m}:${s}`);
-    },
-
-    toPersian(value) {
-        return toPersian(value);
+        return `${m}:${s}`;
     },
 
     digitsOnly(value) {

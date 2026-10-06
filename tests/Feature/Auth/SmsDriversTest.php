@@ -118,4 +118,40 @@ final class SmsDriversTest extends TestCase
             self::assertInstanceOf(SmsPort::class, SmsManager::make($driver, $this->app), $driver);
         }
     }
+
+    /**
+     * 🔴 Negahban e default e config: `sms.php` yek bar default esh `log`
+     * bud — driver-i ke HAZF shode bud. Natije: har deploy-i ke `SMS_DRIVER`
+     * nadasht، avvalin OTP ba `unknownDriver` miterkid. Default bayad
+     * hamishe ozv e `SmsManager::drivers()` bashe.
+     */
+    public function test_the_config_default_driver_is_a_known_driver(): void
+    {
+        // Env e OS (container `.env` ro export mikone) mitune default ro
+        // MASK kone va test ro bi-ma'ni — movaghatan pak mishe ta vaghe'an
+        // DEFAULT e file khunde beshe.
+        $backup = [getenv('SMS_DRIVER'), $_ENV['SMS_DRIVER'] ?? null, $_SERVER['SMS_DRIVER'] ?? null];
+        putenv('SMS_DRIVER');
+        unset($_ENV['SMS_DRIVER'], $_SERVER['SMS_DRIVER']);
+
+        try {
+            $config = require __DIR__.'/../../../app/Modules/Auth/Config/sms.php';
+
+            self::assertContains(
+                $config['driver'],
+                SmsManager::drivers(),
+                'default e `sms.driver` bayad yek driver e sabt-shode bashe.',
+            );
+        } finally {
+            if ($backup[0] !== false) {
+                putenv('SMS_DRIVER='.$backup[0]);
+            }
+            if ($backup[1] !== null) {
+                $_ENV['SMS_DRIVER'] = $backup[1];
+            }
+            if ($backup[2] !== null) {
+                $_SERVER['SMS_DRIVER'] = $backup[2];
+            }
+        }
+    }
 }
