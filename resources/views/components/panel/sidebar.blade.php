@@ -45,7 +45,7 @@
         <span x-show="wide" x-cloak class="truncate font-semibold">تابلو قیمت</span>
     </div>
 
-    <nav id="panel-nav" class="flex-1 overflow-y-auto overflow-x-hidden py-3">
+    <nav id="panel-nav" class="flex-1 overflow-y-auto overflow-x-hidden py-3" @scroll.passive="dropTip()">
         @foreach ($groups as $group)
             <div class="px-3 pb-1 pt-3 first:pt-0">
                 <p x-show="wide" x-cloak class="px-2 text-xs font-medium text-muted-2">{{ $group['label'] }}</p>
@@ -69,8 +69,8 @@
                                  yek majmu'e dide shan (na yek list e saf). --}}
                             :class="wide && sub && 'bg-surface-3/70 p-1'"
                         @endif
-                        @mouseenter="show('{{ $item['key'] }}')" @mouseleave="hide('{{ $item['key'] }}')"
-                        @focusin="show('{{ $item['key'] }}')" @focusout="hide('{{ $item['key'] }}')">
+                        @mouseenter="show(@js($item['key']), $el, @js($item['label']))" @mouseleave="hide(@js($item['key']))"
+                        @focusin="show(@js($item['key']), $el, @js($item['label']))" @focusout="hide(@js($item['key']))">
 
                         @if ($children === [])
                             <a @if (! $disabled) href="{{ route($item['route']) }}" @else href="#" aria-disabled="true" tabindex="-1" @endif
@@ -142,13 +142,6 @@
                             </ul>
                         @endif
 
-                        {{-- RTL-aware: rail samt-e rast neshaste, pas tooltip be samt-e chap baz mishe
-                             va hich vaght rooye icon-i ke tosif mikone nemishine. --}}
-                        <div x-show="hovered === '{{ $item['key'] }}'" x-cloak x-transition.opacity.duration.120ms
-                             role="tooltip"
-                             class="pointer-events-none absolute start-full top-5 z-50 ms-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs text-ink-invert shadow-lg">
-                            {{ $item['label'] }}
-                        </div>
                     </li>
                 @endforeach
             </ul>
@@ -168,8 +161,8 @@
         </p>
 
         <div class="relative"
-             @mouseenter="show('logout')" @mouseleave="hide('logout')"
-             @focusin="show('logout')" @focusout="hide('logout')">
+             @mouseenter="show('logout', $el, 'خروج')" @mouseleave="hide('logout')"
+             @focusin="show('logout', $el, 'خروج')" @focusout="hide('logout')">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" aria-label="خروج"
@@ -179,12 +172,19 @@
                 </button>
             </form>
 
-            {{-- Hamun olgoo-ye tooltip-e item-haye nav: samt-e chap baz mishe, rooye icon nemishine. --}}
-            <div x-show="hovered === 'logout'" x-cloak x-transition.opacity.duration.120ms
-                 role="tooltip"
-                 class="pointer-events-none absolute start-full top-1/2 z-50 ms-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs text-ink-invert shadow-lg">
-                خروج
-            </div>
         </div>
     </div>
+
+    {{-- 🔴 Tooltip-e rail-e baste — YEKI، teleport be body + `fixed`. Ghablan
+         `absolute` dakhel-e nav-e `overflow-x-hidden` (va shell-e
+         `overflow: hidden`) bud va HICH vaght dide nemishod. `:style` faghat
+         mokhtasat-e pooya-st (token ghabl-e mohasebe nist). --}}
+    <template x-teleport="body">
+        <div x-show="tip !== null" x-cloak x-transition.opacity.duration.120ms
+             @resize.window="dropTip()"
+             role="tooltip" data-sidebar-tooltip
+             :style="tipStyle()"
+             x-text="tip?.label"
+             class="pointer-events-none fixed z-[60] -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs text-ink-invert shadow-lg"></div>
+    </template>
 </aside>
