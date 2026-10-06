@@ -7,6 +7,7 @@ namespace App\Modules\Panel\Http\Controllers;
 use App\Modules\Auth\Application\Queries\UserQuery;
 use App\Modules\Auth\Domain\Enums\UserLevel;
 use App\Modules\Auth\Domain\Enums\UserStatus;
+use App\Modules\Panel\Queries\UserDetailQuery;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -20,6 +21,7 @@ final readonly class UserController
 {
     public function __construct(
         private UserQuery $users,
+        private UserDetailQuery $detail,
     ) {}
 
     public function index(Request $request): View
@@ -43,5 +45,10 @@ final readonly class UserController
             'statuses' => UserStatus::labels(),
             'levels' => UserLevel::labels(),
         ]);
+    }
+
+    public function show(int $user): View
+    {
+        return view('panel::users.show', $this->detail->show($user));
     }
 }

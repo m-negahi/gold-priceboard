@@ -73,6 +73,11 @@
                             <td class="num px-5 py-3 text-muted" data-sites="{{ $user['sitesCount'] }}">{{ $user['sitesCount'] }}</td>
                             <td class="num px-5 py-3 text-xs text-muted">{{ $user['lastLoginAt'] ?? '—' }}</td>
                             <td class="px-5 py-3 text-end">
+                                <a href="{{ route('panel.users.show', $user['id']) }}"
+                                   class="inline-flex size-9 items-center justify-center rounded-lg text-muted hover:bg-surface-3 hover:text-ink"
+                                   aria-label="جزئیات {{ $user['name'] ?? $user['phone'] }}" title="جزئیات">
+                                    <x-icon name="eye" class="size-4" />
+                                </a>
                             </td>
                         </tr>
                     @empty

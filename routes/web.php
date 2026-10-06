@@ -105,6 +105,7 @@ Route::middleware(['auth', EnsureAdmin::class])
 
         // ── Karbaran (Phase 6) ──────────────────────────────────────
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/{user}', [UserController::class, 'show'])->whereNumber('user')->name('users.show');
     });
 
 /*

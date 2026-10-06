@@ -22,12 +22,25 @@ test.afterAll(async () => {
 
 const rows = () => page.locator('[data-user-row]');
 
-/** `#rrggbb` e yek token az `:root` -> `rgb(r, g, b)`. */
+/**
+ * Rang e yek token e `@theme` -> `rgb(...)` ke browser khodesh resolve
+ * karde (probe element) — `#fff` e kutah ya `var(...)` ham dorost mishe.
+ */
 async function tokenRgb(name: string): Promise<string> {
-    const hex = await page.evaluate((n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim(), name);
-    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    const rgb = await page.evaluate((n) => {
+        const probe = document.createElement('div');
+        probe.style.backgroundColor = `var(${n})`;
+        document.body.appendChild(probe);
+        const rgb = getComputedStyle(probe).backgroundColor;
+        probe.remove();
 
-    return `rgb(${r}, ${g}, ${b})`;
+        return rgb;
+    }, name);
+
+    // Token e nabude = transparent — nabayad ba element e shafaf «barabar» she.
+    expect(rgb, `token e ${name} resolve nashod`).not.toBe('rgba(0, 0, 0, 0)');
+
+    return rgb;
 }
 
 test.describe('lista ye karbaran (P6-02)', () => {
@@ -72,3 +85,26 @@ test.describe('lista ye karbaran (P6-02)', () => {
         expect(await pill.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(expected);
     });
 });
+
+test.describe('safhe ye karbar (P6-03)', () => {
+    test('az lista be safhe ye admin + bakhsh ha', async () => {
+        await page.goto('/dashboard/users?q=0' + ADMIN);
+        await rows().first().getByRole('link', { name: /^جزئیات/ }).click();
+
+        await expect(page).toHaveURL(/\/dashboard\/users\/\d+$/);
+        await expect(page.getByRole('heading', { level: 2, name: 'مشخصات' })).toBeVisible();
+        await expect(page.getByRole('heading', { level: 2, name: 'کیف پول' })).toBeVisible();
+        await expect(page.getByRole('heading', { level: 2, name: 'سایت‌ها و پلن‌ها' })).toBeVisible();
+        await expect(page.locator('[data-user-status]')).toHaveAttribute('data-user-status', 'active');
+    });
+
+    test('card e mande rang e surface e token dare', async () => {
+        const url = page.url();
+        await page.goto(url);
+
+        const card = page.locator('[data-wallet]');
+        const expected = await tokenRgb('--color-surface');
+        expect(await card.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(expected);
+    });
+});
+
