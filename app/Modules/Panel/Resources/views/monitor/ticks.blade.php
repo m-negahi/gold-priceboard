@@ -68,7 +68,7 @@
     };
 @endphp
 
-<x-layouts.panel title="پایش زنده" current="monitor" :breadcrumbs="['پنل', 'پایش زنده']">
+<x-layouts.panel title="پایش زنده" current="monitor.ticks" :breadcrumbs="['پنل', 'پایش', 'tick']">
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
             <h1 class="text-2xl font-extrabold text-ink md:text-3xl">پایش زنده</h1>
@@ -76,16 +76,6 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <a href="{{ route('panel.monitor.upstream') }}"
-               class="inline-flex h-10 items-center gap-2 rounded-xl border border-line px-4 text-sm font-medium text-ink hover:bg-surface-2">
-                <x-icon name="download" class="size-4" />
-                پایش منابع
-            </a>
-            <a href="{{ route('panel.monitor.api') }}"
-               class="inline-flex h-10 items-center gap-2 rounded-xl border border-line px-4 text-sm font-medium text-ink hover:bg-surface-2">
-                <x-icon name="code" class="size-4" />
-                پایش API
-            </a>
 
             <x-panel.help key="monitor" title="راهنمای پایش">
                 <h3>محافظ‌های قیمت — سقف‌ها</h3>

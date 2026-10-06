@@ -56,37 +56,97 @@
             <ul class="space-y-0.5 px-3">
                 @foreach ($group['items'] as $item)
                     @php
-                        $active = $current === $item['key'];
+                        $children = $item['children'] ?? [];
+                        $childKeys = array_column($children, 'key');
+                        // Parent active e age khodesh ya yeki az bache ha `current` bashe.
+                        $active = $current === $item['key'] || in_array($current, $childKeys, true);
                         $disabled = $item['route'] === null;
                     @endphp
-                    <li class="relative"
+                    <li @class(['relative', 'rounded-xl transition-colors' => $children !== []])
+                        @if ($children !== [])
+                            x-data="{ sub: @js($active) }"
+                            {{-- Group e baz yek panel e narm migire ta parent va bache ha
+                                 yek majmu'e dide shan (na yek list e saf). --}}
+                            :class="wide && sub && 'bg-surface-3/70 p-1'"
+                        @endif
                         @mouseenter="show('{{ $item['key'] }}')" @mouseleave="hide('{{ $item['key'] }}')"
                         @focusin="show('{{ $item['key'] }}')" @focusout="hide('{{ $item['key'] }}')">
 
-                        <a @if (! $disabled) href="{{ route($item['route']) }}" @else href="#" aria-disabled="true" tabindex="-1" @endif
-                           aria-label="{{ $item['label'] }}"
-                           @class([
-                               'relative flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm transition-colors',
-                               // Donezo (doc §5): fa'al = navar e brand e samt + bg e surface + bold.
-                               'bg-surface font-bold text-ink shadow-xs' => $active,
-                               'text-ink-3 hover:bg-surface-3' => ! $active && ! $disabled,
-                               'text-muted-3 cursor-not-allowed' => $disabled,
-                           ])>
-                            @if ($active)
-                                <span class="absolute inset-y-2 start-0 w-0.5 rounded-full bg-brand-700" aria-hidden="true"></span>
-                            @endif
-                            <x-icon :name="$item['icon']" class="size-5 shrink-0" />
-                            <span x-show="wide" x-cloak class="truncate">{{ $item['label'] }}</span>
-                            @if ($disabled)
-                                <span x-show="wide" x-cloak class="ms-auto text-[10px] text-muted-3">به‌زودی</span>
-                            @endif
-                        </a>
+                        @if ($children === [])
+                            <a @if (! $disabled) href="{{ route($item['route']) }}" @else href="#" aria-disabled="true" tabindex="-1" @endif
+                               aria-label="{{ $item['label'] }}"
+                               @class([
+                                   'relative flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm transition-colors',
+                                   // Donezo (doc §5): fa'al = navar e brand e samt + bg e surface + bold.
+                                   'bg-surface font-bold text-ink shadow-xs' => $active,
+                                   'text-ink-3 hover:bg-surface-3' => ! $active && ! $disabled,
+                                   'text-muted-3 cursor-not-allowed' => $disabled,
+                               ])>
+                                @if ($active)
+                                    <span class="absolute inset-y-2 start-0 w-0.5 rounded-full bg-brand-700" aria-hidden="true"></span>
+                                @endif
+                                <x-icon :name="$item['icon']" class="size-5 shrink-0" />
+                                <span x-show="wide" x-cloak class="truncate">{{ $item['label'] }}</span>
+                                @if ($disabled)
+                                    <span x-show="wide" x-cloak class="ms-auto text-[10px] text-muted-3">به‌زودی</span>
+                                @endif
+                            </a>
+                        @else
+                            {{-- Parent: hamishe yek LINK be bache ye aval (ghabl az Alpine
+                                 va tu rail e baste kar mikone)؛ vaghti sidebar baz e، click
+                                 faghat zir-menu ro baz/baste mikone. Kart e sefid faghat
+                                 vaghti zir-menu baste-st — vagarna bache ye active hilight
+                                 dare va do hilight shologh mishe. --}}
+                            <a href="{{ route($item['route']) }}"
+                               aria-label="{{ $item['label'] }}"
+                               @click="if (wide) { $event.preventDefault(); sub = ! sub }"
+                               :aria-expanded="wide ? sub.toString() : null"
+                               aria-controls="sub-{{ $item['key'] }}"
+                               class="relative flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm transition-colors"
+                               :class="{{ $active ? 'true' : 'false' }} && ! (wide && sub)
+                                   ? 'bg-surface font-bold text-ink shadow-xs'
+                                   : ({{ $active ? 'true' : 'false' }} ? 'font-bold text-ink hover:bg-surface/70' : 'text-ink-3 hover:bg-surface-3')">
+                                @if ($active)
+                                    <span x-show="! (wide && sub)" class="absolute inset-y-2 start-0 w-0.5 rounded-full bg-brand-700" aria-hidden="true"></span>
+                                @endif
+                                <x-icon :name="$item['icon']" class="size-5 shrink-0" />
+                                <span x-show="wide" x-cloak class="truncate">{{ $item['label'] }}</span>
+                                <x-icon name="chevron-down" x-show="wide" x-cloak
+                                        class="ms-auto size-4 shrink-0 text-muted transition-transform duration-200"
+                                        ::class="sub && 'rotate-180'" />
+                            </a>
+
+                            {{-- Bache ha: ba khat e rahnama ZIR e markaz e icon e parent
+                                 indent mishan (p-1 + px-2.5 + nesf e icon ≈ ms-5). --}}
+                            <ul id="sub-{{ $item['key'] }}" x-show="wide && sub" x-cloak x-collapse
+                                class="ms-5 mt-1 space-y-0.5 border-s border-line pb-1 ps-2">
+                                @foreach ($children as $child)
+                                    @php $childActive = $current === $child['key']; @endphp
+                                    <li>
+                                        <a href="{{ route($child['route']) }}"
+                                           @if ($childActive) aria-current="page" @endif
+                                           @class([
+                                               'relative flex h-9 items-center rounded-lg px-3 text-[0.8125rem] transition-colors',
+                                               'bg-surface font-semibold text-ink shadow-xs' => $childActive,
+                                               'text-ink-3 hover:bg-surface/70 hover:text-ink' => ! $childActive,
+                                           ])>
+                                            @if ($childActive)
+                                                {{-- Ru khod e khat e rahnama (ps-2 + 1px border) — hamun
+                                                     tike az khat sabz mishe. --}}
+                                                <span class="absolute inset-y-1.5 -start-[0.5625rem] w-0.5 rounded-full bg-brand-700" aria-hidden="true"></span>
+                                            @endif
+                                            <span class="truncate">{{ $child['label'] }}</span>
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
 
                         {{-- RTL-aware: rail samt-e rast neshaste, pas tooltip be samt-e chap baz mishe
                              va hich vaght rooye icon-i ke tosif mikone nemishine. --}}
                         <div x-show="hovered === '{{ $item['key'] }}'" x-cloak x-transition.opacity.duration.120ms
                              role="tooltip"
-                             class="pointer-events-none absolute start-full top-1/2 z-50 ms-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs text-ink-invert shadow-lg">
+                             class="pointer-events-none absolute start-full top-5 z-50 ms-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs text-ink-invert shadow-lg">
                             {{ $item['label'] }}
                         </div>
                     </li>

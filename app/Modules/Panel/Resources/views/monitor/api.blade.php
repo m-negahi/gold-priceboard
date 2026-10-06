@@ -32,7 +32,7 @@
     };
 @endphp
 
-<x-layouts.panel title="پایش API" current="monitor" :breadcrumbs="['پنل', 'پایش زنده', 'API']">
+<x-layouts.panel title="پایش API" current="monitor.api" :breadcrumbs="['پنل', 'پایش', 'API']">
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
             <h1 class="text-2xl font-extrabold text-ink md:text-3xl">پایش API</h1>
@@ -40,16 +40,6 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <a href="{{ route('panel.monitor.ticks') }}"
-               class="inline-flex h-10 items-center gap-2 rounded-xl border border-line px-4 text-sm font-medium text-ink hover:bg-surface-2">
-                <x-icon name="eye" class="size-4" />
-                پایش tick
-            </a>
-            <a href="{{ route('panel.monitor.upstream') }}"
-               class="inline-flex h-10 items-center gap-2 rounded-xl border border-line px-4 text-sm font-medium text-ink hover:bg-surface-2">
-                <x-icon name="download" class="size-4" />
-                پایش منابع
-            </a>
 
             <x-panel.help key="monitor-api" title="راهنمای پایش API">
                 <h3>وضعیت‌ها</h3>

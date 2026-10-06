@@ -21,7 +21,12 @@ namespace App\Modules\Panel\Support;
 final class Navigation
 {
     /**
-     * @return list<array{label: string, items: list<array{key: string, label: string, icon: string, route: ?string}>}>
+     * `children` (ekhtiari): zir-menu. `route` e parent hamun avvalin bache-st
+     * (rail e baste bache ha ro neshun nemide va click mostaghim unja mire).
+     * Parent vaghti active e ke `current` ba key e khodesh ya yeki az bache ha
+     * match kone.
+     *
+     * @return list<array{label: string, items: list<array{key: string, label: string, icon: string, route: ?string, children?: list<array{key: string, label: string, route: string}>}>}>
      */
     public static function groups(): array
     {
@@ -32,7 +37,14 @@ final class Navigation
                     ['key' => 'dashboard', 'label' => 'میزکار', 'icon' => 'gauge', 'route' => 'panel.dashboard'],
                     ['key' => 'providers', 'label' => 'منابع قیمت', 'icon' => 'feed', 'route' => 'panel.providers.index'],
                     ['key' => 'health', 'label' => 'سلامت منابع', 'icon' => 'pulse', 'route' => 'panel.health'],
-                    ['key' => 'monitor', 'label' => 'پایش زنده', 'icon' => 'eye', 'route' => 'panel.monitor.ticks'],
+                    [
+                        'key' => 'monitor', 'label' => 'پایش', 'icon' => 'eye', 'route' => 'panel.monitor.ticks',
+                        'children' => [
+                            ['key' => 'monitor.ticks', 'label' => 'پایش tick', 'route' => 'panel.monitor.ticks'],
+                            ['key' => 'monitor.upstream', 'label' => 'پایش منابع', 'route' => 'panel.monitor.upstream'],
+                            ['key' => 'monitor.api', 'label' => 'پایش API', 'route' => 'panel.monitor.api'],
+                        ],
+                    ],
                     ['key' => 'matrix', 'label' => 'ماتریس نمادها', 'icon' => 'coins', 'route' => 'panel.matrix'],
                     ['key' => 'manual', 'label' => 'قیمت دستی', 'icon' => 'pencil', 'route' => 'panel.manual.index'],
                 ],

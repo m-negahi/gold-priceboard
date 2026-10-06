@@ -2,7 +2,7 @@
      har TALASH e HTTP yek radif (retry ha joda). Filter ha client-side-and
      (Alpine) chun kol e data hamin 100 radif e load-shode-ast (UI-only). --}}
 
-<x-layouts.panel title="پایش منابع" current="monitor" :breadcrumbs="['پنل', 'پایش زنده', 'منابع']">
+<x-layouts.panel title="پایش منابع" current="monitor.upstream" :breadcrumbs="['پنل', 'پایش', 'منابع']">
     <div x-data="{
             calls: @js($calls),
             meta: @js($providerMeta),
@@ -29,16 +29,6 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <a href="{{ route('panel.monitor.ticks') }}"
-                   class="inline-flex h-10 items-center gap-2 rounded-xl border border-line px-4 text-sm font-medium text-ink hover:bg-surface-2">
-                    <x-icon name="eye" class="size-4" />
-                    پایش tick
-                </a>
-                <a href="{{ route('panel.monitor.api') }}"
-                   class="inline-flex h-10 items-center gap-2 rounded-xl border border-line px-4 text-sm font-medium text-ink hover:bg-surface-2">
-                    <x-icon name="code" class="size-4" />
-                    پایش API
-                </a>
 
                 <x-panel.help key="monitor-upstream" title="راهنمای پایش منابع">
                     <h3>این صفحه چیست؟</h3>
