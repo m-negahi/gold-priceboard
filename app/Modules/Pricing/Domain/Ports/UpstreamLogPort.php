@@ -27,4 +27,10 @@ interface UpstreamLogPort
 
     /** @return array<int, UpstreamCallDto> jadid tarin aval */
     public function recent(int $limit = 100): array;
+
+    /**
+     * Yek call ba id (safhe ye jozyat — P4-20). `null` ya'ni az daftarche
+     * birun rafte (trim) ya hich vaght nabude.
+     */
+    public function find(string $id): ?UpstreamCallDto;
 }

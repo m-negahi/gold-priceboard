@@ -13,6 +13,7 @@ use App\Modules\Pricing\Application\Pipeline\TickContext;
 use App\Modules\Pricing\Domain\Enums\StagePolicy;
 use App\Modules\Pricing\Domain\Ports\QuoteSourcePort;
 use App\Modules\Pricing\Domain\Ports\UpstreamLogPort;
+use App\Modules\Pricing\Domain\Services\SensitiveRedactor;
 use App\Modules\Pricing\Domain\Services\TransientFailure;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Pool;
@@ -54,6 +55,16 @@ final readonly class FetchStage implements Stage
 {
     /** Kamtar az in vaght e baghi-munde، retry arzesh nadare. */
     private const MIN_RETRY_BUDGET_MS = 1_500;
+
+    /**
+     * Body e call e MOVAFAGH tu daftarche faghat preview-e (P4-20): tgju
+     * ~171KB ast va daftarche 300 entry — kamel zakhire kardan ~50MB e
+     * Redis e dev mishe. Baraye debug e movafagh preview kafi-e.
+     */
+    public const SUCCESS_BODY_PREVIEW = 2_048;
+
+    /** Body e call e NAKAM — payload e khata hamun chizi-e ke debug mikhad. */
+    public const FAILURE_BODY_LIMIT = 16_384;
 
     public function __construct(
         /** `1` = bedun e retry. */
@@ -200,14 +211,18 @@ final readonly class FetchStage implements Stage
         // «1ms» gozaresh mishe va monitoring e panel dorugh mige.
         $latencyMs = $this->transferMs($response);
 
-        // Status/bytes GHABL az try: khata ye parse (200 vali markup e
-        // avaz-shode) ham bayad ba status e vaghei-sh log beshe.
+        // Status/bytes/header GHABL az try: khata ye parse (200 vali markup
+        // e avaz-shode) ham bayad ba status va payload e vaghei-sh log beshe.
         $status = null;
         $bytes = null;
+        $rawBody = null;
+        $headers = [];
 
         if ($response !== null && ! $response instanceof Throwable) {
             $status = $response->status();
-            $bytes = strlen($response->body());
+            $rawBody = $response->body();
+            $bytes = strlen($rawBody);
+            $headers = SensitiveRedactor::map($response->headers());
         }
 
         try {
@@ -233,12 +248,12 @@ final readonly class FetchStage implements Stage
             $result = $source->parse($payload)->withPayloadMeta(md5($body), strlen($body));
 
             $this->accept($context, $source, $result, $latencyMs, $attempt);
-            $this->logCall($context, $source, true, $status, $latencyMs, $attempt, null, $result->count(), $bytes);
+            $this->logCall($context, $source, true, $status, $latencyMs, $attempt, null, $result->count(), $bytes, $headers, $rawBody);
 
             return true;
         } catch (Throwable $e) {
             $this->fail($context, $source, $e, $latencyMs, $attempt);
-            $this->logCall($context, $source, false, $status, $latencyMs, $attempt, $e->getMessage(), 0, $bytes);
+            $this->logCall($context, $source, false, $status, $latencyMs, $attempt, $e->getMessage(), 0, $bytes, $headers, $rawBody);
 
             return ! TransientFailure::isRetryable($e);
         }
@@ -316,12 +331,18 @@ final readonly class FetchStage implements Stage
         ?string $error,
         int $symbolCount,
         ?int $bytes,
+        /** @param array<string, string> $responseHeaders redact-shode */
+        array $responseHeaders = [],
+        ?string $rawBody = null,
     ): void {
         $request = $source->request();
 
         if ($this->upstreamLog === null || $request === null) {
             return;
         }
+
+        $limit = $succeeded ? self::SUCCESS_BODY_PREVIEW : self::FAILURE_BODY_LIMIT;
+        $body = $rawBody === null ? null : $this->cut($rawBody, $limit);
 
         // Gharardad e port: `push` hargez throw nemikone — pas inja try
         // lazem nist va shekast e log hich vaght tick ro nemishkane.
@@ -330,14 +351,37 @@ final readonly class FetchStage implements Stage
             succeeded: $succeeded,
             at: CarbonImmutable::createFromTimestampUTC($context->at->timestamp()),
             method: strtoupper($request->method),
-            url: $request->url,
+            url: SensitiveRedactor::url($request->url),
             status: $status,
             latencyMs: $latencyMs,
             attempt: $attempt,
             error: $error === null ? null : mb_substr($error, 0, 480),
             symbolCount: $symbolCount,
             bytes: $bytes,
+            id: bin2hex(random_bytes(8)),
+            requestHeaders: SensitiveRedactor::map($request->headers),
+            requestBody: SensitiveRedactor::map($request->body),
+            responseHeaders: $responseHeaders,
+            responseBody: $body,
+            bodyTruncated: $rawBody !== null && strlen($rawBody) > $limit,
         ));
+    }
+
+    /**
+     * Boresh e body ta `$limit` BYTE — ru marz e character.
+     *
+     * 🔴 `substr` vasat e yek harf e Farsi (2 byte) UTF-8 e kharab misaze va
+     * `json_encode` e adapter un vaght entry ro saket gom mikone. `mb_strcut`
+     * hargez yek harf ro nesf nemikone. Body e gheyr-UTF-8 (binary) ham
+     * scrub mishe ta zakhire-shodani bemune.
+     */
+    private function cut(string $body, int $limit): string
+    {
+        if (! mb_check_encoding($body, 'UTF-8')) {
+            $body = mb_scrub($body, 'UTF-8');
+        }
+
+        return strlen($body) <= $limit ? $body : mb_strcut($body, 0, $limit, 'UTF-8');
     }
 
     /**

@@ -25,4 +25,15 @@ final class InMemoryUpstreamCallLog implements UpstreamLogPort
     {
         return array_slice($this->calls, 0, max(0, $limit));
     }
+
+    public function find(string $id): ?UpstreamCallDto
+    {
+        foreach ($this->calls as $call) {
+            if ($id !== '' && $call->id === $id) {
+                return $call;
+            }
+        }
+
+        return null;
+    }
 }

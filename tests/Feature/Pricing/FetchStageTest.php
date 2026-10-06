@@ -643,6 +643,94 @@ final class FetchStageTest extends TestCase
         $this->assertFalse($log->calls[1]->succeeded);
     }
 
+    // ── 🔴 Jozyat e Telescope-vaar (P4-20) ──────────────────────────
+
+    public function test_a_failed_call_keeps_its_response_payload_and_headers(): void
+    {
+        // Payload e khata (Cloudflare/503) — daghighan chizi ke baraye debug lazem e.
+        Http::fake(['example.test/*' => Http::response('{"error":"rate limited"}', 503, ['Content-Type' => 'application/json', 'Retry-After' => '30'])]);
+        $log = new InMemoryUpstreamCallLog;
+
+        $this->fetch(
+            [(new FakeQuoteSource('tgju'))->returns([$this->quote()])->pooled('https://example.test/prices')],
+            $this->loggedStage($log),
+        );
+
+        $call = $log->calls[0];
+        self::assertNotSame('', $call->id, 'har call bayad id dashte bashe ta safhe ye jozyat dashte bashe.');
+        self::assertSame('{"error":"rate limited"}', $call->responseBody);
+        self::assertFalse($call->bodyTruncated);
+        self::assertSame('30', $call->responseHeaders['Retry-After']);
+    }
+
+    public function test_request_headers_body_and_url_are_kept_redacted(): void
+    {
+        Http::fake(['estjt.test/*' => Http::response('nope', 500)]);
+        $log = new InMemoryUpstreamCallLog;
+
+        $source = (new FakeQuoteSource('estjt'))
+            ->returns([$this->quote(provider: 'estjt')])
+            ->posting('https://estjt.test/admin-ajax.php?api_key=hunter2', ['action' => 'new_price', 'token' => 'abc']);
+
+        $this->fetch([$source], $this->loggedStage($log));
+
+        $call = $log->calls[0];
+        self::assertSame('new_price', $call->requestBody['action']);
+        self::assertSame('[redacted]', $call->requestBody['token']);
+        self::assertStringNotContainsString('hunter2', $call->url);
+    }
+
+    public function test_a_successful_body_is_only_a_capped_preview(): void
+    {
+        // tgju ~171KB ast × 300 entry — kamel zakhire kardanesh Redis e dev ro
+        // por mikone. Movafagh = faghat preview.
+        $big = json_encode(['current' => str_repeat('x', 10_000)]);
+        Http::fake(['example.test/*' => Http::response($big)]);
+        $log = new InMemoryUpstreamCallLog;
+
+        $this->fetch(
+            [(new FakeQuoteSource('tgju'))->returns([$this->quote()])->pooled('https://example.test/p')],
+            $this->loggedStage($log),
+        );
+
+        $call = $log->calls[0];
+        self::assertSame(FetchStage::SUCCESS_BODY_PREVIEW, strlen((string) $call->responseBody));
+        self::assertTrue($call->bodyTruncated);
+        // `bytes` hanuz andaze ye VAGHEI ye body ro mige، na preview.
+        self::assertSame(strlen((string) $big), $call->bytes);
+    }
+
+    public function test_a_failed_body_is_capped_at_the_failure_limit(): void
+    {
+        Http::fake(['example.test/*' => Http::response(str_repeat('e', FetchStage::FAILURE_BODY_LIMIT + 500), 502)]);
+        $log = new InMemoryUpstreamCallLog;
+
+        $this->fetch(
+            [(new FakeQuoteSource('tgju'))->returns([$this->quote()])->pooled('https://example.test/p')],
+            $this->loggedStage($log),
+        );
+
+        self::assertSame(FetchStage::FAILURE_BODY_LIMIT, strlen((string) $log->calls[0]->responseBody));
+        self::assertTrue($log->calls[0]->bodyTruncated);
+    }
+
+    public function test_a_cut_never_breaks_a_multibyte_character(): void
+    {
+        // 🔴 Boresh vasat e yek harf e Farsi = UTF-8 e kharab = `json_encode`
+        // false mide va entry SAKET gom mishe. Cut bayad ru marz e harf bashe.
+        // `'a'` e aval yek byte jabeja mikone ta byte e LIMIT vasat e yek
+        // harf e 2-byte bioftad — vagarna `substr` e sade ham sabz mimund.
+        Http::fake(['example.test/*' => Http::response('a'.str_repeat('ط', FetchStage::FAILURE_BODY_LIMIT), 500)]);
+        $log = new InMemoryUpstreamCallLog;
+
+        $this->fetch(
+            [(new FakeQuoteSource('tgju'))->returns([$this->quote()])->pooled('https://example.test/p')],
+            $this->loggedStage($log),
+        );
+
+        self::assertTrue(mb_check_encoding((string) $log->calls[0]->responseBody, 'UTF-8'));
+    }
+
     public function test_direct_sources_are_not_logged(): void
     {
         // Mock/manual HTTP nadaran — tu daftarche ye «call be provider»

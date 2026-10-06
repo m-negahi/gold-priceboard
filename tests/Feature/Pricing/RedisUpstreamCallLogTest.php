@@ -88,6 +88,50 @@ final class RedisUpstreamCallLogTest extends TestCase
         $this->assertSame('tgju', $calls[0]->providerKey);
     }
 
+    public function test_detail_fields_round_trip(): void
+    {
+        $this->log->push(new UpstreamCallDto(
+            providerKey: 'tgju', succeeded: false, at: CarbonImmutable::parse('2026-10-06T10:00:00Z'),
+            method: 'POST', url: 'https://example.test', status: 503,
+            id: 'abc123',
+            requestHeaders: ['User-Agent' => 'PriceBoard'],
+            requestBody: ['action' => 'new_price'],
+            responseHeaders: ['Retry-After' => '30'],
+            responseBody: '{"error":"x"}',
+            bodyTruncated: true,
+        ));
+
+        $call = $this->log->recent(1)[0];
+
+        $this->assertSame('abc123', $call->id);
+        $this->assertSame(['User-Agent' => 'PriceBoard'], $call->requestHeaders);
+        $this->assertSame(['action' => 'new_price'], $call->requestBody);
+        $this->assertSame(['Retry-After' => '30'], $call->responseHeaders);
+        $this->assertSame('{"error":"x"}', $call->responseBody);
+        $this->assertTrue($call->bodyTruncated);
+    }
+
+    public function test_an_invalid_utf8_body_does_not_silently_drop_the_entry(): void
+    {
+        // 🔴 `json_encode` ru UTF-8 e kharab `false` mide -> `(string) false`
+        // = '' -> entry SAKET gom mishod.
+        $this->log->push(new UpstreamCallDto(
+            providerKey: 'tgju', succeeded: false, at: CarbonImmutable::parse('2026-10-06T10:00:00Z'),
+            method: 'GET', url: 'https://example.test', responseBody: "bad \xC3\x28 bytes",
+        ));
+
+        $this->assertCount(1, $this->log->recent(5));
+    }
+
+    public function test_find_returns_one_call_by_id(): void
+    {
+        $this->log->push(new UpstreamCallDto(providerKey: 'tgju', succeeded: true, at: CarbonImmutable::now(), method: 'GET', url: 'u', id: 'one'));
+        $this->log->push(new UpstreamCallDto(providerKey: 'estjt', succeeded: true, at: CarbonImmutable::now(), method: 'GET', url: 'u', id: 'two'));
+
+        $this->assertSame('tgju', $this->log->find('one')?->providerKey);
+        $this->assertNull($this->log->find('nist'));
+    }
+
     public function test_an_empty_store_gives_an_empty_list(): void
     {
         $this->assertSame([], $this->log->recent(10));

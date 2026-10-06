@@ -32,7 +32,13 @@ final readonly class RedisUpstreamCallLog implements UpstreamLogPort
     {
         try {
             Redis::connection()->pipeline(function ($pipe) use ($call): void {
-                $pipe->lpush(self::KEY, (string) json_encode($call->toArray(), JSON_UNESCAPED_UNICODE));
+                // 🔴 `INVALID_UTF8_SUBSTITUTE`: body e upstream mitune UTF-8 e
+                // kharab dashte bashe؛ bedun esh `json_encode` false mide va
+                // entry SAKET (`''`) gom mishe — daghighan call e khata-dar.
+                $pipe->lpush(self::KEY, (string) json_encode(
+                    $call->toArray(),
+                    JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE,
+                ));
                 $pipe->ltrim(self::KEY, 0, self::MAX - 1);
             });
         } catch (Throwable) {
@@ -70,5 +76,22 @@ final readonly class RedisUpstreamCallLog implements UpstreamLogPort
         }
 
         return $calls;
+    }
+
+    public function find(string $id): ?UpstreamCallDto
+    {
+        if ($id === '') {
+            return null;
+        }
+
+        // Daftarche kuchik e (MAX) — scan e kamel arzun tar az yek index e
+        // joda-st ke bayad ba trim ham-gam bemune.
+        foreach ($this->recent(self::MAX) as $call) {
+            if ($call->id === $id) {
+                return $call;
+            }
+        }
+
+        return null;
     }
 }

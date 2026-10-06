@@ -30,7 +30,23 @@ final readonly class UpstreamCallDto
         public ?string $error = null,
         /** Chand symbol az payload dar umad — `0` ba status 200 ya'ni parse kharab e. */
         public int $symbolCount = 0,
+        /** Andaze ye VAGHEI ye body (na preview-e zakhire-shode). */
         public ?int $bytes = null,
+        /** Baraye safhe ye jozyat (P4-20) — `''` faghat tu data ye ghadimi. */
+        public string $id = '',
+        /** @var array<string, string> redact-shode */
+        public array $requestHeaders = [],
+        /** @var array<string, string> field haye form — redact-shode */
+        public array $requestBody = [],
+        /** @var array<string, string> redact-shode */
+        public array $responseHeaders = [],
+        /**
+         * Body e pasokh — call e NAKAM ta `FetchStage::FAILURE_BODY_LIMIT`،
+         * movafagh faghat preview (tgju 171KB × 300 entry Redis e dev ro por
+         * mikone).
+         */
+        public ?string $responseBody = null,
+        public bool $bodyTruncated = false,
     ) {}
 
     /** @return array<string, mixed> */
@@ -48,6 +64,12 @@ final readonly class UpstreamCallDto
             'error' => $this->error,
             'symbol_count' => $this->symbolCount,
             'bytes' => $this->bytes,
+            'id' => $this->id,
+            'request_headers' => $this->requestHeaders,
+            'request_body' => $this->requestBody,
+            'response_headers' => $this->responseHeaders,
+            'response_body' => $this->responseBody,
+            'body_truncated' => $this->bodyTruncated,
         ];
     }
 
@@ -66,6 +88,24 @@ final readonly class UpstreamCallDto
             error: isset($data['error']) ? (string) $data['error'] : null,
             symbolCount: (int) ($data['symbol_count'] ?? 0),
             bytes: isset($data['bytes']) ? (int) $data['bytes'] : null,
+            id: (string) ($data['id'] ?? ''),
+            requestHeaders: self::strings($data['request_headers'] ?? []),
+            requestBody: self::strings($data['request_body'] ?? []),
+            responseHeaders: self::strings($data['response_headers'] ?? []),
+            responseBody: isset($data['response_body']) ? (string) $data['response_body'] : null,
+            bodyTruncated: (bool) ($data['body_truncated'] ?? false),
         );
+    }
+
+    /** @return array<string, string> */
+    private static function strings(mixed $value): array
+    {
+        $out = [];
+
+        foreach ((array) $value as $k => $v) {
+            $out[(string) $k] = is_scalar($v) ? (string) $v : (string) json_encode($v);
+        }
+
+        return $out;
     }
 }
