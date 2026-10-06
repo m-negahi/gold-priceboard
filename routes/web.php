@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Auth\Http\Controllers\LoginController;
 use App\Modules\Auth\Http\Middleware\EnsureAdmin;
+use App\Modules\Panel\Http\Controllers\ChartController;
 use App\Modules\Panel\Http\Controllers\DashboardController;
 use App\Modules\Panel\Http\Controllers\KitController;
 use App\Modules\Panel\Http\Controllers\ManualPriceController;
@@ -86,6 +87,10 @@ Route::middleware(['auth', EnsureAdmin::class])
             ->where('id', '[A-Za-z0-9]{1,32}')
             ->name('monitor.upstream.show');
         Route::get('/matrix', [MatrixController::class, 'show'])->name('matrix');
+
+        // ── Chart (P5-08) ───────────────────────────────────────────
+        Route::get('/charts', [ChartController::class, 'show'])->name('charts');
+        Route::get('/charts/data', [ChartController::class, 'data'])->name('charts.data');
     });
 
 /*

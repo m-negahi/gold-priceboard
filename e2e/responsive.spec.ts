@@ -23,6 +23,7 @@ const PAGES: Array<{ path: string; heading: RegExp }> = [
     { path: '/dashboard/monitor/api', heading: /پایش API/ },
     { path: '/dashboard/monitor/upstream', heading: /پایش منابع/ },
     { path: '/dashboard/matrix', heading: /ماتریس/ },
+    { path: '/dashboard/charts', heading: /نمودار قیمت/ },
 ];
 
 let page: Page;

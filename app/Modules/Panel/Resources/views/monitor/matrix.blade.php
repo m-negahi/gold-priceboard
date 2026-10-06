@@ -64,8 +64,18 @@
                     @forelse ($rows as $row)
                         <tr>
                             <td class="px-5 py-3">
-                                <p class="font-medium text-ink">{{ $row['label'] }}</p>
-                                <p class="ltr text-xs text-muted-3">{{ $row['symbol'] }}</p>
+                                <div class="flex items-center gap-2">
+                                    <div class="min-w-0">
+                                        <p class="font-medium text-ink">{{ $row['label'] }}</p>
+                                        <p class="ltr text-xs text-muted-3">{{ $row['symbol'] }}</p>
+                                    </div>
+                                    {{-- P5-08 — chart e hamun symbol. --}}
+                                    <a href="{{ route('panel.charts', ['symbol' => $row['symbol']]) }}"
+                                       aria-label="نمودار {{ $row['label'] }}"
+                                       class="grid size-9 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-brand-2">
+                                        <x-icon name="chart" class="size-4" />
+                                    </a>
+                                </div>
                             </td>
                             <td class="px-5 py-3">
                                 @if ($row['spreadPct'] !== null)

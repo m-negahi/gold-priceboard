@@ -47,6 +47,7 @@ final class Navigation
                         ],
                     ],
                     ['key' => 'matrix', 'label' => 'ماتریس نمادها', 'icon' => 'coins', 'route' => 'panel.matrix'],
+                    ['key' => 'charts', 'label' => 'نمودار قیمت', 'icon' => 'chart', 'route' => 'panel.charts'],
                     ['key' => 'manual', 'label' => 'قیمت دستی', 'icon' => 'pencil', 'route' => 'panel.manual.index'],
                 ],
             ],
