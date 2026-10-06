@@ -25,7 +25,7 @@
 🔴 **Mande ye Phase 4**:
 - `P4-07` — admin: CustomerList + WalletLedger (model/Query amade، faghat UI mande)
 - `P4-10` — panel e CUSTOMER (self-serve): website ezafe kardan، credential، kharid e plan، wallet. (Model e kamel: `api_clients.website_url`/`plan_id`، `PurchasePlanAction`، saghf e ruzane — hame amade، faghat UI)
-- 🔴 **`.env` e Influx 401** — token haye write/read bi-e'tebar (volume reset shode)؛ tick ha be spool miran (emn). Hall tu P3-05 sabt shode (faghat sahebe proje، `.env`).
+- ✅ **Influx 401 HALL SHOD (2026-10-06)** — token haye write/read ba'd az reset e volume yatim shode budan. `reset-influx-tokens.php` (bug e use-ordering esh ham fix shod) → `provision --tokens` → do token tu `.env` → `up -d --force-recreate`. Ta'eed: drain 1732 khat nevesht، health سبز (candles_1m < 180s)، 83 tick tu 3 daghighe tu bucket، spool 0. (`candles_1d` rooye scheduler e 15-daghighe-i por mishe.)
 - ⚠️ `price_group_id` va `cost_per_call_minor` e `api_price_groups` mandan؛ `ApiPlan` jaygozin e asli shod (nerkh ru plan). Group baraye dasteh-bandi e gheymat e customer (Phase ba'd) mimune.
 
 **Tamiz-kari ye memory**: cookie e session shod `pb8300_session` (collision ba proje ye ghabli ru localhost → logout-e-refresh — hall shod).

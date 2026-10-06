@@ -13,13 +13,17 @@ declare(strict_types=1);
  * Ejra: docker compose exec octane php scripts/reset-influx-tokens.php
  */
 
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\Http;
+
+// 🔴 `use` ha bayad GHABL az masraf bashan: PHP import ha ro az noghte ye
+// e'lam be ba'd e'mal mikone، pas `use` e ba'd az `make(Kernel::class)`
+// un ro resolve nemikard va script fatal midad. (Hamun dars e Pint tu
+// `scripts/board-probe.php`.)
 require __DIR__.'/../vendor/autoload.php';
 
 $app = require __DIR__.'/../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
-
-use Illuminate\Contracts\Console\Kernel;
-use Illuminate\Support\Facades\Http;
 
 $url = rtrim((string) config('pricing.influx.url'), '/');
 $org = (string) config('pricing.influx.org');
