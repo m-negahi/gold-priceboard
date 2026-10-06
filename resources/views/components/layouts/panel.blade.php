@@ -11,25 +11,30 @@
     <title>{{ $title ? $title.' — پنل' : 'پنل مدیریت' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-dvh bg-canvas text-ink antialiased">
-    <div class="flex">
+{{-- Shell e Donezo (docs/dashboard-design.md §4): canvas e khakestari posht،
+     kol e panel dakhel e yek card e gerd e bozorg («floating panel»). --}}
+<body class="min-h-dvh bg-canvas text-ink antialiased lg:p-4">
+    <div class="shell-app flex min-h-dvh lg:min-h-[calc(100dvh-2rem)]">
         <x-panel.sidebar :groups="\App\Modules\Panel\Support\Navigation::groups()" :current="$current" />
 
-        <div class="min-w-0 flex-1">
-            <header class="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-line bg-surface/90 px-6 backdrop-blur">
-                <nav class="flex min-w-0 items-center gap-2 text-sm text-muted" aria-label="مسیر">
-                    @foreach ($breadcrumbs as $crumb)
-                        @if (! $loop->first)
-                            <x-icon name="chevron" class="size-4 shrink-0 text-muted-3" />
-                        @endif
-                        <span @class(['truncate', 'text-ink font-medium' => $loop->last])>{{ $crumb }}</span>
-                    @endforeach
-                </nav>
+        <div class="flex min-w-0 flex-1 flex-col">
+            {{-- Topbar: card e gerd e JODAGANE (doc §4)، na yek navar e full-width. --}}
+            <header class="sticky top-0 z-40 px-4 pt-4 lg:px-6">
+                <div class="flex h-14 items-center gap-4 rounded-2xl bg-surface px-4 shadow-sm">
+                    <nav class="flex min-w-0 flex-1 items-center gap-2 text-sm text-muted" aria-label="مسیر">
+                        @foreach ($breadcrumbs as $crumb)
+                            @if (! $loop->first)
+                                <x-icon name="chevron" class="size-4 shrink-0 text-muted-3" />
+                            @endif
+                            <span @class(['truncate', 'text-ink font-medium' => $loop->last])>{{ $crumb }}</span>
+                        @endforeach
+                    </nav>
 
-                {{-- Karbar va dokme-ye khoroj hala ta'e sidebar-and, ta tu rail-e baste ham dide beshan. --}}
+                    {{-- Karbar va khoroj ta'e sidebar-and ta tu rail e baste ham dide beshan. --}}
+                </div>
             </header>
 
-            <main class="p-6">{{ $slot }}</main>
+            <main class="flex-1 p-4 lg:p-6">{{ $slot }}</main>
         </div>
     </div>
 

@@ -5,7 +5,9 @@
     ke label-e item ro hamel mikone, pas be :focus-visible ham javab mide na faghat hover, va har
     item dar har halati aria-label-esh ro negah midare.
 --}}
-<aside x-data="panelSidebar" class="sticky top-0 flex h-dvh shrink-0 flex-col border-l border-line bg-surface transition-[width] duration-200"
+{{-- Dakhel e shell e Donezo: sidebar shafaf ru surface-2 ye shell mishine
+     (doc §4)؛ faghat yek hairline e logical (`border-e`) jodash mikone. --}}
+<aside x-data="panelSidebar" class="sticky top-0 flex h-dvh shrink-0 flex-col border-e border-line bg-transparent transition-[width] duration-200 lg:top-4 lg:h-[calc(100dvh-2rem)]"
        :class="expanded ? 'w-60' : 'w-[4.25rem]'">
 
     <div class="flex h-16 items-center gap-2 border-b border-line px-3">
@@ -38,15 +40,19 @@
                         <a @if (! $disabled) href="{{ route($item['route']) }}" @else href="#" aria-disabled="true" tabindex="-1" @endif
                            aria-label="{{ $item['label'] }}"
                            @class([
-                               'flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm transition-colors',
-                               'bg-brand-soft text-brand-2 font-medium' => $active,
+                               'relative flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm transition-colors',
+                               // Donezo (doc §5): fa'al = navar e brand e samt + bg e surface + bold.
+                               'bg-surface font-bold text-ink shadow-xs' => $active,
                                'text-ink-3 hover:bg-surface-3' => ! $active && ! $disabled,
                                'text-muted-3 cursor-not-allowed' => $disabled,
                            ])>
+                            @if ($active)
+                                <span class="absolute inset-y-2 start-0 w-0.5 rounded-full bg-brand-700" aria-hidden="true"></span>
+                            @endif
                             <x-icon :name="$item['icon']" class="size-5 shrink-0" />
                             <span x-show="expanded" x-cloak class="truncate">{{ $item['label'] }}</span>
                             @if ($disabled)
-                                <span x-show="expanded" x-cloak class="mr-auto text-[10px] text-muted-3">به‌زودی</span>
+                                <span x-show="expanded" x-cloak class="ms-auto text-[10px] text-muted-3">به‌زودی</span>
                             @endif
                         </a>
 
@@ -54,7 +60,7 @@
                              va hich vaght rooye icon-i ke tosif mikone nemishine. --}}
                         <div x-show="hovered === '{{ $item['key'] }}'" x-cloak x-transition.opacity.duration.120ms
                              role="tooltip"
-                             class="pointer-events-none absolute right-full top-1/2 z-50 ml-0 mr-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs text-ink-invert shadow-lg">
+                             class="pointer-events-none absolute start-full top-1/2 z-50 ms-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs text-ink-invert shadow-lg">
                             {{ $item['label'] }}
                         </div>
                     </li>
@@ -90,7 +96,7 @@
             {{-- Hamun olgoo-ye tooltip-e item-haye nav: samt-e chap baz mishe, rooye icon nemishine. --}}
             <div x-show="hovered === 'logout'" x-cloak x-transition.opacity.duration.120ms
                  role="tooltip"
-                 class="pointer-events-none absolute right-full top-1/2 z-50 ml-0 mr-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs text-ink-invert shadow-lg">
+                 class="pointer-events-none absolute start-full top-1/2 z-50 ms-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs text-ink-invert shadow-lg">
                 خروج
             </div>
         </div>

@@ -5,11 +5,18 @@ declare(strict_types=1);
 namespace App\Modules\Panel\Support;
 
 /**
- * Sidebar be shekl-e data na markup, ta rail-e baste, list-e baz va breadcrumb hame az yek manba'
- * bekhunand va natoonand az ham fasele begirand.
+ * Sidebar be shekl-e data na markup, ta rail-e baste, list-e baz va breadcrumb
+ * hame az yek manba' bekhunand va natoonand az ham fasele begirand.
  *
- * `route` baraye bakhshi ke hanuz vojood nadare momkene null bashe: item disabled render mishe
- * be jaye inke gheyb beshe, ke shekl-e panel ro dar hin-e sakht sadegh negah midare.
+ * `route` baraye bakhshi ke hanuz vojood nadare `null` ast: item DISABLED
+ * render mishe (badge e «به‌زودی») be jaye inke gheyb beshe — shekl-e panel
+ * dar hin-e sakht sadegh mimune.
+ *
+ * ⚠️ Bazneveshte baraye IN proje (2026-10-06): noskhe ye ghabli ~13 esm e
+ * route e proje ye Desktop ro dasht (`panel.pages.index`، …) va `route()` e
+ * sidebar ru har safhe RouteNotFound midad. Inja faghat naghshe ye PLAN e
+ * hamin proje ast: Phase 3 (panel e pricing)، Phase 4 (wallet/API)، Phase 5
+ * (site/media). Har task-i ke route esh sakhte shod، hamin ja por mishe.
  */
 final class Navigation
 {
@@ -23,56 +30,33 @@ final class Navigation
                 'label' => 'قیمت‌گذاری',
                 'items' => [
                     ['key' => 'dashboard', 'label' => 'میزکار', 'icon' => 'gauge', 'route' => 'panel.dashboard'],
-                    ['key' => 'instruments', 'label' => 'ابزارها', 'icon' => 'coins', 'route' => 'panel.instruments.index'],
-                    ['key' => 'sources', 'label' => 'منابع قیمت', 'icon' => 'feed', 'route' => 'panel.sources.index'],
-                    // ADR-0050: «نگاشت نمادها» ba «پایش زنده» yeki shod؛ item-e joda-gane hazf shod.
-                    ['key' => 'monitor', 'label' => 'پایش زنده', 'icon' => 'pulse', 'route' => 'panel.monitor'],
+                    // P3-06/P3-07 — provider ha + spread.
+                    ['key' => 'providers', 'label' => 'منابع قیمت', 'icon' => 'feed', 'route' => null],
+                    // P3-08/P3-09 — salamat + payesh e tick.
+                    ['key' => 'health', 'label' => 'سلامت منابع', 'icon' => 'pulse', 'route' => null],
+                    ['key' => 'monitor', 'label' => 'پایش زنده', 'icon' => 'eye', 'route' => null],
+                    // P3-10 — matrix e provider × symbol.
+                    ['key' => 'matrix', 'label' => 'ماتریس نمادها', 'icon' => 'coins', 'route' => null],
                 ],
             ],
             [
-                'label' => 'محتوا',
+                'label' => 'مشتریان و مالی', // Phase 4
                 'items' => [
-                    ['key' => 'pages', 'label' => 'صفحات', 'icon' => 'page', 'route' => 'panel.pages.index'],
-                    ['key' => 'articles', 'label' => 'مقاله‌ها', 'icon' => 'article', 'route' => 'panel.articles.index'],
-                    ['key' => 'article-categories', 'label' => 'دسته‌بندی مقالات', 'icon' => 'tag', 'route' => 'panel.article-categories.index'],
-                    ['key' => 'menus', 'label' => 'منوها', 'icon' => 'menu', 'route' => 'panel.menus.index'],
-                    ['key' => 'media', 'label' => 'رسانه', 'icon' => 'image', 'route' => 'panel.media.index'],
-                ],
-            ],
-            [
-                'label' => 'سئو',
-                'items' => [
-                    ['key' => 'seo', 'label' => 'مرور سئو', 'icon' => 'search', 'route' => 'panel.seo.overview'],
-                    ['key' => 'redirects', 'label' => 'ریدایرکت‌ها', 'icon' => 'arrow', 'route' => 'panel.redirects.index'],
-                ],
-            ],
-            [
-                'label' => 'مشتریان',
-                'items' => [
-                    ['key' => 'merchants', 'label' => 'مشتریان', 'icon' => 'users', 'route' => null],
-                    ['key' => 'sites', 'label' => 'سایت‌ها', 'icon' => 'globe', 'route' => null],
-                    ['key' => 'tickets', 'label' => 'تیکت‌ها', 'icon' => 'ticket', 'route' => null],
-                    ['key' => 'messages', 'label' => 'پیام‌ها', 'icon' => 'mail', 'route' => 'panel.messages.index'],
-                ],
-            ],
-            [
-                'label' => 'مالی',
-                'items' => [
-                    ['key' => 'plans', 'label' => 'پلن‌ها', 'icon' => 'tag', 'route' => null],
+                    ['key' => 'customers', 'label' => 'مشتریان', 'icon' => 'users', 'route' => null],
                     ['key' => 'wallets', 'label' => 'کیف پول', 'icon' => 'wallet', 'route' => null],
-                    ['key' => 'invoices', 'label' => 'فاکتورها', 'icon' => 'receipt', 'route' => null],
                 ],
             ],
             [
-                'label' => 'گزارش‌ها',
+                'label' => 'سایت', // Phase 5 + P3-00 (Media)
                 'items' => [
-                    ['key' => 'provider-report', 'label' => 'گزارش منابع', 'icon' => 'pulse', 'route' => 'panel.reports.providers'],
+                    ['key' => 'media', 'label' => 'رسانه', 'icon' => 'image', 'route' => null],
+                    ['key' => 'seo', 'label' => 'سئو', 'icon' => 'search', 'route' => null],
                 ],
             ],
             [
                 'label' => 'تنظیمات',
                 'items' => [
-                    ['key' => 'settings', 'label' => 'تنظیمات', 'icon' => 'cog', 'route' => 'panel.settings.index'],
+                    ['key' => 'settings', 'label' => 'تنظیمات', 'icon' => 'cog', 'route' => null],
                 ],
             ],
         ];
