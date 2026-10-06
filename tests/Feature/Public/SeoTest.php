@@ -267,6 +267,13 @@ final class SeoTest extends TestCase
      */
     public function test_absolute_seo_urls_ignore_a_spoofed_host_header(): void
     {
+        // 🔴 Tag haye asset e `@vite` (`<script src>`/`<link rel=stylesheet>`)
+        // ba `public/build` (bedun e `public/hot`) az `asset()` = host e
+        // REQUEST sakhte mishan — pas in test faghat vaghti sabz bud ke Vite
+        // e dev bala bud (URL e `localhost:5373`). Asset URL marbut be SEO
+        // nist (safhe `private` ast)؛ in test meta/JSON-LD ro mosanje، na
+        // vaziat e build e mohit.
+        $this->withoutVite();
         config(['app.url' => 'https://tablo.example', 'seo.indexable' => true]);
         $tgju = $this->seoProvider('tgju', 10);
         $this->seoSnapshot($tgju, 'xau-18k-g-irr', 266_400_000);
