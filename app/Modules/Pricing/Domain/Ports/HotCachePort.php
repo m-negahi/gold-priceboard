@@ -114,4 +114,24 @@ interface HotCachePort
      * correctness: hame ye sink ha idempotent-and).
      */
     public function isAvailable(): bool;
+
+    /**
+     * Sabt e yek gozaresh e tick baraye `TickMonitor` e panel (P3-09).
+     *
+     * 🔴 Gharardad: jadid tarin AVVAL، saghf e sabet (adapter LTRIM mizane)
+     * — in yek daftarche ye monitoring e gozara-st، na audit (un
+     * `price_changes`/log e `pricing` ast). Gom shodan esh zarar e dadei
+     * nadare، pas adapter nabayad hich vaght throw kone... na، THROW mojaz
+     * ast (caller izole mikone) vali nabayad tick ro bokoshe.
+     *
+     * @param  array<string, mixed>  $report  khoruji ye `TickReportDto::toArray()`
+     */
+    public function putTickReport(array $report): void;
+
+    /**
+     * Jadid tarin gozaresh ha — jadid tarin aval.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function tickReports(int $limit = 20): array;
 }

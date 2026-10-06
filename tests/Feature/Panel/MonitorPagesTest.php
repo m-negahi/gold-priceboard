@@ -1,0 +1,94 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\Panel;
+
+use App\Modules\Auth\Infrastructure\Persistence\Models\User;
+use App\Modules\Pricing\Application\Actions\ProviderAction;
+use App\Modules\Pricing\Application\Dto\ProviderInputDto;
+use App\Modules\Pricing\Domain\Ports\HotCachePort;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Redis;
+use Tests\TestCase;
+
+/**
+ * Safhe haye monitoring (P3-08/09/10) az rooye HTTP.
+ *
+ * Tick e vaghei ba driver e MOCK zade mishe (hich network-i) ta masir e
+ * kamel — `IngestTickAction` -> `putTickReport` -> safhe — yek ja test she.
+ */
+final class MonitorPagesTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Redis::connection('prices')->flushdb();
+    }
+
+    private function admin(): User
+    {
+        return User::factory()->admin()->create();
+    }
+
+    private function seedMockProvider(): void
+    {
+        (new ProviderAction)->create(ProviderInputDto::fromArray([
+            'key' => 'mock',
+            'driver' => 'mock',
+            'name' => 'Mock',
+            'name_fa' => 'آزمایشی',
+            'is_active' => true,
+        ]));
+    }
+
+    public function test_the_health_page_lists_every_provider(): void
+    {
+        $this->seedMockProvider();
+
+        $this->actingAs($this->admin())->get(route('panel.health'))
+            ->assertOk()
+            ->assertSee('سلامت منابع')
+            ->assertSee('آزمایشی');
+    }
+
+    public function test_the_monitor_page_shows_an_honest_empty_state(): void
+    {
+        $this->actingAs($this->admin())->get(route('panel.monitor.ticks'))
+            ->assertOk()
+            ->assertSee('هنوز گزارشی ثبت نشده');
+    }
+
+    public function test_a_real_tick_lands_on_the_monitor_and_matrix_pages(): void
+    {
+        $this->seedMockProvider();
+
+        // Tick e vaghei — mock source hich HTTP-i nadare.
+        $this->artisan('pricing:tick', ['--force' => true])->assertSuccessful();
+
+        // Daftarche por shod (masir e IngestTickAction -> putTickReport).
+        $reports = $this->app->make(HotCachePort::class)->tickReports(1);
+        self::assertNotSame([], $reports);
+
+        // Gharardad e kelid haye payload — view az hamin ha mikhune
+        // (`ok` e sink، na `succeeded`؛ yek bar eshtebah shod).
+        self::assertTrue($reports[0]['sinks']['redis']['ok'] ?? false, 'sink e redis tu tick e test bayad ok bashe.');
+        self::assertTrue($reports[0]['providers']['mock']['succeeded'] ?? false);
+
+        $this->actingAs($this->admin())->get(route('panel.monitor.ticks'))
+            ->assertOk()
+            ->assertSee('قیمت') // pill e «N قیمت»
+            ->assertSee('mock');
+
+        // Matrix ham hamun tick ro mibine. (`LatinizeDigits` ragham e label
+        // ro Latin mikone، pas «۱۸» tu khoruji «18» ast.)
+        $this->actingAs($this->admin())->get(route('panel.matrix'))
+            ->assertOk()
+            ->assertSee('طلای 18 عیار')
+            ->assertSee('xau-18k-g-irr')
+            ->assertSee('mock');
+    }
+}

@@ -31,11 +31,9 @@ final class Navigation
                 'items' => [
                     ['key' => 'dashboard', 'label' => 'میزکار', 'icon' => 'gauge', 'route' => 'panel.dashboard'],
                     ['key' => 'providers', 'label' => 'منابع قیمت', 'icon' => 'feed', 'route' => 'panel.providers.index'],
-                    // P3-08/P3-09 — salamat + payesh e tick.
-                    ['key' => 'health', 'label' => 'سلامت منابع', 'icon' => 'pulse', 'route' => null],
-                    ['key' => 'monitor', 'label' => 'پایش زنده', 'icon' => 'eye', 'route' => null],
-                    // P3-10 — matrix e provider × symbol.
-                    ['key' => 'matrix', 'label' => 'ماتریس نمادها', 'icon' => 'coins', 'route' => null],
+                    ['key' => 'health', 'label' => 'سلامت منابع', 'icon' => 'pulse', 'route' => 'panel.health'],
+                    ['key' => 'monitor', 'label' => 'پایش زنده', 'icon' => 'eye', 'route' => 'panel.monitor.ticks'],
+                    ['key' => 'matrix', 'label' => 'ماتریس نمادها', 'icon' => 'coins', 'route' => 'panel.matrix'],
                 ],
             ],
             [

@@ -50,6 +50,11 @@ final readonly class RedisHotCache implements HotCachePort
 
     private const HEARTBEAT_KEY = 'pb:board:hb';
 
+    private const TICK_REPORTS_KEY = 'pb:ticks:reports';
+
+    /** Saghf e daftarche ye monitoring — ~50 tick ≈ 12.5 daghighe. */
+    private const MAX_TICK_REPORTS = 50;
+
     public function board(): array
     {
         $raw = $this->connection()->get(self::BOARD_KEY);
@@ -186,6 +191,36 @@ final readonly class RedisHotCache implements HotCachePort
         }
 
         return $health;
+    }
+
+    public function putTickReport(array $report): void
+    {
+        // Jadid tarin aval + saghf — yek daftarche ye gozara ye monitoring.
+        $this->connection()->pipeline(function ($pipe) use ($report): void {
+            $pipe->lpush(self::TICK_REPORTS_KEY, (string) json_encode($report, JSON_UNESCAPED_UNICODE));
+            $pipe->ltrim(self::TICK_REPORTS_KEY, 0, self::MAX_TICK_REPORTS - 1);
+        });
+    }
+
+    public function tickReports(int $limit = 20): array
+    {
+        $rows = $this->connection()->lrange(self::TICK_REPORTS_KEY, 0, max(0, $limit - 1));
+
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        $reports = [];
+
+        foreach ($rows as $row) {
+            $decoded = json_decode((string) $row, true);
+
+            if (is_array($decoded)) {
+                $reports[] = $decoded;
+            }
+        }
+
+        return $reports;
     }
 
     /**

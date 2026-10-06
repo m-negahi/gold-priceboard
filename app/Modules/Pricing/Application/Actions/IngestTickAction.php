@@ -60,9 +60,24 @@ final readonly class IngestTickAction
         }
 
         try {
-            return $this->tick($at, $force);
+            $report = $this->tick($at, $force);
         } finally {
             $this->release($lock);
+        }
+
+        // Daftarche ye `TickMonitor` (P3-09) — izole: monitoring hargez
+        // nabayad tick ro bokoshe.
+        $this->recordReport($report);
+
+        return $report;
+    }
+
+    private function recordReport(TickReportDto $report): void
+    {
+        try {
+            $this->cache->putTickReport($report->toArray());
+        } catch (Throwable) {
+            // Redis ghat' — hamun ghat'i ghablan tu sink ha sabt shode.
         }
     }
 

@@ -153,6 +153,26 @@ final class ArrayHotCache implements HotCachePort
         return $this->available;
     }
 
+    /** @var array<int, array<string, mixed>> */
+    private array $tickReports = [];
+
+    public function putTickReport(array $report): void
+    {
+        $this->assertWritable();
+        $this->guard();
+
+        // Hamun gharardad e Redis: jadid tarin AVVAL + saghf e 50.
+        array_unshift($this->tickReports, $report);
+        $this->tickReports = array_slice($this->tickReports, 0, 50);
+    }
+
+    public function tickReports(int $limit = 20): array
+    {
+        $this->guard();
+
+        return array_slice($this->tickReports, 0, $limit);
+    }
+
     /** Shabih-sazi ye ghat'i ye Redis. */
     /**
      * 🔴 OOM: write ha rad mishan، read ha salem.

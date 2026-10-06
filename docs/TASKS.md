@@ -403,9 +403,15 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
   → `ProviderSpreadController` (edit/update/remove/preview) + `SpreadSaveRequest` + `SpreadQuery::formRows()/preview()` + `spread-form.js` (faghat transport: debounce 400ms → endpoint e preview؛ HICH mohasebe ye gheymat tu JS). 16 radif (wildcard + 15 instrument، hamishe HAME — na faghat save-shode ha)؛ preview e avvaliye server-side render mishe؛ hazf e override faghat ba dokme ye sarih (`formaction` e PUT ru hamun form) va revision e `is_removal` minevise.
   → 🔴 **Fallback e preview `SnapshotStorePort::all()` NIST** — gharardad e un «faghat fa'al» e، vali flow e vaghei spread ro GHABL az roshan kardan e provider tanzim mikone؛ `SpreadQuery` mostaghim az `price_snapshots` (Model، read-only — mojaz tebgh e jadval e dastresi) mikhune ta provider e khamoosh ham preview dashte bashe.
   → 5 test (`ProviderSpreadPageTest`): 16 radif، save → revision faghat baraye taghir (save ye dovvom e bi-taghir sefr revision)، darsad e kharej az band rad، remove + `is_removal`، **preview daghighan arithmetic e `SpreadPricer`** (±1% ru 266,400,000). **795 test sabz، e2e 6/6.** Screenshot: `screenshots/spreads.png` (ba data ye zende ye estjt).
-- [ ] **P3-08** — `ProviderHealth`
-- [ ] **P3-09** — `TickMonitor` (chi rad shod va chera) — safhe ye asli ye debug
-- [ ] **P3-10** — `InstrumentMatrix` (`provider × symbol` + sen e har khune + marker e `is_derived`)
+- [x] **P3-08** — `ProviderHealth`
+  → `MonitorController::health` + `panel::monitor.health`: jadval e kamel (state az DB، latency/symbol/rad az hot، shekast e payapey، akharin movafagh، akharin khata) ba hamun `ProviderHealthQuery` e P3-05.
+- [x] **P3-09** — `TickMonitor` (chi rad shod va chera) — safhe ye asli ye debug
+  → **Engine**: `HotCachePort::putTickReport()/tickReports()` (gharardad: jadid tarin aval، saghf 50) + `RedisHotCache` (`pb:ticks:reports`، LPUSH+LTRIM) + `ArrayHotCache` e fake ba HAMUN gharardad + sabt e izole tu `IngestTickAction` (monitoring hich vaght tick ro nemikoshe). `TickReportQuery` baraye khundan.
+  → Safhe: har tick yek card — vaght e Tehran، pill e ghabul/rad/duration، pill e har provider (latency + `↻` e retry)، pill e har sink (`ok`/fail + adad e spool)، radd ha GROUP-shode ba dalil (kohne/kharej-az-band/enheraf/beyn-manba'i) + label haye unmapped. Ru mohit e zende DO chiz ro fori ma'lum kard: dore ye vaghei ~30s ast (yeki dar miyan «hich provider...» — raftar e sanadi) va influx 401 ba 11 khat spool dar har tick.
+  → ⚠️ Yek bug e khodam hamin ja gereftam: kelid e sink tu payload `ok`-e na `succeeded` — pill e hame ye sink ha ghermez mishod؛ test e gharardad e kelid ha ezafe shod.
+  → Test: `TickReportLedgerTest` (gharardad ru HAR DO impl: tartib، saghf e 50، limit) + `MonitorPagesTest` (tick e VAGHEI ba driver e mock bedun e network → daftarche → safhe؛ kelid haye payload). 
+- [x] **P3-10** — `InstrumentMatrix` (`provider × symbol` + sen e har khune + marker e `is_derived`)
+  → `InstrumentMatrixQuery` — AMDAN az `BoardQuery` nemikhune: un radif e makhfi ro hazf mikone dar hali ke «chera ru tablo nist» daghighan hadaf e in safhe-ast. Har khune: sen + tone (taze/kohne/makhfi) + `bid/ask` e native + `*` e derived. **801 test sabz، e2e 6/6.** Screenshot ha: `monitor.png`/`health.png`/`matrix.png`.
 - [ ] **P3-11** — Verify ba Playwright + moghayese ba `images/dashboard-prefer.webp`
 
 ---

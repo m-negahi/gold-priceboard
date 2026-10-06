@@ -6,6 +6,8 @@ use App\Modules\Auth\Http\Controllers\LoginController;
 use App\Modules\Auth\Http\Middleware\EnsureAdmin;
 use App\Modules\Panel\Http\Controllers\DashboardController;
 use App\Modules\Panel\Http\Controllers\KitController;
+use App\Modules\Panel\Http\Controllers\MatrixController;
+use App\Modules\Panel\Http\Controllers\MonitorController;
 use App\Modules\Panel\Http\Controllers\ProviderController;
 use App\Modules\Panel\Http\Controllers\ProviderSpreadController;
 use Illuminate\Support\Facades\Route;
@@ -57,6 +59,11 @@ Route::middleware(['auth', EnsureAdmin::class])
         // form `@method('PUT')` dare.
         Route::put('/providers/{key}/spreads/{symbol}/remove', [ProviderSpreadController::class, 'remove'])->name('providers.spreads.remove');
         Route::post('/providers/{key}/spreads/preview', [ProviderSpreadController::class, 'preview'])->name('providers.spreads.preview');
+
+        // ── Monitoring (P3-08/09/10) ────────────────────────────────
+        Route::get('/health', [MonitorController::class, 'health'])->name('health');
+        Route::get('/monitor', [MonitorController::class, 'ticks'])->name('monitor.ticks');
+        Route::get('/matrix', [MatrixController::class, 'show'])->name('matrix');
     });
 
 /*
