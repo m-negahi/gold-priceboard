@@ -12,6 +12,16 @@ final readonly class ZibalGateway implements PaymentGatewayPort
 {
     private const BASE_URL = 'https://gateway.zibal.ir';
 
+    public function name(): string
+    {
+        return 'zibal';
+    }
+
+    public function redirectUrl(string $trackId): string
+    {
+        return self::BASE_URL.'/start/'.$trackId;
+    }
+
     /** @return array{track_id: string, url: string} */
     public function request(int $amountRial, string $callbackUrl, string $orderId): array
     {
@@ -33,7 +43,7 @@ final readonly class ZibalGateway implements PaymentGatewayPort
             throw new RuntimeException('shenase ye peygiri e dargah na-motabar ast');
         }
 
-        return ['track_id' => $trackId, 'url' => self::BASE_URL.'/start/'.$trackId];
+        return ['track_id' => $trackId, 'url' => $this->redirectUrl($trackId)];
     }
 
     /** @return array{verified: bool, amount_rial: int, reference: string|null, data: array<string, mixed>} */

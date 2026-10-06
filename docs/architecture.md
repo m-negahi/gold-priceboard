@@ -227,7 +227,7 @@ Octane process ro zende negah midare — pas har chizi ke **halat** dare bayn e 
 | `Access` | RBAC: role/permission (`PermissionCatalog`)، profile e admin، gate e route/navigation، audit e dastresi | `AccessQuery`، `ManageAccessAction`، `Domain/PermissionCatalog` | `AccessServiceProvider` |
 | `Api` | API e foroushi: HMAC auth، idempotency/charge e har call، plan/subscription/quota، site approval، usage e ruzane | `ApiHmacAuth`، `IdempotentApiCall`، `ChargeApiCall`، `LogApiRequest`، `PurchasePlanAction`، `RollupApiUsageAction`، `HmacSignature` | `ApiServiceProvider` |
 | `Wallet` | kif e pool: balance e cache-shode + `wallet_transactions` e append-only + idempotency e `(wallet, reason, reference)` | `WalletAction`، `AdjustWalletAction`، `ReverseWalletAdjustmentAction`، `WalletQuery` | — (Action/Query e sade؛ autowire) |
-| `Billing` | pardakht: `PaymentGatewayPort` + `ZibalGateway`، topup e wallet، sodur e factor e immutable، safhe haye `/account` | `TopupPaymentAction`، `IssueInvoiceAction`، `CustomerBillingQuery`، `Config/billing.php` | `BillingServiceProvider` (bind e gateway) |
+| `Billing` | pardakht: `PaymentGatewayPort` + `VandarGateway` (default، `BILLING_GATEWAY`) / `ZibalGateway`، topup e wallet، sodur e factor e immutable، safhe haye `/account` | `TopupPaymentAction`، `IssueInvoiceAction`، `CustomerBillingQuery`، `Config/billing.php` | `BillingServiceProvider` (bind e gateway) |
 | `Finance` | daftar e kol: journal e do-tarafe ru har tarakonesh e wallet، settlement e dargah، gozaresh haye admin | `PostWalletJournalAction`، `SettleGatewayPaymentAction`، `FinanceLedgerQuery`، `FinanceMonthlyReportQuery`، `FinanceInvoiceQuery` | — (autowire) |
 | `Kyc` | onboarding + estelam e hoviat (Zohal) posht e `IdentityVerificationPort`؛ job e `RunIdentityChecks`؛ tasmim e admin | `SubmitKycRequestAction`، `QueueIdentityChecksAction`، `DecideKycAction`، `ZohalIdentityVerification` | `KycServiceProvider` |
 | `Ticket` | ticket e moshtari/admin: status/message/event، peyvast e private ba signed URL، SMS e status tu queue | `OpenTicketAction`، `ReplyTicketAction`، `TransitionTicketAction`، `TicketQuery`، `Jobs/SendTicketStatus` | `TicketServiceProvider` |
@@ -343,7 +343,7 @@ PriorityChain::order(global, custom)          Domain — mahz، bedun e IO
 
 | Reason e `wallet_transactions` | Koja neveshte mishe | Reference |
 |---|---|---|
-| `topup` | `Billing\TopupPaymentAction` (ba'd az verify e server-to-server) | `zibal:{track_id}` |
+| `topup` | `Billing\TopupPaymentAction` (ba'd az verify e server-to-server) | `{gateway}:{track_id}` (`vandar:{token}` / `zibal:{trackId}`) |
 | `plan_purchase` | `Api\PurchasePlanAction` | `purchase_reference` e eshterak |
 | `api_call` / `refund` | `Api\ChargeApiCallAction` (reserve → ejra → refund ru khata/304) | hash e client + request id |
 | `admin_adjust` | `Wallet\AdjustWalletAction` (panel: `users.wallet.adjust`، `finance.wallet-adjust`) | request key؛ bargasht ba `ReverseWalletAdjustmentAction` |
@@ -381,7 +381,7 @@ Hame ye mablagh ha `bigint` e minor unit (rial → `scale 0`، USD → `scale 4`
 | `api_usage_daily` | rollup e ruzane ye usage | unique(api_client_id, day)، `calls`، `cost_minor` |
 | `site_subscriptions` | snapshot e eshterak e kharide-shode | `api_client_id`، `api_plan_id`، `user_id`، `starts_at/ends_at`، `calls_included`، `calls_per_day`، `price_minor`، `cost_per_call_minor`، `calls_used`، `purchase_reference` unique |
 | `site_subscription_days` / `site_subscription_calls` | masraf e ruzane / idempotency e har call | unique(site_subscription_id, day) / `reference` unique |
-| `wallet_topup_payments` | pardakht e dargah (Zibal) | `request_key`، `track_id` unique، `status`، `gateway_reference`، `verified_at`، `verify_data`؛ unique(user_id, request_key) |
+| `wallet_topup_payments` | pardakht e dargah (Vandar/Zibal) | `request_key`، `track_id` unique، `status`، `gateway_reference`، `verified_at`، `verify_data`؛ unique(user_id, request_key) |
 | `billing_invoices` | factor e **immutable** (trigger) | `number` unique (`PB-YYYY-NNNNNN`)، `kind`، `amount_minor`، `buyer_snapshot`، `lines_snapshot`، `issued_at`؛ FK unique be topup ya subscription |
 | `billing_invoice_sequences` | shomarande ye sali | `year` PK، `last_number` |
 | `finance_accounts` | chart e hesab ha | `code` unique، `name`، `normal_side`، `is_active` |

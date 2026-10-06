@@ -44,7 +44,7 @@ Port ha amdan shift shodan ta ba projeh haye dige conflict nakhoran — avazeshu
 - `Domain/` hich chiz e Laravel nemibine؛ hich Eloquent tu Livewire/Blade/Controller (faghat `Action`/`Query`).
 - Gheymat hamishe `bigint` e minor unit + `scale` — hargez float. Hame ye mablagh ha **rial**؛ faghat quote haye jahani (ons/noghre/mes) USD.
 - Spread ru **read** e'mal mishe، na write. `wallet_transactions` va `finance_journals` append-only.
-- Hich test-i be provider/Zohal/Zibal/Kavenegar e vaghei network nemizane — fixture tu `tests/Fixtures/`.
+- Hich test-i be provider/Zohal/Vandar/Zibal/Kavenegar e vaghei network nemizane — fixture tu `tests/Fixtures/`.
 
 ## Test
 

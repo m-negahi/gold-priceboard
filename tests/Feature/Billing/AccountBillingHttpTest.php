@@ -120,7 +120,7 @@ final class AccountBillingHttpTest extends TestCase
         $this->assertDatabaseCount('site_subscriptions', 0);
     }
 
-    // ── POST /account/wallet/topup + GET /payments/zibal/callback ───
+    // ── POST /account/wallet/topup + GET /payments/callback ───
 
     public function test_topup_redirects_to_the_gateway_and_the_callback_credits_once(): void
     {

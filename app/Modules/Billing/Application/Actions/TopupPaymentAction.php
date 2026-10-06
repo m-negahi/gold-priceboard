@@ -41,7 +41,7 @@ final readonly class TopupPaymentAction
                         throw new InvalidArgumentException('darkhast e tekrari e pardakht na-motabar ast');
                     }
 
-                    return ['payment' => $payment, 'url' => 'https://gateway.zibal.ir/start/'.$payment->track_id];
+                    return ['payment' => $payment, 'url' => $this->gateway->redirectUrl((string) $payment->track_id)];
                 }
                 $payment = WalletTopupPayment::query()->create([
                     'user_id' => $userId, 'amount_minor' => $amountRial,
@@ -61,7 +61,7 @@ final readonly class TopupPaymentAction
                 throw new InvalidArgumentException('darkhast e tekrari e pardakht na-motabar ast', previous: $exception);
             }
 
-            return ['payment' => $payment, 'url' => 'https://gateway.zibal.ir/start/'.$payment->track_id];
+            return ['payment' => $payment, 'url' => $this->gateway->redirectUrl((string) $payment->track_id)];
         }
     }
 
@@ -91,8 +91,8 @@ final readonly class TopupPaymentAction
             }
 
             $wallet = $this->wallets->forOwner($payment->user_id);
-            $this->wallets->credit($wallet, $payment->amount_minor, 'topup', 'zibal:'.$trackId, [
-                'gateway' => 'zibal', 'payment_id' => $payment->id,
+            $this->wallets->credit($wallet, $payment->amount_minor, 'topup', $this->gateway->name().':'.$trackId, [
+                'gateway' => $this->gateway->name(), 'payment_id' => $payment->id,
             ]);
             $payment->forceFill([
                 'status' => 'verified', 'gateway_reference' => $result['reference'],

@@ -100,7 +100,10 @@ final readonly class CustomerBillingQuery
 
         return [
             'balanceRial' => Money::rialDisplay((int) ($wallet?->balance_minor ?? 0)),
-            'paymentConfigured' => (string) config('billing.zibal.merchant', '') !== '',
+            'paymentConfigured' => match ((string) config('billing.gateway', 'vandar')) {
+                'zibal' => (string) config('billing.zibal.merchant', '') !== '',
+                default => (string) config('billing.vandar.api_key', '') !== '',
+            },
             'ledger' => array_map(static fn (array $row): array => [
                 'id' => $row['id'], 'direction' => $row['direction'],
                 'amountRial' => Money::rialDisplay($row['amountMinor']),

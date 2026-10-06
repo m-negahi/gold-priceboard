@@ -55,4 +55,4 @@ Route::middleware('auth')->prefix('account')->name('account.billing.')->group(fu
     Route::get('/usage', [AccountBillingController::class, 'usage'])->name('usage');
 });
 
-Route::get('/payments/zibal/callback', [AccountBillingController::class, 'callback'])->name('account.billing.topup.callback');
+Route::get('/payments/callback', [AccountBillingController::class, 'callback'])->name('account.billing.topup.callback');

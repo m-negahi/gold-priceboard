@@ -14,6 +14,16 @@ final class FakePaymentGateway implements PaymentGatewayPort
 
     public function __construct(public int $verifiedAmountRial, public bool $isVerified = true) {}
 
+    public function name(): string
+    {
+        return 'fake';
+    }
+
+    public function redirectUrl(string $trackId): string
+    {
+        return 'https://gateway.zibal.ir/start/'.$trackId;
+    }
+
     /** @return array{track_id: string, url: string} */
     public function request(int $amountRial, string $callbackUrl, string $orderId): array
     {

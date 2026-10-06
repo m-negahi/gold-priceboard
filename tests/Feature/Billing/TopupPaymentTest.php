@@ -7,6 +7,7 @@ namespace Tests\Feature\Billing;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Billing\Application\Actions\TopupPaymentAction;
 use App\Modules\Billing\Domain\Ports\PaymentGatewayPort;
+use App\Modules\Billing\Infrastructure\Payments\VandarGateway;
 use App\Modules\Billing\Infrastructure\Payments\ZibalGateway;
 use App\Modules\Finance\Application\Actions\SettleGatewayPaymentAction;
 use App\Modules\Wallet\Application\Actions\WalletAction;
@@ -23,8 +24,12 @@ final class TopupPaymentTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_gateway_port_is_bound_to_the_zibal_adapter(): void
+    /** Default Vandar (entekhab e sahebe proje)؛ `BILLING_GATEWAY=zibal` adapter e Zibal. */
+    public function test_gateway_port_is_bound_by_config(): void
     {
+        self::assertInstanceOf(VandarGateway::class, app(PaymentGatewayPort::class));
+
+        config()->set('billing.gateway', 'zibal');
         self::assertInstanceOf(ZibalGateway::class, app(PaymentGatewayPort::class));
     }
 
@@ -135,6 +140,8 @@ final class TopupPaymentTest extends TestCase
         $wallets = app(WalletAction::class);
         $wallet = $wallets->forOwner($user->id);
         $wallets->block($wallet);
+        // In test adapter e VAGHEI ye Zibal ro ba Http::fake mizane — pas dargah ro Zibal kon.
+        config()->set('billing.gateway', 'zibal');
         config()->set('billing.zibal.merchant', 'test-merchant');
         Http::preventStrayRequests();
         $verifyCalls = 0;

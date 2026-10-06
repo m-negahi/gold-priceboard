@@ -110,6 +110,7 @@ abstract class TestCase extends BaseTestCase
         $config->set('sms.driver', 'fake');
         $config->set('modules.kyc.token', '');
         $config->set('billing.zibal.merchant', '');
+        $config->set('billing.vandar.api_key', '');
         $config->set('database.redis.cache.database', '14');
 
         // ── OTP: meghdar haye SABET e test ─────────────────────

@@ -100,7 +100,7 @@ test('kif e pul: mande sefr + form e topup (ya payam e dargah e tanzim-nashode)'
     await expect(page.getByText('موجودی کیف پول')).toBeVisible();
     await expect(page.getByText('گردشی ثبت نشده است.')).toBeVisible();
 
-    // Form faghat vaghti dargah config shode render mishe (config('billing.zibal.merchant')).
+    // Form faghat vaghti dargah config shode render mishe (config('billing.vandar.api_key') / zibal.merchant).
     const form = page.locator('form[action$="/account/wallet/topup"]');
     if ((await form.count()) === 1) {
         await expect(form.locator('input[name="amount_rial"]')).toBeVisible();
