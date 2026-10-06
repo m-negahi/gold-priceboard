@@ -517,7 +517,8 @@ Token e `write` baraye `rebuildMinuteCandles` be HAR SE ta niaz dare:
 
 > Darkhast e sahebe proje (chat 2026-10-06): «CRUD e karbaran kojast؟ admin ya customer ezafe konim، wallet + site + usage + plan hayi ke kharidan ro bebinim، disable/enable konim». **Vaziat e fe'li (inventory e code)**: CRUD e karbar AASLAN nist — tanha naghsh `is_admin`، hich status/level/disable؛ admin faghat ba `AdminSeeder` sakhte mishe. `P4-07` (CustomerList + WalletLedger) inja edgham mishe.
 
-- [ ] **P6-01** — Migration e ezafe-shi ru `users`: `status` (active/disabled)، `disabled_at`، `disabled_reason`، `level` (basic / invoice_verified)، `customer_type` (individual / legal)، `national_code` (nullable). Backfill: hame active + basic.
+- [x] **P6-01** — Migration e ezafe-shi ru `users`: `status` (active/disabled)، `disabled_at`، `disabled_reason`، `level` (basic / invoice_verified)، `customer_type` (individual / legal)، `national_code` (nullable). Backfill: hame active + basic.
+  → Anjam shod (2026-10-06): migration `2026_10_06_160000_add_status_and_level_to_users_table` (default e soton = backfill + `update` e sarih) + enum haye `Auth\Domain\Enums\{UserStatus,UserLevel,CustomerType}` + cast/default e sath e model + `User::isActive()`. `status`/`level`/`disabled_*` fillable NISTAN (mesl e `is_admin`). Ru dev apply shod (1 karbar → active/basic). Test: `UserStatusSchemaTest` 6 (mutation: hazf e default e model va default e DB har kodum 1 test ghermez). Kol: 993 PHP (4189 assertion).
 - [ ] **P6-02** — Panel: **lista ye karbaran** (search ba mobile/esm، filter e naghsh/vaziat/level) — `UserQuery` + jadval e server-side.
 - [ ] **P6-03** — Panel: **safhe ye karbar**: profile، wallet (mande + ledger)، site ha (api_client) ba vaziat، plan/subscription haye fa'al، **usage** (chart e call/rooz)، ticket ha.
 - [ ] **P6-04** — Panel: **sakht e karbar** (admin ya customer، ba mobile) + taghir e naghsh. `is_admin` faghat ba `forceFill` (hamun gharardad e mojud).
