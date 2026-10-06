@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Pricing;
 
 use App\Modules\Pricing\Application\Actions\ManualPriceAction;
+use App\Modules\Pricing\Application\Actions\SymbolPriorityAction;
 use App\Modules\Pricing\Application\Queries\EffectivePriceQuery;
 use App\Modules\Pricing\Application\Queries\ManualPriceQuery;
 use App\Modules\Pricing\Domain\Enums\Instrument;
@@ -155,6 +156,104 @@ final class ManualFallbackTest extends TestCase
         self::assertSame('tgju', $gold['provider'], 'olaviat ba sort e kamtar.');
         self::assertFalse($gold['usingFallback']);
         self::assertFalse($feed['alarm']);
+    }
+
+    private function snapshotFor(Provider $p, string $symbol, int $ageSeconds, int $minor = 266_400_000): void
+    {
+        PriceSnapshot::query()->create([
+            'provider_id' => $p->id, 'symbol' => $symbol, 'side' => 'last',
+            'quote_currency' => 'IRR', 'scale' => 0, 'raw_minor' => $minor,
+            'change_pct' => 0, 'direction' => 'flat',
+            'quoted_at' => CarbonImmutable::now()->subSeconds($ageSeconds),
+        ]);
+    }
+
+    /** @return array<string, array<string, mixed>> symbol -> radif e feed */
+    private function feedBySymbol(): array
+    {
+        return collect($this->app->make(EffectivePriceQuery::class)->feed()['symbols'])->keyBy('symbol')->all();
+    }
+
+    // ── 🔴 P5-07: olaviat e PER-SYMBOL ──────────────────────────────
+
+    public function test_a_per_symbol_chain_overrides_the_global_order_for_that_symbol_only(): void
+    {
+        $tgju = $this->activeProvider('tgju', 10);
+        $estjt = $this->activeProvider('estjt', 20);
+
+        foreach ([$tgju, $estjt] as $p) {
+            $this->snapshotFor($p, 'xau-18k-g-irr', 5);
+            $this->snapshotFor($p, 'xau-24k-g-irr', 5, 355_000_000);
+        }
+
+        $this->app->make(SymbolPriorityAction::class)->set(Instrument::Gold18Gram, ['estjt']);
+
+        $feed = $this->feedBySymbol();
+
+        self::assertSame('estjt', $feed['xau-18k-g-irr']['provider'], 'olaviat e sefareshi e in symbol.');
+        self::assertSame('tgju', $feed['xau-24k-g-irr']['provider'], 'symbol e digar dast nakhore (global).');
+    }
+
+    public function test_a_stale_first_choice_falls_to_the_next_in_the_chain_not_to_manual(): void
+    {
+        // «aval estjt، age khata dad wallgold» — zanjire amdan ba global
+        // FARGH dare (global tgju ro aval mideh) ta test bedun e feature
+        // sabz namune.
+        $tgju = $this->activeProvider('tgju', 10);
+        $estjt = $this->activeProvider('estjt', 20);
+        $wallgold = $this->activeProvider('wallgold', 30);
+        $manual = $this->activeProvider('manual', 80);
+
+        $this->snapshotFor($estjt, 'xau-18k-g-irr', 2 * 86_400); // stale
+        $this->snapshotFor($wallgold, 'xau-18k-g-irr', 5);
+        $this->snapshotFor($tgju, 'xau-18k-g-irr', 5);
+        $this->snapshotFor($manual, 'xau-18k-g-irr', 5);
+
+        $this->app->make(SymbolPriorityAction::class)->set(Instrument::Gold18Gram, ['estjt', 'wallgold']);
+
+        $gold = $this->feedBySymbol()['xau-18k-g-irr'];
+
+        self::assertSame('wallgold', $gold['provider'], 'nafar e dovom e ZANJIRE، na avvalin e global.');
+        self::assertFalse($gold['usingFallback'], 'wallgold taze-st — hanuz fallback nist.');
+    }
+
+    public function test_seed_by_priority_takes_each_symbol_from_its_first_fresh_provider(): void
+    {
+        $tgju = $this->activeProvider('tgju', 10);
+        $estjt = $this->activeProvider('estjt', 20);
+
+        // xau-18k: zanjire [estjt, tgju]، estjt bayat -> az tgju.
+        $this->snapshotFor($estjt, 'xau-18k-g-irr', 2 * 86_400, 111_000_000);
+        $this->snapshotFor($tgju, 'xau-18k-g-irr', 5, 266_400_000);
+        $this->app->make(SymbolPriorityAction::class)->set(Instrument::Gold18Gram, ['estjt', 'tgju']);
+
+        // xau-24k: faghat yek manba' e BAYAT -> nabayad seed she.
+        $this->snapshotFor($estjt, 'xau-24k-g-irr', 2 * 86_400, 300_000_000);
+        ManualPrice::query()->create(['symbol' => 'xau-24k-g-irr', 'minor' => 355_000_000, 'scale' => 0, 'quote_currency' => 'IRR', 'source_hint' => 'manual']);
+
+        $result = (new ManualPriceAction)->seedFromRows(
+            $this->app->make(EffectivePriceQuery::class)->freshestByPriority(),
+            'admin',
+        );
+
+        self::assertSame(1, $result);
+
+        $gold18 = ManualPrice::query()->where('symbol', 'xau-18k-g-irr')->firstOrFail();
+        self::assertSame(266_400_000, (int) $gold18->minor);
+        self::assertSame('tgju', $gold18->source_hint, 'source_hint = provider-i ke vaghean azash por shod.');
+
+        // Gheymat e dasti e ghabli ba adad e bayat jaygozin NASHOD.
+        $gold24 = ManualPrice::query()->where('symbol', 'xau-24k-g-irr')->firstOrFail();
+        self::assertSame(355_000_000, (int) $gold24->minor);
+        self::assertSame('manual', $gold24->source_hint);
+    }
+
+    public function test_seed_by_priority_never_copies_from_manual_itself(): void
+    {
+        $manual = $this->activeProvider('manual', 80);
+        $this->snapshotFor($manual, 'xau-18k-g-irr', 5);
+
+        self::assertSame([], $this->app->make(EffectivePriceQuery::class)->freshestByPriority());
     }
 
     public function test_effective_falls_back_to_manual_when_reals_are_stale(): void

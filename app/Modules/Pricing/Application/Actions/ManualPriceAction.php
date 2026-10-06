@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Pricing\Application\Actions;
 
+use App\Modules\Pricing\Application\Dto\BoardRowDto;
 use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\ManualPrice;
@@ -76,6 +77,40 @@ final readonly class ManualPriceAction
             );
 
             $seen[$snapshot->symbol] = true;
+            $seeded++;
+        }
+
+        return $seeded;
+    }
+
+    /**
+     * Seed bar asas e OLAVIAT e per-symbol (P5-07): har symbol az avvalin
+     * provider e TAZE ye zanjire ye khodesh.
+     *
+     * Vorudi khoruji ye `EffectivePriceQuery::freshestByPriority()` ast —
+     * symbol-i ke manba' e taze nadasht unja NIST، pas gheymat e dasti e
+     * ghabli ash ba adad e bayat jaygozin nemishe.
+     *
+     * 🔴 Gheymat e KHAM (`raw`، ghabl az spread) zakhire mishe — mesl e
+     * `seedFromProvider`: spread ru read e'mal mishe، na ru gheymat e manba'.
+     *
+     * @param  array<string, BoardRowDto>  $rows  symbol -> radif e entekhab-shode
+     * @return int tedad e symbol-i ke seed shod
+     */
+    public function seedFromRows(array $rows, ?string $updatedBy = null): int
+    {
+        $seeded = 0;
+
+        foreach ($rows as $row) {
+            $this->store(
+                $row->instrument,
+                $row->raw->minor,
+                $row->providerKey,
+                $updatedBy,
+                $row->raw->quote->value,
+                $row->raw->quote->scale(),
+            );
+
             $seeded++;
         }
 

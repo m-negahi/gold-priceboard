@@ -17,6 +17,7 @@ const PAGES: Array<{ path: string; heading: RegExp }> = [
     { path: '/dashboard/providers/tgju/edit', heading: /ویرایش/ },
     { path: '/dashboard/providers/tgju/spreads', heading: /اسپرد/ },
     { path: '/dashboard/manual', heading: /قیمت دستی/ },
+    { path: '/dashboard/priorities', heading: /اولویت منابع/ },
     { path: '/dashboard/health', heading: /سلامت منابع/ },
     { path: '/dashboard/monitor', heading: /پایش زنده/ },
     { path: '/dashboard/monitor/api', heading: /پایش API/ },

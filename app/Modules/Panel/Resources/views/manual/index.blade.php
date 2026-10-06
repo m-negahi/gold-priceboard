@@ -5,6 +5,7 @@
             routes: {
                 update: @js(route('panel.manual.update')),
                 seed: @js(route('panel.manual.seed')),
+                seedPriority: @js(route('panel.manual.seed-priority')),
                 remove: @js(route('panel.manual.remove')),
             },
             rows: @js($rows),
@@ -46,14 +47,30 @@
             </div>
         </div>
 
-        {{-- Seed az yek source. --}}
-        <div class="mt-5 flex flex-wrap items-end gap-3 rounded-2xl bg-surface card-p shadow-xs">
+        {{-- Seed bar asas e OLAVIAT e per-symbol (P5-07) — rah e asli. --}}
+        <div class="mt-5 flex flex-wrap items-center gap-3 rounded-2xl bg-surface card-p shadow-xs" data-seed-priority>
+            <div class="min-w-0 flex-1">
+                <p class="font-semibold text-ink">پر کردن بر اساس اولویت</p>
+                <p class="mt-0.5 text-sm text-muted">
+                    هر نماد از اولین منبعِ تازهٔ زنجیرهٔ خودش پر می‌شود (مثلاً اول تی‌جی‌جی‌یو، اگر کهنه بود اتحادیه). نمادی که هیچ منبع تازه‌ای ندارد دست نمی‌خورد.
+                    <a href="{{ route('panel.priorities.index') }}" class="font-medium text-brand-2 hover:underline">تنظیم اولویت‌ها</a>
+                </p>
+            </div>
+            <button type="button" @click="seedByPriority()" :disabled="busy.seedPriority"
+                    class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-brand shadow-(--bp-elev-brand) hover:bg-brand-2 disabled:opacity-60">
+                <x-icon name="layers" class="size-4" />
+                پر کردن بر اساس اولویت
+            </button>
+        </div>
+
+        {{-- Seed az YEK source (hame ye symbol ha az hamun) — gozine ye dovom. --}}
+        <div class="mt-3 flex flex-wrap items-end gap-3 rounded-2xl bg-surface card-p shadow-xs">
             <div class="min-w-48 flex-1">
-                <label class="mb-1.5 block text-sm font-medium">پر کردن از منبع</label>
+                <label class="mb-1.5 block text-sm font-medium">پر کردن همه از یک منبع</label>
                 <x-form.select name="seed_provider" :options="$seedSources" placeholder="یک منبع انتخاب کنید" x-model="seedProvider" />
             </div>
             <button type="button" @click="seed()" :disabled="!seedProvider || busy.seed"
-                    class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-brand shadow-(--bp-elev-brand) hover:bg-brand-2 disabled:opacity-60">
+                    class="inline-flex h-11 items-center gap-2 rounded-xl border border-line px-4 text-sm font-semibold text-ink hover:bg-surface-2 disabled:opacity-60">
                 <x-icon name="download" class="size-4" />
                 پر کن
             </button>

@@ -31,6 +31,15 @@ export default ({ routes, rows, effective }) => ({
         if (res.ok) this.apply(res.data);
     },
 
+    /** P5-07 — har symbol az avvalin manba' e TAZE ye zanjire ye khodesh. */
+    async seedByPriority() {
+        this.busy.seedPriority = true;
+        const res = await window.panelRequest(routes.seedPriority, { body: {} });
+        this.busy.seedPriority = false;
+
+        if (res.ok) this.apply(res.data);
+    },
+
     async remove(symbol) {
         this.busy[symbol] = true;
         const res = await window.panelRequest(routes.remove, { body: { symbol } });

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Pricing\Application\Queries;
 
+use App\Modules\Pricing\Application\Dto\BoardDto;
 use App\Modules\Pricing\Application\Dto\BoardRowDto;
+use App\Modules\Pricing\Domain\Services\PriorityChain;
 use App\Modules\Pricing\Infrastructure\Sources\ManualQuoteSource;
 
 /**
@@ -13,7 +15,8 @@ use App\Modules\Pricing\Infrastructure\Sources\ManualQuoteSource;
  *
  * ── Mantegh ─────────────────────────────────────────────────────────
  * Baraye har symbol، yek gheymat entekhab mishe ba OLAVIAT:
- *   1. Provider ha be tartib e `sort` (kamtar = olaviat e balatar).
+ *   1. Zanjire ye `PriorityChain` e HAMUN symbol (P5-07): olaviat e
+ *      sefareshi e admin، ya bedun esh tartib e `sort` e global.
  *   2. Avvalin provider-i ke gheymat esh TAZE (gheyr e stale) ast.
  *   3. Age HAME ye provider haye vaghei stale/ghat' budan -> MANUAL.
  *   4. Age manual ham nabud -> taze tarin e mojud (ba flag e stale).
@@ -28,6 +31,7 @@ final readonly class EffectivePriceQuery
     public function __construct(
         private BoardQuery $board,
         private ProviderQuery $providers,
+        private SymbolPriorityQuery $priorities,
     ) {}
 
     /**
@@ -39,36 +43,12 @@ final readonly class EffectivePriceQuery
      */
     public function feed(): array
     {
-        $configs = $this->providers->allActive();
-        $board = $this->board->board($configs);
-
-        // Olaviat: sort e provider (kamtar = balatar).
-        $priority = [];
-        $i = 0;
-
-        foreach ($configs as $key => $config) {
-            $priority[$key] = $i++;
-        }
-
-        /** @var array<string, array<int, BoardRowDto>> $bySymbol */
-        $bySymbol = [];
-
-        foreach ($board->rows as $row) {
-            // Faghat side e namayande (last/ask) baraye feed e mo'asser.
-            if (! in_array($row->side->value, ['last', 'ask'], true)) {
-                continue;
-            }
-
-            $bySymbol[$row->instrument->value][] = $row;
-        }
+        [$bySymbol, $board] = $this->rankedRows();
 
         $symbols = [];
         $fallbackCount = 0;
 
-        foreach ($bySymbol as $symbol => $rows) {
-            // Tartib ba olaviat e provider.
-            usort($rows, static fn (BoardRowDto $a, BoardRowDto $b): int => ($priority[$a->providerKey] ?? 99) <=> ($priority[$b->providerKey] ?? 99));
-
+        foreach ($bySymbol as $rows) {
             [$chosen, $usingFallback] = $this->choose($rows);
 
             if ($chosen === null) {
@@ -105,6 +85,69 @@ final readonly class EffectivePriceQuery
             'spreadVersion' => $board->spreadVersion,
             'degraded' => $board->degraded,
         ];
+    }
+
+    /**
+     * Avvalin radif e TAZE ye gheyr-manual e zanjire ye har symbol (P5-07).
+     *
+     * Masraf: «پر کردن بر اساس اولویت» e gheymat e dasti — «aval tgju، age
+     * khata dad estjt، …». Symbol-i ke hich manba' e taze nadare TU KHORUJI
+     * NIST: seed nabayad gheymat e dasti ro ba yek adad e bayat jaygozin kone.
+     *
+     * @return array<string, BoardRowDto> symbol -> radif
+     */
+    public function freshestByPriority(): array
+    {
+        [$bySymbol] = $this->rankedRows();
+        $chosen = [];
+
+        foreach ($bySymbol as $symbol => $rows) {
+            foreach ($rows as $row) {
+                if (! $row->isStale && $row->providerKey !== ManualQuoteSource::KEY) {
+                    $chosen[$symbol] = $row;
+
+                    break;
+                }
+            }
+        }
+
+        return $chosen;
+    }
+
+    /**
+     * Radif haye side e namayande (last/ask)، group be symbol، moratab ba
+     * zanjire ye HAMUN symbol.
+     *
+     * @return array{0: array<string, list<BoardRowDto>>, 1: BoardDto}
+     */
+    private function rankedRows(): array
+    {
+        $configs = $this->providers->allActive();
+        $board = $this->board->board($configs);
+
+        // `allActive` be tartib e `sort` ast = tartib e global.
+        $global = array_map('strval', array_keys($configs));
+        $custom = $this->priorities->customMap();
+
+        /** @var array<string, list<BoardRowDto>> $bySymbol */
+        $bySymbol = [];
+
+        foreach ($board->rows as $row) {
+            // Faghat side e namayande (last/ask) baraye feed e mo'asser.
+            if (! in_array($row->side->value, ['last', 'ask'], true)) {
+                continue;
+            }
+
+            $bySymbol[$row->instrument->value][] = $row;
+        }
+
+        foreach ($bySymbol as $symbol => $rows) {
+            $rank = PriorityChain::rank($global, $custom[$symbol] ?? []);
+            usort($rows, static fn (BoardRowDto $a, BoardRowDto $b): int => ($rank[$a->providerKey] ?? PHP_INT_MAX) <=> ($rank[$b->providerKey] ?? PHP_INT_MAX));
+            $bySymbol[$symbol] = $rows;
+        }
+
+        return [$bySymbol, $board];
     }
 
     /**

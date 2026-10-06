@@ -36,6 +36,7 @@ final class Navigation
                 'items' => [
                     ['key' => 'dashboard', 'label' => 'میزکار', 'icon' => 'gauge', 'route' => 'panel.dashboard'],
                     ['key' => 'providers', 'label' => 'منابع قیمت', 'icon' => 'feed', 'route' => 'panel.providers.index'],
+                    ['key' => 'priorities', 'label' => 'اولویت منابع', 'icon' => 'layers', 'route' => 'panel.priorities.index'],
                     ['key' => 'health', 'label' => 'سلامت منابع', 'icon' => 'pulse', 'route' => 'panel.health'],
                     [
                         'key' => 'monitor', 'label' => 'پایش', 'icon' => 'eye', 'route' => 'panel.monitor.ticks',

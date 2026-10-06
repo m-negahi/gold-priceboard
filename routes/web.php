@@ -9,6 +9,7 @@ use App\Modules\Panel\Http\Controllers\KitController;
 use App\Modules\Panel\Http\Controllers\ManualPriceController;
 use App\Modules\Panel\Http\Controllers\MatrixController;
 use App\Modules\Panel\Http\Controllers\MonitorController;
+use App\Modules\Panel\Http\Controllers\PriorityController;
 use App\Modules\Panel\Http\Controllers\ProviderController;
 use App\Modules\Panel\Http\Controllers\ProviderSpreadController;
 use App\Modules\Pricing\Http\Controllers\PublicBoardController;
@@ -69,7 +70,12 @@ Route::middleware(['auth', EnsureAdmin::class])
         Route::get('/manual', [ManualPriceController::class, 'index'])->name('manual.index');
         Route::post('/manual', [ManualPriceController::class, 'update'])->name('manual.update');
         Route::post('/manual/seed', [ManualPriceController::class, 'seed'])->name('manual.seed');
+        Route::post('/manual/seed-priority', [ManualPriceController::class, 'seedByPriority'])->name('manual.seed-priority');
         Route::post('/manual/remove', [ManualPriceController::class, 'remove'])->name('manual.remove');
+
+        // ── Olaviat e per-symbol (P5-07) ────────────────────────────
+        Route::get('/priorities', [PriorityController::class, 'index'])->name('priorities.index');
+        Route::post('/priorities', [PriorityController::class, 'update'])->name('priorities.update');
 
         // ── Monitoring (P3-08/09/10) ────────────────────────────────
         Route::get('/health', [MonitorController::class, 'health'])->name('health');
