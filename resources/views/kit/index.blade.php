@@ -41,8 +41,8 @@
                 <p>نمونهٔ زندهٔ همهٔ اجزای پنل. هر صفحهٔ فرم یا فهرست یک دکمهٔ «راهنما» مثل همین دارد.</p>
                 <dl><dt>toast</dt><dd>پیام کوتاه پس از هر عمل.</dd><dt>modal</dt><dd>فرم‌ها داخل پنجرهٔ شناور.</dd></dl>
             </x-panel.help>
-                <x-panel.button variant="secondary" size="sm" href="{{ url('/panel/kit/date') }}" icon="clock">تاریخ شمسی</x-panel.button>
-                <x-panel.button variant="secondary" size="sm" href="{{ url('/panel/kit/slug') }}" icon="link">شناسه (slug)</x-panel.button>
+                <x-panel.button variant="secondary" size="sm" href="{{ route('panel.kit.date') }}" icon="clock">تاریخ شمسی</x-panel.button>
+                <x-panel.button variant="secondary" size="sm" href="{{ route('panel.kit.slug') }}" icon="link">شناسه (slug)</x-panel.button>
             </x-slot:actions>
         </x-panel.page-header>
 

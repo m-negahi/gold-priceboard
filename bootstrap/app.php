@@ -8,6 +8,7 @@ use App\Modules\Common\Http\Middleware\NormalizeRouteParamsMiddleware;
 use App\Modules\Common\Http\Middleware\NormalizeStringMiddleware;
 use App\Modules\Common\Http\Middleware\SecurityHeaders;
 use App\Modules\Common\Http\Middleware\TrustProxies;
+use App\Modules\Panel\Http\Middleware\EnsureLocalEnvironment;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -21,6 +22,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        /*
+         * `local-only`: route haye faghat-developer (kit e component ha).
+         * Kharej az local/testing 404 — vojudeshun ham nabayad ma'lum bashe.
+         */
+        $middleware->alias([
+            'local-only' => EnsureLocalEnvironment::class,
+        ]);
+
         /*
          * ── 🔴 TrustProxies: JAYGOZIN، na EZAFE ─────────────────────
          * Framework khodesh `Illuminate\Http\Middleware\TrustProxies` ro tu

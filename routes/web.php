@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Auth\Http\Controllers\LoginController;
 use App\Modules\Auth\Http\Middleware\EnsureAdmin;
+use App\Modules\Panel\Http\Controllers\KitController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,4 +41,21 @@ Route::middleware(['auth', EnsureAdmin::class])
     ->name('panel.')
     ->group(function (): void {
         Route::get('/', static fn () => view('panel-placeholder'))->name('dashboard');
+    });
+
+/*
+ * ── Kit e component ha (FAGHAT dev) ──────────────────────────────────
+ * Namayeshgah e zende ye primitive haye panel — P3-04 rush kar mikone.
+ * `local-only` kharej az local/testing 404 mide؛ auth lazem nist chun tu
+ * production aslan vojud nadare va e2e bedun e login roosh test mizane.
+ */
+Route::middleware('local-only')
+    ->prefix('dashboard/kit')
+    ->name('panel.kit.')
+    ->group(function (): void {
+        Route::get('/', [KitController::class, 'index'])->name('index');
+        Route::get('/date', [KitController::class, 'date'])->name('date');
+        Route::get('/slug', [KitController::class, 'slug'])->name('slug');
+        Route::post('/request', [KitController::class, 'request'])->name('request');
+        Route::post('/flash', [KitController::class, 'flash'])->name('flash');
     });

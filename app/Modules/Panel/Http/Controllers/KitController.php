@@ -22,19 +22,20 @@ final readonly class KitController
 {
     public function index(): View
     {
-        return view('panel.kit.index');
+        // View ha tu `resources/views/kit/`-and (global)، na namespace e panel.
+        return view('kit.index');
     }
 
     /** Namayeshgah-e `x-form.jalali-date`: min/max, disabled, meghdar-e bind shode, khorooji-ye ISO. */
     public function date(): View
     {
-        return view('panel.kit.date');
+        return view('kit.date');
     }
 
     /** Namayeshgah-e `x-form.slug` bedoone form-e vaghei. */
     public function slug(): View
     {
-        return view('panel.kit.slug');
+        return view('kit.slug');
     }
 
     /** Har `outcome` yek shakhe-ye gharardad-e panelRequest-e; front hamun ro toast mikone. */
@@ -59,7 +60,7 @@ final readonly class KitController
     /** Redirect-e classic ba flash: host-e toast ha `session('toast')` ro sar-e load neshun mide. */
     public function flash(): RedirectResponse
     {
-        return redirect()->route('panel.kit')->with('toast', [
+        return redirect()->route('panel.kit.index')->with('toast', [
             'kind' => 'success',
             'title' => 'فرم ارسال شد',
             'message' => 'این توست از session پس از redirect آمده است.',
