@@ -93,6 +93,18 @@ final readonly class RedisOtpStore implements OtpStorePort
         );
     }
 
+    public function consume(string $phone, string $codeHash, int $maxAttempts): bool
+    {
+        $script = <<<'LUA'
+            if redis.call('HGET', KEYS[1], 'hash') ~= ARGV[1] then return 0 end
+            local attempts = tonumber(redis.call('HGET', KEYS[1], 'attempts') or '0')
+            if attempts >= tonumber(ARGV[2]) then return 0 end
+            return redis.call('DEL', KEYS[1])
+        LUA;
+
+        return (int) $this->redis()->eval($script, 1, self::KEY_PREFIX.$phone, $codeHash, $maxAttempts) === 1;
+    }
+
     public function invalidate(string $phone): void
     {
         $this->redis()->del(self::KEY_PREFIX.$phone);

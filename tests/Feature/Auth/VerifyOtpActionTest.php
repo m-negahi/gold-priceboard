@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Auth;
 
 use App\Modules\Auth\Application\Actions\VerifyOtpAction;
+use App\Modules\Auth\Application\Dto\OtpEntryDto;
 use App\Modules\Auth\Domain\Exceptions\OtpException;
+use App\Modules\Auth\Domain\Ports\OtpStorePort;
 use App\Modules\Auth\Domain\Services\OtpCode;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Auth\Support\OtpThrottle;
@@ -261,5 +263,22 @@ final class VerifyOtpActionTest extends TestCase
         $user = $action->execute(self::PHONE, '777777', self::IP);
 
         self::assertSame(self::PHONE, $user->phone);
+    }
+
+    public function test_a_code_consumed_by_another_request_cannot_sign_in(): void
+    {
+        $hash = $this->otp->hash(self::PHONE, self::CODE);
+        $store = \Mockery::mock(OtpStorePort::class);
+        $store->shouldReceive('get')->once()->with(self::PHONE)
+            ->andReturn(new OtpEntryDto($hash, 0));
+        $store->shouldReceive('consume')->once()->with(self::PHONE, $hash, 3)->andReturn(false);
+        $action = new VerifyOtpAction($store, $this->otp, new OtpThrottle($this->app->make(RateLimiter::class)));
+
+        try {
+            $action->execute(self::PHONE, self::CODE, self::IP);
+            self::fail('code e masraf-shode nabayad login bede.');
+        } catch (OtpException) {
+            $this->assertDatabaseCount('users', 0);
+        }
     }
 }

@@ -243,4 +243,31 @@ final class OtpStoreContractTest extends TestCase
 
         self::assertSame(0, $store->cooldownRemaining(self::PHONE));
     }
+
+    #[DataProvider('stores')]
+    public function test_only_one_verifier_can_consume_the_same_code(string $kind): void
+    {
+        $store = $this->store($kind);
+        $store->put(self::PHONE, 'hash-1', 120);
+        $firstRead = $store->get(self::PHONE);
+        $secondRead = $store->get(self::PHONE);
+
+        self::assertTrue($store->consume(self::PHONE, $firstRead->codeHash, 3));
+        self::assertFalse($store->consume(self::PHONE, $secondRead->codeHash, 3));
+        self::assertNull($store->get(self::PHONE));
+    }
+
+    #[DataProvider('stores')]
+    public function test_a_stale_verifier_cannot_consume_a_replacement_or_exhausted_code(string $kind): void
+    {
+        $store = $this->store($kind);
+        $store->put(self::PHONE, 'hash-2', 120);
+
+        self::assertFalse($store->consume(self::PHONE, 'hash-1', 3));
+        self::assertSame('hash-2', $store->get(self::PHONE)->codeHash);
+        $store->recordFailedAttempt(self::PHONE);
+        $store->recordFailedAttempt(self::PHONE);
+        $store->recordFailedAttempt(self::PHONE);
+        self::assertFalse($store->consume(self::PHONE, 'hash-2', 3));
+    }
 }

@@ -66,6 +66,17 @@ final readonly class WalletAction
                 /** @var Wallet $locked */
                 $locked = Wallet::query()->lockForUpdate()->findOrFail($wallet->id);
 
+                // Retry ghabl az check e mande: debit e avval momkene kif ro sefr karde bashe.
+                $existing = WalletTransaction::query()
+                    ->where('wallet_id', $locked->id)
+                    ->where('reason', $reason)
+                    ->where('reference', $reference)
+                    ->first();
+
+                if ($existing !== null) {
+                    return $existing;
+                }
+
                 if ($locked->is_blocked) {
                     throw WalletException::blocked($locked->id);
                 }

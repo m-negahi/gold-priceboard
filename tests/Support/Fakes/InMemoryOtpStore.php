@@ -55,6 +55,19 @@ final class InMemoryOtpStore implements OtpStorePort
         return ++$this->entries[$phone]['attempts'];
     }
 
+    public function consume(string $phone, string $codeHash, int $maxAttempts): bool
+    {
+        $entry = $this->live($phone);
+
+        if ($entry === null || $entry['hash'] !== $codeHash || $entry['attempts'] >= $maxAttempts) {
+            return false;
+        }
+
+        unset($this->entries[$phone]);
+
+        return true;
+    }
+
     public function invalidate(string $phone): void
     {
         unset($this->entries[$phone]);

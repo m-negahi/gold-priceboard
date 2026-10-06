@@ -54,7 +54,7 @@ final readonly class ManualPriceQuery
                 'precision' => $instrument->quote()->displayPrecision(),
                 'hasPrice' => $row !== null,
                 // Display unit (toman/dollar) baraye namayesh tu form.
-                'display' => $row !== null ? $row->minor / ($divisor * (10 ** $scale)) : null,
+                'display' => $row !== null ? bcdiv((string) $row->minor, (string) ($divisor * (10 ** $scale)), max($scale, $divisor === 10 ? 1 : 0)) : null,
                 'sourceHint' => $row?->source_hint,
                 'updatedBy' => $row?->updated_by,
                 'updatedAt' => $row?->updated_at?->toIso8601String(),

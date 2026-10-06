@@ -13,6 +13,7 @@ use App\Modules\Wallet\Application\Actions\WalletAction;
 use App\Modules\Wallet\Infrastructure\Persistence\Models\Wallet;
 use App\Modules\Wallet\Infrastructure\Persistence\Models\WalletTransaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -172,5 +173,92 @@ final class ApiChargeTest extends TestCase
         // be Redis mikhore va bayad 503 bede.
         $response->assertStatus(503);
         self::assertSame(10_000, (int) $this->wallet->refresh()->balance_minor);
+    }
+
+    public function test_a_retry_after_the_last_credit_replays_the_same_response(): void
+    {
+        (new WalletAction)->debit($this->wallet, 9000, 'adjustment', 'leave-one-call');
+        $first = $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'last-credit'])->assertOk();
+        $second = $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'last-credit'])->assertOk();
+        self::assertSame($first->getContent(), $second->getContent());
+        $second->assertHeader('X-Pb-Replayed', '1')->assertHeader('X-Pb-Cost', '0');
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'last-credit'])->assertOk()->assertHeader('X-Pb-Replayed', '1');
+        self::assertSame(0, $this->wallet->refresh()->balance_minor);
+    }
+
+    public function test_reusing_an_id_with_another_request_cannot_refund_a_successful_call(): void
+    {
+        $first = $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'same-id'])->assertOk();
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'same-id', 'If-None-Match' => $first->headers->get('ETag')])->assertConflict();
+        $this->signed('/api/v1/prices/missing', ['X-Pb-Request-Id' => 'same-id'])->assertConflict();
+        self::assertSame(9000, $this->wallet->refresh()->balance_minor);
+        $this->assertDatabaseCount('wallet_transactions', 2);
+    }
+
+    public function test_request_ids_are_scoped_to_each_client_of_the_same_owner(): void
+    {
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'same-id'])->assertOk();
+        $made = (new ApiClientAction)->create($this->client->user_id, 'second', $this->client->price_group_id);
+        $this->client = $made['client'];
+        $this->secret = $made['secret'];
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'same-id'])->assertOk();
+        self::assertSame(8000, $this->wallet->refresh()->balance_minor);
+    }
+
+    public function test_lost_replay_cache_does_not_serve_new_data_for_an_old_debit(): void
+    {
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'lost-cache'])->assertOk();
+        Cache::flush();
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'lost-cache'])->assertConflict();
+        self::assertSame(9000, $this->wallet->refresh()->balance_minor);
+    }
+
+    public function test_long_request_ids_fit_the_ledger_even_when_refunded(): void
+    {
+        $this->signed('/api/v1/prices/missing', ['X-Pb-Request-Id' => str_repeat('a', 128)])->assertNotFound();
+        foreach (WalletTransaction::whereIn('reason', ['api_call', 'refund'])->get() as $row) {
+            self::assertLessThanOrEqual(64, strlen($row->reference));
+        }
+        self::assertSame(10000, $this->wallet->refresh()->balance_minor);
+    }
+
+    public function test_an_in_flight_request_is_not_charged_again_and_releases_its_lock(): void
+    {
+        $reference = 'api:'.substr(hash('sha256', $this->client->client_id.'|busy'), 0, 48);
+        $lock = Cache::lock('api:replay:'.$reference.':lock', 120);
+        self::assertTrue($lock->get());
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'busy'])->assertConflict();
+        self::assertSame(10000, $this->wallet->refresh()->balance_minor);
+        $lock->release();
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'busy'])->assertOk();
+    }
+
+    public function test_a_blocked_wallet_cannot_replay_saved_data(): void
+    {
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'blocked-later'])->assertOk();
+        (new WalletAction)->block($this->wallet);
+        $this->signed('/api/v1/prices', ['X-Pb-Request-Id' => 'blocked-later'])->assertForbidden();
+    }
+
+    public function test_a_refunded_error_replays_without_another_debit_or_credit(): void
+    {
+        $first = $this->signed('/api/v1/prices/missing', ['X-Pb-Request-Id' => 'failed-once'])->assertNotFound();
+        $second = $this->signed('/api/v1/prices/missing', ['X-Pb-Request-Id' => 'failed-once'])->assertNotFound();
+        self::assertSame($first->getContent(), $second->getContent());
+        $second->assertHeader('X-Pb-Replayed', '1');
+        self::assertSame(10000, $this->wallet->refresh()->balance_minor);
+        $this->assertDatabaseCount('wallet_transactions', 3);
+    }
+
+    public function test_replaying_the_effective_feed_preserves_its_fallback_header(): void
+    {
+        $first = $this->signed('/api/v1/effective', ['X-Pb-Request-Id' => 'effective-retry'])->assertOk();
+        $second = $this->signed('/api/v1/effective', ['X-Pb-Request-Id' => 'effective-retry'])->assertOk();
+
+        $first->assertHeader('X-Pb-Fallback', '0');
+        $second->assertHeader('X-Pb-Fallback', '0')->assertHeader('X-Pb-Replayed', '1');
+        self::assertSame($first->getContent(), $second->getContent());
+        self::assertSame($first->headers->get('ETag'), $second->headers->get('ETag'));
+        self::assertSame(9000, $this->wallet->refresh()->balance_minor);
     }
 }

@@ -10,6 +10,7 @@ use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\ManualPrice;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\PriceSnapshot;
 use App\Modules\Pricing\Infrastructure\Persistence\Models\Provider;
+use InvalidArgumentException;
 
 /**
  * Neveshtan e gheymat haye DASTI (fallback) — Phase 4/5.
@@ -23,7 +24,7 @@ use App\Modules\Pricing\Infrastructure\Persistence\Models\Provider;
  */
 final readonly class ManualPriceAction
 {
-    public function setFromDisplay(Instrument $instrument, float $displayValue, ?string $updatedBy = null): ManualPrice
+    public function setFromDisplay(Instrument $instrument, string|int $displayValue, ?string $updatedBy = null): ManualPrice
     {
         $minor = $this->toMinor($instrument, $displayValue);
 
@@ -150,10 +151,23 @@ final readonly class ManualPriceAction
         return $row;
     }
 
-    private function toMinor(Instrument $instrument, float $displayValue): int
+    private function toMinor(Instrument $instrument, string|int $displayValue): int
     {
         $factor = $instrument->quote()->displayDivisor() * (10 ** $instrument->quote()->scale());
 
-        return (int) round($displayValue * $factor);
+        $value = (string) $displayValue;
+
+        if (strlen($value) > 100 || preg_match('/^\d+(?:\.\d+)?$/D', $value) !== 1) {
+            throw new InvalidArgumentException('gheymat bayad decimal e mosbat bashe.');
+        }
+
+        $scaled = bcmul($value, (string) $factor, 1);
+        $rounded = bcadd($scaled, '0.5', 0);
+
+        if (bccomp($rounded, '0', 0) <= 0 || bccomp($rounded, (string) PHP_INT_MAX, 0) > 0) {
+            throw new InvalidArgumentException('gheymat az mahdude e mojaz birun ast.');
+        }
+
+        return (int) $rounded;
     }
 }

@@ -11,13 +11,15 @@ use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 /**
  * Kasr e hazine ye call (P4-05/P4-06): reserve → ejra → error/304 → refund.
  *
  * ── Idempotency e billing ───────────────────────────────────────────
- * `reference` = `X-Pb-Request-Id` (agar client dad) vagarna nonce e
- * hamin request. Client-i ke retry e bedun e kasr e dobare mikhad،
+ * `reference` az client + `X-Pb-Request-Id` (vagarna nonce) hash mishe.
+ * `IdempotentApiCall` reference va replay ro modiriat mikone.
+ * Client-i ke retry e bedun e kasr e dobare mikhad،
  * `X-Pb-Request-Id` e SABET mifreste (nonce bayad har bar taze bashe —
  * zed e replay e auth) — ledger yek bar kasr mikone.
  *
@@ -43,11 +45,7 @@ final class ChargeApiCall
             return new JsonResponse(['message' => 'اعتبارسنجی درخواست ناموفق بود.'], 401);
         }
 
-        $reference = trim((string) $request->header('X-Pb-Request-Id', ''));
-
-        if ($reference === '') {
-            $reference = (string) $request->header('X-Pb-Nonce', '');
-        }
+        $reference = (string) $request->attributes->get('billing_reference');
 
         $charge = $this->charger->charge($client, $reference);
 
@@ -68,7 +66,14 @@ final class ChargeApiCall
             return new JsonResponse(['message' => 'سرویس موقتا در دسترس نیست.'], 503);
         }
 
-        $response = $next($request);
+        try {
+            $response = $next($request);
+        } catch (Throwable $exception) {
+            if ($charge['status'] === 'ok') {
+                $this->charger->refundCall($client, $reference, $charge['cost']);
+            }
+            throw $exception;
+        }
 
         // Usage e ruzane (P6-08): har call e SERVE-shode (304/khata ham —
         // «call» ast، hazine ash az ledger miad).
@@ -85,7 +90,7 @@ final class ChargeApiCall
         $response->headers->set('X-Pb-Cost', (string) ($charged ? $charge['cost'] : 0));
 
         if ($charge['balance'] !== null) {
-            $response->headers->set('X-Pb-Balance', (string) $charge['balance']);
+            $response->headers->set('X-Pb-Balance', (string) ($charge['balance'] + (! $charged && $charge['status'] === 'ok' ? $charge['cost'] : 0)));
         }
 
         return $response;

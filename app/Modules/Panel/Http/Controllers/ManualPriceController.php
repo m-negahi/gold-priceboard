@@ -12,6 +12,7 @@ use App\Modules\Pricing\Domain\Enums\Instrument;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use InvalidArgumentException;
 
 /**
  * Gheymat haye DASTI (fallback) — panel e admin (Phase 4/5).
@@ -38,7 +39,7 @@ final readonly class ManualPriceController
     {
         $data = $request->validate([
             'symbol' => ['required', 'string', 'max:32'],
-            'value' => ['required', 'numeric', 'min:0'],
+            'value' => ['required', 'numeric', 'regex:/^\d+(?:\.\d+)?$/D'],
         ]);
 
         $instrument = Instrument::tryFrom((string) $data['symbol']);
@@ -47,7 +48,11 @@ final readonly class ManualPriceController
             return new JsonResponse(['message' => 'نماد ناشناخته است.'], 422);
         }
 
-        $this->action->setFromDisplay($instrument, (float) $data['value'], $this->editor($request));
+        try {
+            $this->action->setFromDisplay($instrument, (string) $data['value'], $this->editor($request));
+        } catch (InvalidArgumentException) {
+            return new JsonResponse(['message' => 'قیمت باید مثبت و در محدوده مجاز باشد.'], 422);
+        }
 
         return $this->json($instrument->label().' به‌روز شد.');
     }

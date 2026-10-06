@@ -182,9 +182,10 @@ final readonly class ChargeApiCallAction
         try {
             // Faghat age mirror hanuz hast — INCRBY ru kelid e nabude yek
             // mande ye ja'li misaze.
-            if ((bool) Redis::connection()->exists(self::MIRROR_PREFIX.$wallet->id)) {
-                Redis::connection()->incrby(self::MIRROR_PREFIX.$wallet->id, $cost);
-            }
+            Redis::connection()->eval(<<<'LUA'
+                if redis.call('EXISTS', KEYS[1]) == 0 then return 0 end
+                return redis.call('INCRBY', KEYS[1], ARGV[1])
+                LUA, 1, self::MIRROR_PREFIX.$wallet->id, $cost);
         } catch (Throwable) {
             $this->invalidateMirror($wallet);
         }

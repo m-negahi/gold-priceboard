@@ -9,6 +9,7 @@ use App\Modules\Api\Http\Controllers\PricesController;
 use App\Modules\Api\Http\Controllers\WalletController;
 use App\Modules\Api\Http\Middleware\ApiHmacAuth;
 use App\Modules\Api\Http\Middleware\ChargeApiCall;
+use App\Modules\Api\Http\Middleware\IdempotentApiCall;
 use App\Modules\Api\Http\Middleware\LogApiRequest;
 use Illuminate\Support\Facades\Route;
 
@@ -28,7 +29,7 @@ Route::prefix('v1')->middleware([LogApiRequest::class, ApiHmacAuth::class])->gro
     Route::get('/providers', [MetaController::class, 'providers'])->name('api.providers');
     Route::get('/wallet', [WalletController::class, 'show'])->name('api.wallet');
 
-    Route::middleware(ChargeApiCall::class)->group(function (): void {
+    Route::middleware([IdempotentApiCall::class, ChargeApiCall::class])->group(function (): void {
         Route::get('/prices', [PricesController::class, 'index'])->name('api.prices');
         Route::get('/prices/{symbol}', [PricesController::class, 'show'])->name('api.prices.show');
         // Feed e mo'asser: yek gheymat/symbol ba olaviat + fallback be manual.

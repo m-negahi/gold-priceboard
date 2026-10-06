@@ -26,6 +26,19 @@ final readonly class WalletQuery
             ->first();
     }
 
+    /** Reference e ghadimi ham check mishe ta deploy kasr e dobare nasaze. */
+    public function hasApiCharge(int $ownerId, string $reference, string $legacyReference, string $clientId): bool
+    {
+        return WalletTransaction::query()
+            ->whereIn('wallet_id', Wallet::query()->select('id')->where('owner_id', $ownerId)->where('currency', 'IRR'))
+            ->where('reason', 'api_call')
+            ->where(function ($query) use ($reference, $legacyReference, $clientId): void {
+                $query->where('reference', $reference)->orWhere(function ($legacy) use ($legacyReference, $clientId): void {
+                    $legacy->where('reference', $legacyReference)->where('meta->client_id', $clientId);
+                });
+            })->exists();
+    }
+
     /** Mande az LEDGER — na az cache. */
     public function balanceFromLedger(Wallet $wallet): int
     {

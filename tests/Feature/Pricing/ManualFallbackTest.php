@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Pricing;
 
+use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Pricing\Application\Actions\ManualPriceAction;
 use App\Modules\Pricing\Application\Actions\SymbolPriorityAction;
 use App\Modules\Pricing\Application\Queries\EffectivePriceQuery;
@@ -71,10 +72,34 @@ final class ManualFallbackTest extends TestCase
     public function test_set_from_display_handles_usd_scale(): void
     {
         // $4,140.19 -> minor 41,401,900 (divisor 1، scale 4).
-        (new ManualPriceAction)->setFromDisplay(Instrument::GoldOunce, 4_140.19, 'admin');
+        (new ManualPriceAction)->setFromDisplay(Instrument::GoldOunce, '4140.19', 'admin');
 
         $row = ManualPrice::query()->where('symbol', 'xau-oz-usd')->firstOrFail();
         self::assertSame(41_401_900, (int) $row->minor);
+    }
+
+    public function test_manual_price_round_trip_preserves_large_decimal_values(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+
+        $response = $this->postJson('/dashboard/manual', [
+            'symbol' => 'xau-oz-usd', 'value' => '900719925474.0993',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('manual_prices', ['symbol' => 'xau-oz-usd', 'minor' => 9007199254740993]);
+        $row = collect($response->json('rows'))->firstWhere('symbol', 'xau-oz-usd');
+        self::assertSame('900719925474.0993', $row['display']);
+    }
+
+    public function test_manual_price_rejects_overflow_without_writing(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+
+        $this->postJson('/dashboard/manual', [
+            'symbol' => 'xau-oz-usd', 'value' => '9223372036854775808',
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseCount('manual_prices', 0);
     }
 
     public function test_seed_from_provider_copies_latest_snapshots(): void

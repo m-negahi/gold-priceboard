@@ -92,6 +92,20 @@ final class WalletLedgerTest extends TestCase
         self::assertSame(2, WalletTransaction::query()->count()); // topup + yek debit
     }
 
+    public function test_retry_after_spending_the_entire_balance_returns_the_original_debit(): void
+    {
+        $wallet = $this->wallet();
+        $this->action->credit($wallet, 100, 'topup', 'seed');
+        $first = $this->action->debit($wallet, 100, 'api_call', 'last-call');
+
+        $retry = $this->action->debit($wallet, 100, 'api_call', 'last-call');
+
+        self::assertSame($first->id, $retry->id);
+        self::assertFalse($retry->wasRecentlyCreated);
+        self::assertSame(0, $wallet->refresh()->balance_minor);
+        self::assertSame(2, WalletTransaction::query()->count());
+    }
+
     public function test_credit_is_idempotent_too(): void
     {
         $wallet = $this->wallet();

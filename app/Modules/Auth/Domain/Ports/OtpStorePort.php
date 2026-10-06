@@ -41,6 +41,9 @@ interface OtpStorePort
     /** Batel kardan e sarih — ba'd az verify e movafagh (yek-bar-masraf) ya 3 ghalat. */
     public function invalidate(string $phone): void;
 
+    /** Masraf e atomic e hamun code e khande-shode; faghat yek verifier barande mishe. */
+    public function consume(string $phone, string $codeHash, int $maxAttempts): bool;
+
     /**
      * Chand saniye az omr e code e zende munde؛ `0` ya'ni code-i nist.
      *

@@ -74,8 +74,10 @@ final readonly class VerifyOtpAction
             throw OtpException::invalidCode();
         }
 
-        // 🔴 Yek-bar-masraf: hamun lahze batel، ghabl az har kar e dige.
-        $this->store->invalidate($normalized);
+        // Do request mitunan yek entry ro bekhunan; faghat barande e consume login migire.
+        if (! $this->store->consume($normalized, $entry->codeHash, $this->maxAttempts)) {
+            throw OtpException::invalidCode();
+        }
         $this->throttle->clearVerifies($normalized);
 
         return $this->signIn($normalized);
