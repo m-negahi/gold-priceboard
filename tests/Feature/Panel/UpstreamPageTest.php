@@ -187,6 +187,19 @@ final class UpstreamPageTest extends TestCase
             ->assertSee(route('panel.monitor.upstream.show', 'feedc0de'), false);
     }
 
+    public function test_the_table_shows_jalali_date_and_time_with_seconds(): void
+    {
+        $this->fakeLogWith(new UpstreamCallDto(
+            providerKey: 'tgju', succeeded: true, at: CarbonImmutable::parse('2026-10-06T10:00:00Z'),
+            method: 'GET', url: 'https://x.test', status: 200, id: 'stamp01',
+        ));
+
+        // 10:00Z = 13:30 Tehran؛ 2026-10-06 = 14 Mehr 1405.
+        $this->actingAs($this->admin())->get(route('panel.monitor.upstream'))
+            ->assertOk()
+            ->assertSee('1405/07/14 13:30:00');
+    }
+
     public function test_an_expired_id_gets_an_honest_404(): void
     {
         $this->fakeLogWith();

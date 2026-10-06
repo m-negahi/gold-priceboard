@@ -57,7 +57,7 @@
 
         <dl class="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
             @foreach ([
-                'زمان' => $at->format('Y-m-d H:i:s'),
+                'زمان' => (string) \App\Modules\Common\Helpers\Jalali::format($at, 'Y/m/d H:i:s'),
                 'مدت' => number_format((int) $call['latency_ms']).'ms',
                 'تلاش' => (string) $call['attempt'],
                 'نمادها' => (string) $call['symbol_count'],

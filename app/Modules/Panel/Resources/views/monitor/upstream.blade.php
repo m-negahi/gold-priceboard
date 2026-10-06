@@ -8,6 +8,15 @@
         ? '—'
         : \Carbon\CarbonImmutable::parse($iso)->setTimezone('Asia/Tehran')->format('H:i:s');
 
+    // Jadval: tarikh e shamsi + saat ta saniye (khaste ye sahebe proje) —
+    // daftarche az nime-shab rad mishe va saat e tanha mobham bud.
+    $stamp = static fn (?string $iso): string => $iso === null
+        ? '—'
+        : (string) \App\Modules\Common\Helpers\Jalali::format(
+            \Carbon\CarbonImmutable::parse($iso)->setTimezone('Asia/Tehran'),
+            'Y/m/d H:i:s',
+        );
+
     $name = static fn (string $key): string => $providerMeta[$key]['name'] ?? $key;
 
     $kb = static fn (?int $bytes): string => $bytes === null ? '—' : number_format($bytes / 1024, 1).' KB';
@@ -212,9 +221,9 @@
                                 <tr x-show="visible(metas[{{ $i }}])" @class(['group', 'bg-down-soft/30' => ! $ok, 'hover:bg-surface-2' => $ok])>
                                     <td class="num whitespace-nowrap px-4 py-2.5 text-xs font-bold text-ink">
                                         @if ($href)
-                                            <a href="{{ $href }}" class="hover:underline">{{ $clock($call['at']) }}</a>
+                                            <a href="{{ $href }}" class="hover:underline">{{ $stamp($call['at']) }}</a>
                                         @else
-                                            {{ $clock($call['at']) }}
+                                            {{ $stamp($call['at']) }}
                                         @endif
                                     </td>
                                     <td class="px-4 py-2.5 font-medium text-ink">{{ $name($call['provider']) }}</td>
@@ -240,7 +249,7 @@
                                     </td>
                                     <td class="px-2 py-2.5 text-end">
                                         @if ($href)
-                                            <a href="{{ $href }}" aria-label="جزئیات فراخوانی {{ $clock($call['at']) }}"
+                                            <a href="{{ $href }}" aria-label="جزئیات فراخوانی {{ $stamp($call['at']) }}"
                                                class="inline-flex size-9 items-center justify-center rounded-lg text-muted hover:bg-surface-3 hover:text-ink">
                                                 <x-icon name="chevron" class="size-4" />
                                             </a>
