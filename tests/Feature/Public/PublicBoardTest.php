@@ -45,6 +45,22 @@ final class PublicBoardTest extends TestCase
             ->assertSee('26,640,000');
     }
 
+    /**
+     * 🔴 Bug e vaghei: Blade `metal` ro ba 'gold'/'silver' moghayese mikard
+     * vali meghdar e enum `xau`/`xag`/`xcu`-e — pas HAME ye gruh ha «ارز»
+     * neshun dade mishodan va dot e rangi khakestari bud.
+     */
+    public function test_group_heading_uses_the_metal_label_not_the_fx_fallback(): void
+    {
+        $this->seedPrice();
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('طلا و سکه')
+            ->assertSee('bg-metal-gold', false)
+            ->assertDontSee('ارز');
+    }
+
     public function test_the_home_page_shows_an_empty_state_with_no_prices(): void
     {
         $this->get('/')->assertOk()->assertSee('به‌زودی');

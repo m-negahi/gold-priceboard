@@ -1,14 +1,8 @@
 @php
     $b = $board;
     $money = static fn (?float $major, int $precision): string => $major === null ? '—' : number_format($major, $precision);
-    // Gruh-bandi ba felez baraye sar-tak haye bakhsh. (match na array —
-    // key e `null` tu array literal be `''` tabdil mishe va lookup kharab.)
-    $metalLabel = static fn (?string $m): string => match ($m) {
-        'gold' => 'طلا و سکه',
-        'silver' => 'نقره',
-        'copper' => 'مس',
-        default => 'ارز',
-    };
+    // Sar-tak e gruh az `groupLabel` e query miad (Instrument::groupLabel) —
+    // `metal` meghdar e enum ast (`xau`/`xag`/`xcu`)، na 'gold'.
 @endphp
 
 <x-layouts.site title="قیمت لحظه‌ای طلا، سکه و نقره"
@@ -51,12 +45,12 @@
                 <h2 class="mb-2 mt-6 flex items-center gap-2 text-sm font-bold text-heading first:mt-0">
                     <span @class([
                         'size-2 rounded-full',
-                        'bg-metal-gold' => $metal === 'gold',
-                        'bg-metal-silver' => $metal === 'silver',
-                        'bg-metal-copper' => $metal === 'copper',
+                        'bg-metal-gold' => $metal === 'xau',
+                        'bg-metal-silver' => $metal === 'xag',
+                        'bg-metal-copper' => $metal === 'xcu',
                         'bg-ink-300' => $metal === null,
                     ])></span>
-                    {{ $metalLabel($metal) }}
+                    {{ $row['groupLabel'] }}
                 </h2>
 
                 <div class="overflow-hidden rounded-2xl bg-surface shadow-xs">
@@ -81,9 +75,9 @@
                                         <div class="flex items-center gap-2.5">
                                             <span @class([
                                                 'grid size-8 shrink-0 place-items-center rounded-lg',
-                                                'bg-gold-soft text-metal-gold' => $metal === 'gold',
-                                                'bg-silver-soft text-metal-silver' => $metal === 'silver',
-                                                'bg-copper-soft text-metal-copper' => $metal === 'copper',
+                                                'bg-gold-soft text-metal-gold' => $metal === 'xau',
+                                                'bg-silver-soft text-metal-silver' => $metal === 'xag',
+                                                'bg-copper-soft text-metal-copper' => $metal === 'xcu',
                                                 'bg-surface-3 text-muted' => $metal === null,
                                             ])>
                                                 <x-icon :name="$row['icon']" class="size-4" />

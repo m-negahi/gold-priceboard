@@ -141,6 +141,22 @@ enum Instrument: string
     }
 
     /**
+     * Sar-tak e gruh tu tablo ye omumi va TV.
+     *
+     * Inja (na Blade) chun Blade ghablan `metal` ro ba 'gold' moghayese
+     * mikard dar hali ke meghdar e enum `xau` ast — hame «ارز» mishodan.
+     */
+    public function groupLabel(): string
+    {
+        return match ($this->metal()) {
+            Metal::Gold => 'طلا و سکه',
+            Metal::Silver => 'نقره',
+            Metal::Copper => 'مس',
+            null => 'ارز',
+        };
+    }
+
+    /**
      * Chand saniye ba'd az `upstream_at`, gheymat BAYAT hesab mishe.
      *
      * 🔴 Chera per-instrument va na yek adad e global:

@@ -35,6 +35,15 @@ final class InstrumentTest extends TestCase
         self::assertSame('xcu', Metal::Copper->value);
     }
 
+    public function test_group_label_follows_the_metal(): void
+    {
+        self::assertSame('طلا و سکه', Instrument::CoinEmami->groupLabel());
+        self::assertSame('طلا و سکه', Instrument::GoldOunce->groupLabel());
+        self::assertSame('نقره', Instrument::Silver925Gram->groupLabel());
+        self::assertSame('مس', Instrument::CopperPound->groupLabel());
+        self::assertSame('ارز', Instrument::UsdIrr->groupLabel());
+    }
+
     public function test_every_instrument_has_a_persian_label(): void
     {
         foreach (Instrument::cases() as $instrument) {

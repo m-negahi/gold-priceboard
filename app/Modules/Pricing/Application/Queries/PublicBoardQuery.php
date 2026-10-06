@@ -66,6 +66,7 @@ final readonly class PublicBoardQuery
                 'symbol' => $instrument->value,
                 'label' => $instrument->label(),
                 'metal' => $instrument->metal()?->value,
+                'groupLabel' => $instrument->groupLabel(),
                 'icon' => $instrument->icon(),
                 'unit' => $instrument->unit()->value,
                 'quote' => $instrument->quote()->value,
