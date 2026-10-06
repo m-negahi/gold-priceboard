@@ -49,6 +49,12 @@ final class OtpException extends RuntimeException
         return new self('کد نادرست است یا منقضی شده؛ در صورت نیاز کد جدید بگیرید.');
     }
 
+    /** P6-05 — faghat BA'D az code e dorost partab mishe (enumeration-safe). */
+    public static function accountDisabled(): self
+    {
+        return new self('حساب کاربری شما غیرفعال شده است.');
+    }
+
     public static function sendFailed(): self
     {
         // Jozyat e khata (Kavenegar/…) tu LOG mimune، na jolo ye karbar.

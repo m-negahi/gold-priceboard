@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Auth\Http\Middleware\EnsureActiveUser;
 use App\Modules\Common\Http\Middleware\LatinizeDigits;
 use App\Modules\Common\Http\Middleware\NormalizePhoneMiddleware;
 use App\Modules\Common\Http\Middleware\NormalizeRouteParamsMiddleware;
@@ -68,6 +69,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             NormalizeStringMiddleware::class,
             NormalizePhoneMiddleware::class,
+            // P6-05: session e baz e karbar e disable-shode ru request e
+            // ba'di logout mishe (ghabl az `guest`/`auth` e route).
+            EnsureActiveUser::class,
         ]);
 
         /*

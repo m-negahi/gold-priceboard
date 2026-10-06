@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { ADMIN, artisan, signInAsAdmin } from './helpers/auth';
+import { ADMIN, artisan, resetOtp, signInAsAdmin } from './helpers/auth';
 
 /**
  * Karbaran e panel (Phase 6) tu browser e vaghei.
@@ -162,3 +162,44 @@ test.describe('sakht + naghsh (P6-04)', () => {
     });
 });
 
+test.describe('disable/enable (P6-05)', () => {
+    test('session e baz e karbar e disable-shode mioftad + login payam mide', async ({ browser }) => {
+        // Karbar e movaghat (az P6-04) ba OTP e bypass login mikone.
+        const ctx = await browser.newContext();
+        const customer = await ctx.newPage();
+        resetOtp(TEMP_PHONE.slice(1));
+        await customer.goto('/login');
+        await customer.getByLabel('شماره موبایل').fill(TEMP_PHONE);
+        await customer.getByRole('button', { name: 'دریافت کد ورود' }).click();
+        await customer.getByRole('button', { name: 'پر کردن خودکار' }).click();
+        await customer.waitForURL((url) => url.pathname === '/');
+
+        // Admin disable mikone.
+        await page.goto('/dashboard/users?q=' + TEMP_PHONE);
+        await rows().first().getByRole('link', { name: /^جزئیات/ }).click();
+        await page.getByLabel('دلیل غیرفعال‌سازی').fill('آزمایش e2e');
+        await page.locator('[data-user-disable]').click();
+        await expect(page.locator('[data-user-status]')).toHaveAttribute('data-user-status', 'disabled');
+        await expect(page.getByText('آزمایش e2e')).toBeVisible();
+
+        // Request e ba'di ye session e baz -> /login ba payam.
+        await customer.goto('/');
+        await expect(customer).toHaveURL(/\/login$/);
+        const notice = customer.locator('[data-login-notice]');
+        await expect(notice).toHaveText('حساب کاربری شما غیرفعال شده است.');
+        const danger = await customer.evaluate(() => {
+            const probe = document.createElement('div');
+            probe.style.color = 'var(--color-danger)';
+            document.body.appendChild(probe);
+            const rgb = getComputedStyle(probe).color;
+            probe.remove();
+            return rgb;
+        });
+        expect(await notice.evaluate((el) => getComputedStyle(el).color)).toBe(danger);
+        await ctx.close();
+
+        // Enable -> vaziat bar migarde.
+        await page.locator('[data-user-enable]').click();
+        await expect(page.locator('[data-user-status]')).toHaveAttribute('data-user-status', 'active');
+    });
+});

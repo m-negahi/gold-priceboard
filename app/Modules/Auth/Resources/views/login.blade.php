@@ -26,6 +26,13 @@
                             شماره موبایل خود را وارد کنید. کد ورود پیامک می‌شود؛ رمز عبوری وجود ندارد.
                         </p>
 
+                        {{-- P6-05: session e karbar e disable-shode inja tamum shod (EnsureActiveUser). --}}
+                        @if (session(\App\Modules\Auth\Http\Middleware\EnsureActiveUser::FLASH_KEY))
+                            <p role="alert" data-login-notice class="mt-4 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
+                                {{ session(\App\Modules\Auth\Http\Middleware\EnsureActiveUser::FLASH_KEY) }}
+                            </p>
+                        @endif
+
                         <form @submit.prevent="requestCode()" class="mt-8 space-y-5" novalidate>
                             <div>
                                 <label for="phone" class="mb-2 block text-sm font-medium">شماره موبایل</label>

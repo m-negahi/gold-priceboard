@@ -6,12 +6,14 @@ namespace App\Modules\Api\Http\Middleware;
 
 use App\Modules\Api\Domain\Services\HmacSignature;
 use App\Modules\Api\Infrastructure\Persistence\Models\ApiClient;
+use App\Modules\Auth\Domain\Enums\UserStatus;
 use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -72,7 +74,14 @@ final class ApiHmacAuth
         );
 
         // ── Client + decoy ──────────────────────────────────────────
+        // `owner_status` ba SUBQUERY (P6-05) — hamun yek query، bedun e
+        // relation e Api -> Auth.
         $client = ApiClient::query()
+            ->select('api_clients.*')
+            ->addSelect(['owner_status' => DB::table('users')
+                ->select('status')
+                ->whereColumn('users.id', 'api_clients.user_id')
+                ->limit(1)])
             ->where('client_id', $clientId)
             ->where('is_active', true)
             ->first();
@@ -99,6 +108,13 @@ final class ApiHmacAuth
 
         if (! HmacSignature::verify($secret, $canonical, $signature)) {
             return $this->unauthorized();
+        }
+
+        // ── Saheb e disable (P6-05) ─────────────────────────────────
+        // BA'D az emza: faghat saheb e vaghei ye secret vaziat ro mibine
+        // (bi-emza hamun 401 e omumi). HAME ye site haye karbar ba ham.
+        if ($client->getAttribute('owner_status') !== UserStatus::Active->value) {
+            return new JsonResponse(['message' => 'حساب کاربری صاحب این کلید غیرفعال است.'], 403);
         }
 
         // ── Nonce (BA'D az emza: attacker e bi-emza nabayad betune ba

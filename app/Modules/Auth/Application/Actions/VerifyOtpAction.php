@@ -88,6 +88,13 @@ final readonly class VerifyOtpAction
         /** @var User $user */
         $user = User::query()->firstOrCreate(['phone' => $phone]);
 
+        // 🔴 P6-05: karbar e disable ba code e DOROST ham login nemishe.
+        // Check BA'D az ta'eed e code ast — payam faghat be saheb e vaghei
+        // ye shomare mirese، pas vaziat e hesab ro be attacker lo nemide.
+        if (! $user->isActive()) {
+            throw OtpException::accountDisabled();
+        }
+
         // `forceFill` amdi: in soton ha fillable nistan (va nabayad bashan).
         $user->forceFill([
             'phone_verified_at' => $user->phone_verified_at ?? $now,

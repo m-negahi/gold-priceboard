@@ -119,4 +119,43 @@ final readonly class UserController
             'message' => $data['role'] === 'admin' ? 'کاربر اکنون ادمین است.' : 'کاربر اکنون مشتری است.',
         ]);
     }
+
+    /** P6-05 — login، session haye baz va HAME ye site ha ru API baste mishan. */
+    public function disable(Request $request, int $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        /** @var User $target */
+        $target = $this->users->findOrFail($user);
+        /** @var User $actor */
+        $actor = $request->user();
+
+        try {
+            $this->admin->disable($target, $data['reason'], $actor);
+        } catch (UserAdminException $e) {
+            return back()->withErrors([$e->field => $e->getMessage()]);
+        }
+
+        return redirect()->route('panel.users.show', $target->id)->with('toast', [
+            'kind' => 'success',
+            'title' => 'کاربر غیرفعال شد',
+            'message' => 'ورود، نشست‌های باز و همهٔ سایت‌هایش روی API بسته شدند.',
+        ]);
+    }
+
+    public function enable(int $user): RedirectResponse
+    {
+        /** @var User $target */
+        $target = $this->users->findOrFail($user);
+
+        $this->admin->enable($target);
+
+        return redirect()->route('panel.users.show', $target->id)->with('toast', [
+            'kind' => 'success',
+            'title' => 'کاربر فعال شد',
+            'message' => 'دسترسی ورود و API برگشت.',
+        ]);
+    }
 }

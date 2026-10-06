@@ -59,6 +59,32 @@
                     <dd class="text-end text-down">{{ $profile['disabledReason'] ?? '—' }}</dd>
                 @endif
             </dl>
+
+            {{-- Dastresi (P6-05): disable = login + session haye baz + HAME ye site ha ru API. --}}
+            <div class="mt-5 border-t border-line-2 pt-4" data-user-access>
+                @if ($profile['status']->value === 'disabled')
+                    <form method="POST" action="{{ route('panel.users.enable', $profile['id']) }}">
+                        @csrf
+                        <button type="submit" data-user-enable
+                                class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-on-brand hover:bg-brand-2">
+                            <x-icon name="circle-check" class="size-4" />
+                            فعال‌سازی دوباره
+                        </button>
+                    </form>
+                @else
+                    <form method="POST" action="{{ route('panel.users.disable', $profile['id']) }}" class="space-y-3" data-user-disable-form>
+                        @csrf
+                        <x-form.field name="reason" label="دلیل غیرفعال‌سازی" required hint="ورود، نشست‌های باز و همهٔ سایت‌های این کاربر روی API بسته می‌شوند.">
+                            <x-form.input name="reason" :value="old('reason')" maxlength="500" />
+                        </x-form.field>
+                        <button type="submit" data-user-disable
+                                class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-danger-soft px-4 text-sm font-semibold text-danger ring-1 ring-danger/30 hover:ring-danger">
+                            <x-icon name="ban" class="size-4" />
+                            غیرفعال کردن کاربر
+                        </button>
+                    </form>
+                @endif
+            </div>
         </section>
 
         {{-- ── Wallet ──────────────────────────────────────────────── --}}

@@ -9,11 +9,14 @@ use App\Modules\Auth\Domain\Enums\UserStatus;
 use App\Modules\Auth\Domain\Exceptions\UserAdminException;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Common\Helpers\PhoneHelper;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
- * Modiriat e karbar tavasot e ADMIN (Phase 6): sakht + taghir e naghsh.
+ * Modiriat e karbar tavasot e ADMIN (Phase 6): sakht، taghir e naghsh،
+ * disable/enable.
  *
  * 🔴 `is_admin` FAGHAT inja (va seeder) ba `forceFill` set mishe — hamun
  * gharardad e docblock e `User`: taghir e naghsh yek TASMIM ast، na form.
@@ -78,6 +81,49 @@ final readonly class UserAdminAction
         }
 
         $target->forceFill(['is_admin' => $isAdmin])->save();
+
+        return $target;
+    }
+
+    /**
+     * Disable (P6-05). Khod e enforce tu `EnsureActiveUser` (web) va
+     * `ApiHmacAuth` (API) ast — inja faghat vaziat sabt mishe.
+     *
+     * `remember_token` charkhunde mishe ta cookie e «remember me» e ghadimi
+     * dige karbar ro bar nagardune (laye ye dovom؛ middleware khodesh ham
+     * har request ro check mikone).
+     *
+     * @throws UserAdminException
+     */
+    public function disable(User $target, string $reason, User $actor): User
+    {
+        $reason = trim($reason);
+
+        if ($target->id === $actor->id) {
+            throw UserAdminException::selfDisable();
+        }
+
+        if ($target->is_admin) {
+            $this->assertAnotherActiveAdmin($target);
+        }
+
+        $target->forceFill([
+            'status' => UserStatus::Disabled,
+            'disabled_at' => CarbonImmutable::now(),
+            'disabled_reason' => $reason,
+            'remember_token' => Str::random(60),
+        ])->save();
+
+        return $target;
+    }
+
+    public function enable(User $target): User
+    {
+        $target->forceFill([
+            'status' => UserStatus::Active,
+            'disabled_at' => null,
+            'disabled_reason' => null,
+        ])->save();
 
         return $target;
     }
