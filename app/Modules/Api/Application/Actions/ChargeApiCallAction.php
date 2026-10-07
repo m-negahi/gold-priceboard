@@ -12,6 +12,7 @@ use App\Modules\Wallet\Application\Queries\WalletQuery;
 use App\Modules\Wallet\Infrastructure\Persistence\Models\Wallet;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Throwable;
 
@@ -39,6 +40,19 @@ use Throwable;
 final readonly class ChargeApiCallAction
 {
     private const MIRROR_PREFIX = 'api:wallet:bal:';
+
+    /**
+     * 🔴 Saf e PAYDAR e refund haye oftade (checkpoint e 2026-10-06).
+     *
+     * Vaghti customer charge shode vali pasokh error/304 bud va DOROST dar
+     * hamun lahze PG ghat' shod، refund nemitune sabt she — ghablan faghat
+     * mirror invalidate mishod va pul e customer baraye HAMISHE gom bud
+     * (mirror az ledger seed mishe ke hanuz kasr ro dare). Hala entry tu
+     * in list e Redis (AOF) mimune va scheduler har daghighe ba
+     * `api:refunds:drain` replay esh mikone. Refund idempotent ast
+     * (`unique(wallet, reason, reference)`)، pas replay e dobare amn e.
+     */
+    private const PENDING_REFUNDS_KEY = 'api:refunds:pending';
 
     /**
      * `-1` = mande kam، `-2` = mirror nist (seed lazem)، >=0 = mande ye jadid.
@@ -135,9 +149,10 @@ final readonly class ChargeApiCallAction
             return;
         }
 
-        $wallet = $this->wallets->forOwner($client->user_id);
+        $wallet = null;
 
         try {
+            $wallet = $this->wallets->forOwner($client->user_id);
             $refund = $this->wallets->refund($wallet, $cost, $reference, [
                 'client_id' => $client->client_id,
             ]);
@@ -146,10 +161,89 @@ final readonly class ChargeApiCallAction
                 $this->releaseMirror($wallet, $cost);
             }
         } catch (Throwable) {
-            // Refund nashod: mirror ro batel mikonim ta call e ba'di az
-            // ledger e DOROST seed she — customer hich vaght az ledger
-            // jolo-tar kasr nemishe.
-            $this->invalidateMirror($wallet);
+            // Refund alan nashod (ehtemalan PG ghat') → compensation e
+            // PAYDAR: entry tu saf mimune va scheduler replay mikone.
+            $this->queuePendingRefund($client, $reference, $cost);
+
+            if ($wallet !== null) {
+                // Mirror batel ta call e ba'di az ledger e dorost seed she —
+                // customer hich vaght az ledger jolo-tar kasr nemishe.
+                $this->invalidateMirror($wallet);
+            }
+        }
+    }
+
+    /**
+     * Replay e saf e refund haye oftade — masraf: `api:refunds:drain`
+     * (scheduler، har daghighe).
+     *
+     * @return array{drained: int, requeued: int}
+     */
+    public function drainPendingRefunds(int $max = 500): array
+    {
+        $drained = 0;
+
+        for ($i = 0; $i < $max; $i++) {
+            try {
+                $raw = Redis::connection()->rpop(self::PENDING_REFUNDS_KEY);
+            } catch (Throwable) {
+                // Redis ghat' — talash e ba'di ye scheduler.
+                return ['drained' => $drained, 'requeued' => 0];
+            }
+
+            if (! is_string($raw) || $raw === '') {
+                return ['drained' => $drained, 'requeued' => 0];
+            }
+
+            /** @var array{user_id?: int, client_id?: string, reference?: string, cost?: int}|null $entry */
+            $entry = json_decode($raw, true);
+
+            if (! is_array($entry) || (int) ($entry['cost'] ?? 0) <= 0 || ($entry['reference'] ?? '') === '') {
+                // Entry e kharab ro negah dashtan faghat saf ro ghofl mikone.
+                continue;
+            }
+
+            try {
+                $wallet = $this->wallets->forOwner((int) $entry['user_id']);
+                $refund = $this->wallets->refund($wallet, (int) $entry['cost'], (string) $entry['reference'], [
+                    'client_id' => (string) ($entry['client_id'] ?? ''),
+                    'replayed' => true,
+                ]);
+
+                if ($refund->wasRecentlyCreated) {
+                    // Mirror ba'd az refund e ta'khiri az ledger seed mishe.
+                    $this->invalidateMirror($wallet);
+                }
+
+                $drained++;
+            } catch (Throwable) {
+                // Hanuz nashod — entry bar migarde tu saf va motevaghef
+                // mishim (PG ehtemalan hanuz ghat' e).
+                try {
+                    Redis::connection()->rpush(self::PENDING_REFUNDS_KEY, $raw);
+                } catch (Throwable) {
+                    Log::warning('api.refund_requeue_failed', ['entry' => $raw]);
+                }
+
+                return ['drained' => $drained, 'requeued' => 1];
+            }
+        }
+
+        return ['drained' => $drained, 'requeued' => 0];
+    }
+
+    private function queuePendingRefund(ApiClient $client, string $reference, int $cost): void
+    {
+        $entry = json_encode([
+            'user_id' => $client->user_id, 'client_id' => $client->client_id,
+            'reference' => $reference, 'cost' => $cost,
+        ]);
+
+        try {
+            Redis::connection()->lpush(self::PENDING_REFUNDS_KEY, (string) $entry);
+        } catch (Throwable) {
+            // PG VA Redis har do ghat' — tanha kari ke mimune sabt e boland e.
+            Log::warning('api.refund_queue_failed', ['entry' => $entry]);
         }
     }
 

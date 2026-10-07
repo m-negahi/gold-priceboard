@@ -32,6 +32,13 @@ Schedule::command('pricing:influx:health')
     ->withoutOverlapping()
     ->name('pricing-influx-health');
 
+// Refund haye API ke moghe ye ghat'i ye PG tu saf e Redis mundan — replay
+// (idempotent ba reference). Bedun e in، pul e customer gom mishod.
+Schedule::command('api:refunds:drain')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->name('api-refunds-drain');
+
 // Usage e paydar e API (P6-08): Redis (calls) + ledger (hazine) ->
 // `api_usage_daily`. Idempotent؛ emruz + diruz e Tehran.
 Schedule::command('api:usage:rollup')

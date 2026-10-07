@@ -6,6 +6,7 @@ namespace App\Modules\Billing\Application\Actions;
 
 use App\Modules\Api\Infrastructure\Persistence\Models\ApiPlan;
 use App\Modules\Api\Infrastructure\Persistence\Models\SiteSubscription;
+use App\Modules\Auth\Domain\Enums\CustomerType;
 use App\Modules\Auth\Domain\Enums\UserLevel;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Billing\Infrastructure\Persistence\Models\BillingInvoice;
@@ -102,16 +103,39 @@ final readonly class IssueInvoiceAction
                 'kind' => $kind,
                 'number' => 'PB-'.$year.'-'.str_pad((string) $next, 6, '0', STR_PAD_LEFT),
                 'amount_minor' => $amountRial,
-                'buyer_snapshot' => [
-                    'name' => $user->name,
-                    'phone' => $user->phone,
-                    'national_code' => $user->national_code,
-                    'customer_type' => $user->customer_type->value,
-                    'profile' => $user->invoice_profile,
-                ],
+                'buyer_snapshot' => $this->buyerSnapshot($user),
                 'lines_snapshot' => $lines,
                 'issued_at' => $at,
             ]);
         });
+    }
+
+    /**
+     * 🔴 Hoviat e factor FAGHAT az `invoice_profile` e APPROVE-shode miad
+     * (review e checkpoint e 2026-10-06). Soton haye `users` mutable-and —
+     * taghir eshun profile ro null mikone (`SaveUserProfileAction`)، vali
+     * agar masiri un invalidation ro dor bezane، factor e RASMI nabayad
+     * hoviat e taeed-nashode chap kone. Fallback be user faghat baraye
+     * approve haye GHADIMI ke meta eshun in kelid ha ro nadasht — un
+     * meghdar ha ro DecideKycAction khodesh moghe ye approve set karde bud.
+     *
+     * @return array<string, mixed>
+     */
+    private function buyerSnapshot(User $user): array
+    {
+        /** @var array<string, mixed> $profile */
+        $profile = $user->invoice_profile;
+        $isLegal = ! empty($profile['company_national_id']);
+
+        return [
+            'name' => (string) ($profile['name'] ?? ($isLegal ? ($profile['registered_name'] ?? '') : (string) $user->name)),
+            // Phone hoviat e LOGIN ast (OTP-verified)، na bakhshi az profile.
+            'phone' => $user->phone,
+            'national_code' => $isLegal
+                ? ($profile['representative_national_code'] ?? null)
+                : ($profile['national_code'] ?? $profile['representative_national_code'] ?? $user->national_code),
+            'customer_type' => ($isLegal ? CustomerType::Legal : CustomerType::Individual)->value,
+            'profile' => $profile,
+        ];
     }
 }

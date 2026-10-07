@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Api;
 
 use App\Modules\Api\Application\Actions\ApiClientAction;
+use App\Modules\Api\Application\Actions\ChargeApiCallAction;
 use App\Modules\Api\Application\Actions\PurchasePlanAction;
 use App\Modules\Api\Domain\Services\HmacSignature;
 use App\Modules\Api\Infrastructure\Persistence\Models\ApiClient;
@@ -12,10 +13,12 @@ use App\Modules\Api\Infrastructure\Persistence\Models\ApiPlan;
 use App\Modules\Api\Infrastructure\Persistence\Models\ApiPriceGroup;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Wallet\Application\Actions\WalletAction;
+use App\Modules\Wallet\Application\Queries\WalletQuery;
 use App\Modules\Wallet\Infrastructure\Persistence\Models\Wallet;
 use App\Modules\Wallet\Infrastructure\Persistence\Models\WalletTransaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -130,6 +133,45 @@ final class ApiChargeTest extends TestCase
     }
 
     /** 🔴 P4-08: bedun e e'tebar service nemidim. */
+    /**
+     * 🔴 Compensation e PAYDAR (checkpoint e 2026-10-06): age lahze ye
+     * refund DB dar dastres nabashe (inja: wallet block shode → refund
+     * exception mide)، pul e customer nabayad gom she — entry tu saf e
+     * Redis mimune va `api:refunds:drain` ba'dan replay esh mikone.
+     */
+    public function test_a_failed_refund_is_queued_and_replayed_by_the_drain_command(): void
+    {
+        $charger = app(ChargeApiCallAction::class);
+        $wallets = new WalletAction;
+
+        $charge = $charger->charge($this->client, 'ref-pending-refund');
+        self::assertSame('ok', $charge['status']);
+
+        // Shekast e refund (mesl e ghat'i ye PG): block e wallet har write
+        // ro rad mikone.
+        $wallets->block($this->wallet);
+        $charger->refundCall($this->client, 'ref-pending-refund', $charge['cost']);
+
+        // Hich radif e refund sabt nashode vali entry tu saf e paydar hast.
+        $this->assertDatabaseMissing('wallet_transactions', ['reason' => 'refund', 'reference' => 'refund:ref-pending-refund']);
+        self::assertSame(1, (int) Redis::connection()->llen('api:refunds:pending'));
+
+        // Ta DB "bar nagarde"، drain entry ro negah midare (requeue).
+        $this->artisan('api:refunds:drain')->assertFailed();
+        self::assertCount(1, (array) Redis::connection()->lrange('api:refunds:pending', 0, -1));
+
+        // DB bargasht → replay، radif e refund sabt، saf khali. Idempotent:
+        // ejra ye dovom hich radif e jadid nemisaze.
+        $wallets->unblock($this->wallet);
+        $this->artisan('api:refunds:drain')->assertSuccessful();
+        $this->assertDatabaseHas('wallet_transactions', ['reason' => 'refund', 'reference' => 'refund:ref-pending-refund']);
+        self::assertSame(0, (int) Redis::connection()->llen('api:refunds:pending'));
+        self::assertSame(10_000, (new WalletQuery)->findForOwner($this->client->user_id)->balance_minor);
+
+        $this->artisan('api:refunds:drain')->assertSuccessful();
+        self::assertSame(1, DB::table('wallet_transactions')->where('reason', 'refund')->where('reference', 'refund:ref-pending-refund')->count());
+    }
+
     public function test_an_empty_wallet_gets_402_and_no_data(): void
     {
         // 10 call e movafagh mande ro sefr mikone.

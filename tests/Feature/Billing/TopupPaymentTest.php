@@ -130,6 +130,39 @@ final class TopupPaymentTest extends TestCase
         $this->actingAs($other)->get(route('account.billing.invoice', $invoiceId))->assertNotFound();
     }
 
+    /**
+     * 🔴 Hoviat e factor FAGHAT az `invoice_profile` e approve-shode miad —
+     * soton haye mutable e `users` (name/national_code/customer_type) hata
+     * age ba'd az approve drift konan، ru factor e rasmi nemian.
+     */
+    public function test_the_invoice_snapshot_takes_identity_from_the_approved_profile_only(): void
+    {
+        $user = User::factory()->named('Old Name')->create();
+        $user->forceFill([
+            'level' => 'invoice_verified',
+            'invoice_profile' => [
+                'registered_name' => 'شرکت نمونه',
+                'company_national_id' => '14005815990',
+                'representative_national_code' => '0012345679',
+            ],
+        ])->save();
+        // Drift e farzi (masalan yek masir e ayande invalidation ro dor bezane).
+        $user->forceFill(['name' => 'Drifted Name', 'national_code' => '9999999999', 'customer_type' => 'individual'])->save();
+
+        $this->app->instance(PaymentGatewayPort::class, new FakePaymentGateway(10_000));
+        $payments = app(TopupPaymentAction::class);
+        $started = $payments->start($user->id, 10_000, 'request-snapshot', 'https://example.test/callback');
+        $payments->verify($started['payment']->track_id);
+
+        $snapshot = json_decode((string) DB::table('billing_invoices')->value('buyer_snapshot'), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('شرکت نمونه', $snapshot['name']);
+        self::assertSame('0012345679', $snapshot['national_code']);
+        self::assertSame('legal', $snapshot['customer_type']);
+        self::assertStringNotContainsString('Drifted Name', json_encode($snapshot, JSON_THROW_ON_ERROR));
+        self::assertStringNotContainsString('9999999999', json_encode($snapshot, JSON_THROW_ON_ERROR));
+    }
+
     public function test_gateway_already_verified_reconciles_after_local_wallet_failure(): void
     {
         $user = User::factory()->create();

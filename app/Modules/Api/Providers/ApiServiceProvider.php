@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Api\Providers;
 
+use App\Modules\Api\Console\Commands\DrainApiRefundsCommand;
 use App\Modules\Api\Console\Commands\RollupApiUsageCommand;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,6 +19,7 @@ final class ApiServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 RollupApiUsageCommand::class,
+                DrainApiRefundsCommand::class,
             ]);
         }
     }
