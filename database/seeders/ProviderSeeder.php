@@ -143,6 +143,10 @@ final class ProviderSeeder extends Seeder
              */
             Instrument::GoldOunce->value => 259_200,
             Instrument::SilverOunce->value => 259_200,
+            // Noghre ye 999/925 e MOHASEBATI (az ons × dollar e hamin feed) —
+            // hamun 4 rooz e radif haye IRR e noghre ye tgju.
+            Instrument::Silver999Gram->value => 345_600,
+            Instrument::Silver925Gram->value => 345_600,
             Instrument::Gold18Gram->value => 345_600,
             Instrument::Gold24Gram->value => 345_600,
             Instrument::GoldMesghal->value => 345_600,
@@ -172,11 +176,26 @@ final class ProviderSeeder extends Seeder
             'sort' => 50,
             'timeout' => 10,
             // toman/g؛ jofte (`price_buy` = ask، `price_sell` = bid — fe'lan barabar).
+            // 🔴 Platform e ABSHODE ast — `XAU18` be `xau-melted-g-irr` map mishe.
             'upstream_unit' => 'toman',
         ], [
-            // Timestamp e epoch mide؛ shab/ta'til yakh mizane — hamun override e milli.
-            Instrument::Gold18Gram->value => 345_600,
+            // Timestamp e epoch mide؛ shab/ta'til yakh mizane.
+            Instrument::GoldMeltedGram->value => 345_600,
         ]);
+
+        $this->provider([
+            'key' => 'wallgold',
+            'driver' => 'wallgold',
+            'name' => 'WallGold',
+            'name_fa' => 'وال‌گلد',
+            'website' => 'https://wallgold.ir',
+            'kind' => 'platform',
+            'sort' => 40,
+            'timeout' => 10,
+            // toman/g؛ jofte (`SELL` = ask، `BUY` = bid). API key az env
+            // (`WALLGOLD_API_KEY`) — hich secret inja.
+            'upstream_unit' => 'toman',
+        ], []);
 
         $this->provider([
             'key' => 'tlyn',
@@ -194,7 +213,8 @@ final class ProviderSeeder extends Seeder
             // Timestamp e UTC e daghigh mide؛ shab/ta'til yakh mizane — hamun
             // override haye tgju.
             Instrument::GoldOunce->value => 259_200,
-            Instrument::Gold18Gram->value => 345_600,
+            // 🔴 `GOLD18` e tlyn dar vaghe' ABSHODE ast (platform e abshode).
+            Instrument::GoldMeltedGram->value => 345_600,
             Instrument::GoldMesghal->value => 345_600,
             Instrument::CoinEmami->value => 345_600,
             Instrument::CoinHalf->value => 345_600,

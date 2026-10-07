@@ -35,7 +35,7 @@ final readonly class InstrumentMatrixQuery
     ) {}
 
     /**
-     * @return array{providers: array<int, string>, rows: array<int, array<string, mixed>>}
+     * @return array{providers: array<int, string>, names: array<string, string>, rows: array<int, array<string, mixed>>}
      */
     public function matrix(): array
     {
@@ -128,7 +128,15 @@ final readonly class InstrumentMatrixQuery
             ];
         }
 
-        return ['providers' => array_keys($providerKeys), 'rows' => $rows];
+        // Esm e namayeshi (na key e kham) baraye header e jadval — darkhast e
+        // sahebe proje (2026-10-07): «manual» bayad «API اختصاصی» dide she.
+        $names = [];
+
+        foreach ($this->providers->panelRows() as $row) {
+            $names[(string) $row['key']] = (string) $row['name'];
+        }
+
+        return ['providers' => array_keys($providerKeys), 'names' => $names, 'rows' => $rows];
     }
 
     /** @return array<string, array<string, SpreadPair>> */

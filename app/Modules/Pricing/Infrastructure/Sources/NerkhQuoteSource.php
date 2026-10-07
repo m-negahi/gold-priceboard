@@ -77,6 +77,10 @@ final readonly class NerkhQuoteSource implements QuoteSourcePort
         'GOLD18K' => ['section' => 'gold', 'symbol' => Instrument::Gold18Gram, 'unit' => UpstreamUnit::Toman],
         'GOLD24K' => ['section' => 'gold', 'symbol' => Instrument::Gold24Gram, 'unit' => UpstreamUnit::Toman],
         'MESGHAL' => ['section' => 'gold', 'symbol' => Instrument::GoldMesghal, 'unit' => UpstreamUnit::Toman],
+        // 🔴 `MAZANEH` = mazane ye ABSHODE (per MESGHAL) — tabdil be gram:
+        // ÷4.3318 (4.6083 g × 705/750). Sehat: 115,677,000/4.3318 ≈ GOLD18K
+        // e hamun lahze (26,704,500) ✓. (darkhast e sahebe proje، 2026-10-07)
+        'MAZANEH' => ['section' => 'gold', 'symbol' => Instrument::GoldMeltedGram, 'unit' => UpstreamUnit::Toman, 'perMesghal' => true],
 
         // Jahani — ghablan USD-and، hich tabdili lazem nist.
         'OUNCE' => ['section' => 'gold', 'symbol' => Instrument::GoldOunce, 'unit' => UpstreamUnit::None],
@@ -176,8 +180,9 @@ final readonly class NerkhQuoteSource implements QuoteSourcePort
 
             $instrument = $entry['symbol'];
             $quote = $instrument->quote();
+            $perMesghal = (bool) ($entry['perMesghal'] ?? false);
 
-            $minor = $this->toMinor($row['current'] ?? null, $quote, $entry['unit']);
+            $minor = $this->fromMesghal($this->toMinor($row['current'] ?? null, $quote, $entry['unit']), $perMesghal);
 
             // `null` ya'ni «in radif ro nadide begir»، na «gheymat sefr ast».
             if ($minor === null || $minor <= 0) {
@@ -191,13 +196,75 @@ final readonly class NerkhQuoteSource implements QuoteSourcePort
                 price: new Price($minor, $quote),
                 upstreamAt: $this->jalaliToUtc($row['update'] ?? null) ?? $fallbackAt,
                 // Band e 24 sa'ate — nazdik tarin chiz be `h`/`l` e tgju.
-                dayHigh: $this->optionalPrice($row['max']['24hour'] ?? null, $quote, $entry['unit']),
-                dayLow: $this->optionalPrice($row['min']['24hour'] ?? null, $quote, $entry['unit']),
+                dayHigh: $this->optionalPrice($row['max']['24hour'] ?? null, $quote, $entry['unit'], $perMesghal),
+                dayLow: $this->optionalPrice($row['min']['24hour'] ?? null, $quote, $entry['unit'], $perMesghal),
                 upstreamChangePercent: is_numeric($row['ch_24h_percent'] ?? null) ? (float) $row['ch_24h_percent'] : null,
             );
         }
 
+        // Noghre ye gram-i (999/925) tu feed nist vali gheymat e mohasebati
+        // az ons + dollar e hamin feed dar miad (darkhast e sahebe proje).
+        $this->appendDerivedSilver($quotes);
+
         return new SourceResultDto(quotes: $quotes, unmappedLabels: $missing);
+    }
+
+    /**
+     * 🔴 Noghre ye 999/925 — MOHASEBATI az ons e noghre (USD) × dollar:
+     *
+     *   rial/gram = (ons / 31.1034768) × dollar × khulus
+     *   minor     = s × u × (khulus×1000) / 311,034,768   (bcmath، half-up)
+     *
+     * (makhraj = 31.1034768 g/oz × 10^4 e scale e USD × 1000 e khulus.)
+     *
+     * ⚠️ In gheymat e SPOT ast؛ bazaar e Iran premium dare — andaze-giri
+     * ru fixture haye ham-zaman: tgju 999 ~4.7% balatar az spot e nerkh.
+     * Admin mitune ba spread e panel ru nerkh jobran kone. Timestamp =
+     * KOHNE-tar e do parent (mohafeze-kar baraye check e tazegi).
+     *
+     * @param  list<RawQuoteDto>  $quotes
+     */
+    private function appendDerivedSilver(array &$quotes): void
+    {
+        $silver = null;
+        $usd = null;
+
+        foreach ($quotes as $quote) {
+            if ($quote->instrument === Instrument::SilverOunce) {
+                $silver = $quote;
+            } elseif ($quote->instrument === Instrument::UsdIrr) {
+                $usd = $quote;
+            }
+        }
+
+        if ($silver === null || $usd === null) {
+            return;
+        }
+
+        $at = match (true) {
+            $silver->upstreamAt === null => $usd->upstreamAt,
+            $usd->upstreamAt === null => $silver->upstreamAt,
+            default => $silver->upstreamAt->lessThan($usd->upstreamAt) ? $silver->upstreamAt : $usd->upstreamAt,
+        };
+
+        $product = bcmul((string) $silver->price->minor, (string) $usd->price->minor);
+
+        foreach ([[Instrument::Silver999Gram, '999'], [Instrument::Silver925Gram, '925']] as [$instrument, $purityPerMille]) {
+            // Half-up: nesf e makhraj ghabl az taghsim.
+            $minor = (int) bcdiv(bcadd(bcmul($product, $purityPerMille), '155517384'), '311034768', 0);
+
+            if ($minor <= 0) {
+                continue;
+            }
+
+            $quotes[] = new RawQuoteDto(
+                providerKey: $this->providerKey,
+                instrument: $instrument,
+                side: Side::Last,
+                price: new Price($minor, $instrument->quote()),
+                upstreamAt: $at,
+            );
+        }
     }
 
     /**
@@ -224,11 +291,21 @@ final readonly class NerkhQuoteSource implements QuoteSourcePort
         return $minor * $unit->multiplier();
     }
 
-    private function optionalPrice(mixed $raw, QuoteCurrency $quote, UpstreamUnit $unit): ?Price
+    private function optionalPrice(mixed $raw, QuoteCurrency $quote, UpstreamUnit $unit, bool $perMesghal = false): ?Price
     {
-        $minor = $this->toMinor($raw, $quote, $unit);
+        $minor = $this->fromMesghal($this->toMinor($raw, $quote, $unit), $perMesghal);
 
         return $minor === null || $minor <= 0 ? null : new Price($minor, $quote);
+    }
+
+    /** Mazane (per mesghal e abshode) → rial e har gram: ×10000/43318 (bcmath، half-up). */
+    private function fromMesghal(?int $minor, bool $perMesghal): ?int
+    {
+        if ($minor === null || ! $perMesghal) {
+            return $minor;
+        }
+
+        return (int) bcdiv(bcadd(bcmul((string) $minor, '10000'), '21659'), '43318', 0);
     }
 
     /**

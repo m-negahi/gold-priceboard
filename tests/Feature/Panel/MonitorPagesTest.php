@@ -114,10 +114,11 @@ final class MonitorPagesTest extends TestCase
 
         // Matrix ham hamun tick ro mibine. (`LatinizeDigits` ragham e label
         // ro Latin mikone، pas «۱۸» tu khoruji «18» ast.)
+        // Header e matrix esm e NAMAYESHI ro neshun mide، na key (P10-24).
         $this->actingAs($this->admin())->get(route('panel.matrix'))
             ->assertOk()
             ->assertSee('طلای 18 عیار')
             ->assertSee('xau-18k-g-irr')
-            ->assertSee('mock');
+            ->assertSee('آزمایشی');
     }
 }

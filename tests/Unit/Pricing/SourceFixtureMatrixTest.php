@@ -12,6 +12,7 @@ use App\Modules\Pricing\Infrastructure\Sources\MelligoldQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\NerkhQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\TgjuQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\TlynQuoteSource;
+use App\Modules\Pricing\Infrastructure\Sources\WallgoldQuoteSource;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -127,6 +128,12 @@ final class SourceFixtureMatrixTest extends TestCase
             // USD — scale 4، bedun e ×10.
             'xau-oz-usd:last' => [41_640_000, QuoteCurrency::USD],
             'xag-oz-usd:last' => [610_000, QuoteCurrency::USD],
+            // 🔴 MAZANEH (abshode، per mesghal) ÷4.3318 → gram.
+            'xau-melted-g-irr:last' => [267_041_415, QuoteCurrency::IRR],
+            // 🔴 MOHASEBATI: ons e noghre × dollar (bcmath، half-up) —
+            // 610,000 × 2,691,000 × khulus / 311,034,768.
+            'xag-999-g-irr:last' => [5_272_300, QuoteCurrency::IRR],
+            'xag-925-g-irr:last' => [4_881_759, QuoteCurrency::IRR],
         ]);
     }
 
@@ -140,9 +147,21 @@ final class SourceFixtureMatrixTest extends TestCase
      */
     public static function melligoldMatrix(): array
     {
+        // 🔴 ABSHODE (na 18 ayar) — platform e kharid/foroosh e abshode.
         return self::rows([
-            'xau-18k-g-irr:ask' => [265_536_240, QuoteCurrency::IRR],
-            'xau-18k-g-irr:bid' => [265_536_240, QuoteCurrency::IRR],
+            'xau-melted-g-irr:ask' => [265_536_240, QuoteCurrency::IRR],
+            'xau-melted-g-irr:bid' => [265_536_240, QuoteCurrency::IRR],
+        ]);
+    }
+
+    /** @return array<string, array{0: string, 1: int, 2: QuoteCurrency}> */
+    public static function wallgoldMatrix(): array
+    {
+        return self::rows([
+            'xau-18k-g-irr:ask' => [265_300_000, QuoteCurrency::IRR],
+            'xau-18k-g-irr:bid' => [265_300_000, QuoteCurrency::IRR],
+            'xag-925-g-irr:ask' => [4_980_000, QuoteCurrency::IRR],
+            'xag-925-g-irr:bid' => [4_980_000, QuoteCurrency::IRR],
         ]);
     }
 
@@ -155,8 +174,9 @@ final class SourceFixtureMatrixTest extends TestCase
     public static function tlynMatrix(): array
     {
         return self::rows([
-            'xau-18k-g-irr:ask' => [268_910_000, QuoteCurrency::IRR],
-            'xau-18k-g-irr:bid' => [266_770_000, QuoteCurrency::IRR],
+            // 🔴 `GOLD18` e tlyn dar vaghe' ABSHODE ast.
+            'xau-melted-g-irr:ask' => [268_910_000, QuoteCurrency::IRR],
+            'xau-melted-g-irr:bid' => [266_770_000, QuoteCurrency::IRR],
             'xau-mesghal-irr:ask' => [1_164_890_000, QuoteCurrency::IRR],
             'xau-mesghal-irr:bid' => [1_155_600_000, QuoteCurrency::IRR],
             'xau-coin-emami-irr:ask' => [2_719_100_000, QuoteCurrency::IRR],
@@ -232,6 +252,12 @@ final class SourceFixtureMatrixTest extends TestCase
         self::assertQuote('melligold', $key, $minor, $currency);
     }
 
+    #[DataProvider('wallgoldMatrix')]
+    public function test_wallgold_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
+    {
+        self::assertQuote('wallgold', $key, $minor, $currency);
+    }
+
     #[DataProvider('tlynMatrix')]
     public function test_tlyn_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
     {
@@ -250,6 +276,7 @@ final class SourceFixtureMatrixTest extends TestCase
     {
         return [
             'melligold' => ['melligold', self::melligoldMatrix()],
+            'wallgold' => ['wallgold', self::wallgoldMatrix()],
             'tlyn' => ['tlyn', self::tlynMatrix()],
         ];
     }
@@ -281,6 +308,14 @@ final class SourceFixtureMatrixTest extends TestCase
 
         $shared = array_intersect(array_keys($other), array_keys($tgju));
 
+        if ($source === 'nerkh') {
+            // 🔴 Noghre ye MOHASEBATI ye nerkh gheymat e SPOT ast va bazaar
+            // e Iran premium dare (andaze-giri: tgju ~4.7% balatar) — az
+            // saghf e 3% e in test mostasna، saghf e jodagane ye khodesh
+            // ro tu `test_derived_silver_stays_within_the_market_band` dare.
+            $shared = array_diff($shared, ['xag-999-g-irr:last', 'xag-925-g-irr:last']);
+        }
+
         self::assertGreaterThanOrEqual(
             $minShared,
             count($shared),
@@ -304,6 +339,25 @@ final class SourceFixtureMatrixTest extends TestCase
                 "{$key}: {$source}={$a} va tgju={$b} bishtar az 3% ekhtelaf daran — ".
                 'ehtemalan vahed ya martabe tu yeki az do source kharab ast.',
             );
+        }
+    }
+
+    /**
+     * Noghre ye mohasebati (spot) nabayad az bazaar (tgju) bish az 10% dur
+     * beshe — 10% khata ye martabe/vahed ro migire (90%/900%) vali premium
+     * e tabi'i ye ~5% ro rad nemikone.
+     */
+    public function test_derived_silver_stays_within_the_market_band(): void
+    {
+        $nerkh = self::quotes('nerkh');
+        $tgju = self::quotes('tgju');
+
+        foreach (['xag-999-g-irr:last', 'xag-925-g-irr:last'] as $key) {
+            $spot = $nerkh[$key]->price->minor;
+            $market = $tgju[$key]->price->minor;
+
+            self::assertEqualsWithDelta($market, $spot, $market * 0.10,
+                "{$key}: noghre ye mohasebati kheyli az bazaar dur ast — vahed/martabe ro check kon.");
         }
     }
 
@@ -345,7 +399,8 @@ final class SourceFixtureMatrixTest extends TestCase
 
             $ask = $quote->price->minor;
             $bid = $quotes["{$symbol}:bid"]->price->minor ?? null;
-            $reference = $tgju["{$symbol}:last"]->price->minor ?? null;
+            // Melted tu tgju jofte-ast (last nadare) — marja' ask e tgju.
+            $reference = $tgju["{$symbol}:last"]->price->minor ?? $tgju["{$symbol}:ask"]->price->minor ?? null;
 
             self::assertNotNull($bid, "{$source} / {$symbol}: bid nadare.");
             self::assertGreaterThanOrEqual($bid, $ask, "{$source} / {$symbol}: ask bayad >= bid bashe — side ha bar-aks map shodan?");
@@ -363,7 +418,7 @@ final class SourceFixtureMatrixTest extends TestCase
     /** @return array<string, array{0: string}> */
     public static function twoSidedPlatforms(): array
     {
-        return ['melligold' => ['melligold'], 'tlyn' => ['tlyn']];
+        return ['melligold' => ['melligold'], 'wallgold' => ['wallgold'], 'tlyn' => ['tlyn']];
     }
 
     // ── Helper ──────────────────────────────────────────────────
@@ -419,6 +474,7 @@ final class SourceFixtureMatrixTest extends TestCase
             'estjt' => [new EstjtQuoteSource, 'estjt-new-price.json'],
             'nerkh' => [new NerkhQuoteSource, 'nerkh-prices.json'],
             'melligold' => [new MelligoldQuoteSource, 'melligold-buy-sell.json'],
+            'wallgold' => [new WallgoldQuoteSource, 'wallgold-price.json'],
             'tlyn' => [new TlynQuoteSource, 'tlyn-price.json'],
             default => self::fail("source e nashenas: {$source}"),
         };
@@ -438,7 +494,7 @@ final class SourceFixtureMatrixTest extends TestCase
     /** Har kelid e jadval bayad be yek `Instrument` e vaghei eshare kone. */
     public function test_every_matrix_key_names_a_real_instrument(): void
     {
-        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix()), ...array_keys(self::nerkhMatrix()), ...array_keys(self::melligoldMatrix()), ...array_keys(self::tlynMatrix())] as $key) {
+        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix()), ...array_keys(self::nerkhMatrix()), ...array_keys(self::melligoldMatrix()), ...array_keys(self::wallgoldMatrix()), ...array_keys(self::tlynMatrix())] as $key) {
             $symbol = explode(':', $key)[0];
 
             self::assertNotNull(

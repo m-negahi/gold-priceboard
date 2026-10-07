@@ -30,6 +30,7 @@ final readonly class SourceManager
             EstjtQuoteSource::KEY => new EstjtQuoteSource($config->options, $config->timeout),
             NerkhQuoteSource::KEY => new NerkhQuoteSource($config->options, $config->timeout, $config->key),
             MelligoldQuoteSource::KEY => new MelligoldQuoteSource($config->options, $config->timeout),
+            WallgoldQuoteSource::KEY => new WallgoldQuoteSource($config->options, $config->timeout),
             TlynQuoteSource::KEY => new TlynQuoteSource($config->options, $config->timeout),
             MockQuoteSource::KEY => new MockQuoteSource($this->clock, $this->seeds($config)),
             // Manual: gheymat ha az DB load mishan va pass dade mishan (source
@@ -74,7 +75,7 @@ final readonly class SourceManager
     {
         return [
             TgjuQuoteSource::KEY, EstjtQuoteSource::KEY, NerkhQuoteSource::KEY,
-            MelligoldQuoteSource::KEY, TlynQuoteSource::KEY,
+            MelligoldQuoteSource::KEY, WallgoldQuoteSource::KEY, TlynQuoteSource::KEY,
             ManualQuoteSource::KEY, MockQuoteSource::KEY,
         ];
     }

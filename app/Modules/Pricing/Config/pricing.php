@@ -161,4 +161,12 @@ return [
         'channel' => env('PRICING_LOG_CHANNEL', 'pricing'),
     ],
 
+    /*
+     * WallGold (platform) — API key e Bearer. Tu env mimune (secret hich
+     * vaght tu seeder/DB/git nemiyad)؛ `WallgoldQuoteSource` mikhunadesh.
+     */
+    'wallgold' => [
+        'api_key' => env('WALLGOLD_API_KEY', ''),
+    ],
+
 ];

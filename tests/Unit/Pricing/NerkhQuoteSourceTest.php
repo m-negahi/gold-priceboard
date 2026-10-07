@@ -55,7 +55,8 @@ final class NerkhQuoteSourceTest extends TestCase
             self::assertArrayHasKey($symbol, $quotes, "«{$symbol}» parse nashod.");
         }
 
-        self::assertCount(11, $quotes);
+        // 12 radif e map (ba MAZANEH→abshode) + 2 noghre ye MOHASEBATI.
+        self::assertCount(14, $quotes);
     }
 
     /**
@@ -163,7 +164,7 @@ final class NerkhQuoteSourceTest extends TestCase
         $result = (new NerkhQuoteSource)->parse($payload);
 
         self::assertSame(['coin.SEKE_EMAMI'], $result->unmappedLabels);
-        self::assertSame(10, $result->count());
+        self::assertSame(13, $result->count());
     }
 
     /** Kelid haye map-NASHODE (crypto، platform ha) hich chizi gozaresh nemikonan. */
@@ -181,7 +182,7 @@ final class NerkhQuoteSourceTest extends TestCase
 
         $result = (new NerkhQuoteSource)->parse($payload);
 
-        self::assertSame(5, $result->count(), 'faghat radif haye bakhsh e tala.');
+        self::assertSame(6, $result->count(), 'faghat radif haye bakhsh e tala (ba abshode).');
         self::assertCount(6, $result->unmappedLabels);
     }
 
@@ -195,7 +196,7 @@ final class NerkhQuoteSourceTest extends TestCase
 
         self::assertArrayNotHasKey('xau-18k-g-irr', $quotes);
         self::assertArrayNotHasKey('xau-24k-g-irr', $quotes);
-        self::assertCount(9, $quotes);
+        self::assertCount(12, $quotes);
     }
 
     /** Payload e bi-shekl shekast ast، na «hich gheymati nabud». */
@@ -214,6 +215,67 @@ final class NerkhQuoteSourceTest extends TestCase
         self::assertSame('https://live.nerkh.io/api/prices', $request->url);
         self::assertSame(7, $request->timeout);
         self::assertFalse($request->isPost());
+    }
+
+    /**
+     * 🔴 `MAZANEH` (mazane ye abshode، per mesghal) → gram: ÷4.3318.
+     * 115,677,000 toman → ×10 rial → ×10000/43318 = 267,041,415.
+     */
+    public function test_mazaneh_becomes_melted_gram_with_the_mesghal_conversion(): void
+    {
+        $quotes = $this->quotes($this->payload());
+
+        self::assertSame(267_041_415, $quotes['xau-melted-g-irr']->price->minor);
+        self::assertSame(265_840_990, $quotes['xau-melted-g-irr']->dayLow?->minor);
+        self::assertSame(269_072_903, $quotes['xau-melted-g-irr']->dayHigh?->minor);
+    }
+
+    /**
+     * 🔴 Noghre ye 999/925 — MOHASEBATI az ons e noghre × dollar e HAMIN
+     * feed: minor = s×u×(khulus×1000)/311,034,768 (bcmath، half-up).
+     * Meghdar haye entezari az fixture: s=610,000 ($61)، u=2,691,000 rial.
+     * ⚠️ Spot ast؛ tgju ~4.7% balatar (premium e bazaar) — tu matrix test
+     * ba saghf e jodagane check mishe.
+     */
+    public function test_derives_silver_grams_from_ounce_and_dollar(): void
+    {
+        $quotes = $this->quotes($this->payload());
+
+        self::assertSame(5_272_300, $quotes['xag-999-g-irr']->price->minor);
+        self::assertSame(4_881_759, $quotes['xag-925-g-irr']->price->minor);
+        self::assertSame(QuoteCurrency::IRR, $quotes['xag-999-g-irr']->price->quote);
+        self::assertSame(Side::Last, $quotes['xag-925-g-irr']->side);
+    }
+
+    /** Timestamp e derived = KOHNE-tar e do parent (mohafeze-kar). */
+    public function test_derived_silver_takes_the_older_parent_timestamp(): void
+    {
+        $payload = $this->payload();
+        // USD ro amdan kohne-tar mikonim.
+        $payload['currency']['USD']['update'] = '1405-07-14 10:00:00';
+
+        $quotes = $this->quotes($payload);
+
+        self::assertSame(
+            $quotes['usd-irr']->upstreamAt?->toIso8601String(),
+            $quotes['xag-999-g-irr']->upstreamAt?->toIso8601String(),
+        );
+    }
+
+    /** Bedun e dollar (ya bedun e ons e noghre) hich noghre-i hads zade nemishe. */
+    public function test_silver_is_not_derived_without_both_parents(): void
+    {
+        $noUsd = $this->payload();
+        unset($noUsd['currency']['USD']);
+        $quotes = $this->quotes($noUsd);
+        self::assertArrayNotHasKey('xag-999-g-irr', $quotes);
+        self::assertArrayNotHasKey('xag-925-g-irr', $quotes);
+
+        $noSilver = $this->payload();
+        unset($noSilver['gold']['OUNCE_SILVER']);
+        $quotes = $this->quotes($noSilver);
+        self::assertArrayNotHasKey('xag-999-g-irr', $quotes);
+        self::assertArrayNotHasKey('xag-925-g-irr', $quotes);
     }
 
     public function test_exposes_its_key(): void

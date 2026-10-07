@@ -44,7 +44,7 @@ use Throwable;
  *    tar az `now` e hamun lahze bud — mesl e milli shab/ta'til yakh
  *    mizane؛ hamun override e freshness e platform ha tu seeder.
  * 5. Faghat `XAU18` javab mide (XAU24/SEKEH/… «منبع یافت نشد») — platform
- *    e 18 ayar ast، mesl e milli.
+ *    e ABSHODE ast (map be `xau-melted-g-irr`).
  */
 final readonly class MelligoldQuoteSource implements QuoteSourcePort
 {
@@ -121,7 +121,10 @@ final readonly class MelligoldQuoteSource implements QuoteSourcePort
             throw new RuntimeException('melligold: payload shekl e entezari nadare (`data` nist).');
         }
 
-        $instrument = Instrument::Gold18Gram;
+        // 🔴 `XAU18` dar VAGHE' gheymat e moamele ye ABSHODE ast — melligold
+        // platform e kharid/foroosh e abshode-ast (tasmim e sahebe proje،
+        // 2026-10-07)، na gram e 18 ayar e zinati.
+        $instrument = Instrument::GoldMeltedGram;
         $upstreamAt = $this->epochSecondsToUtc($data['timestamp'] ?? null);
         $quotes = [];
         $missing = [];

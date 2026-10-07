@@ -56,7 +56,7 @@
                         <th class="px-5 py-3 text-start font-semibold">نماد</th>
                         <th class="px-5 py-3 text-start font-semibold">اختلاف منابع</th>
                         @foreach ($providers as $providerKey)
-                            <th class="ltr px-5 py-3 text-center font-semibold">{{ $providerKey }}</th>
+                            <th class="px-5 py-3 text-center font-semibold">{{ $names[$providerKey] ?? $providerKey }}</th>
                         @endforeach
                     </tr>
                 </thead>

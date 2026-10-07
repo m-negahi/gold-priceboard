@@ -262,7 +262,7 @@ enum Instrument: string
         return [
             self::Gold18Gram->value => 'طلای ۱۸ عیار',
             self::Gold24Gram->value => 'طلای ۲۴ عیار',
-            self::GoldMeltedGram->value => 'آبشده نقدی',
+            self::GoldMeltedGram->value => 'آبشده معاملاتی',
             self::GoldMesghal->value => 'مثقال طلا',
             self::CoinEmami->value => 'سکه امامی',
             self::CoinBahar->value => 'سکه بهار آزادی',

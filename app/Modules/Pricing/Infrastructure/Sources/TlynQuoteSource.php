@@ -55,7 +55,10 @@ final readonly class TlynQuoteSource implements QuoteSourcePort
      * @var array<string, array{symbol: Instrument, unit: UpstreamUnit}>
      */
     private const MAP = [
-        'GOLD18' => ['symbol' => Instrument::Gold18Gram, 'unit' => UpstreamUnit::Toman],
+        // 🔴 `GOLD18` dar VAGHE' gheymat e moamele ye ABSHODE ast، na gram e
+        // 18 ayar e zinati — tlyn platform e kharid/foroosh e abshode-ast
+        // (tasmim e sahebe proje، 2026-10-07).
+        'GOLD18' => ['symbol' => Instrument::GoldMeltedGram, 'unit' => UpstreamUnit::Toman],
         'GOLD_MITHQAL17' => ['symbol' => Instrument::GoldMesghal, 'unit' => UpstreamUnit::Toman],
         'SEKEH_E' => ['symbol' => Instrument::CoinEmami, 'unit' => UpstreamUnit::Toman],
         'SEKEH_NIM' => ['symbol' => Instrument::CoinHalf, 'unit' => UpstreamUnit::Toman],

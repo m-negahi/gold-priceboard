@@ -1,0 +1,46 @@
+{
+ "GLD_18C_750TMN": {
+  "BUY": {
+   "result": {
+    "price": "26530000",
+    "priceExpiresAt": "2026-10-08T07:05:21.556731Z",
+    "currentTime": "2026-10-07T07:06:07.034899Z",
+    "ttl": 86354.521832
+   },
+   "message": "عملیات با موفقیت انجام شد",
+   "success": true
+  },
+  "SELL": {
+   "result": {
+    "price": "26530000",
+    "priceExpiresAt": "2026-10-08T07:05:21.558206Z",
+    "currentTime": "2026-10-07T07:06:07.068410Z",
+    "ttl": 86354.48979600001
+   },
+   "message": "عملیات با موفقیت انجام شد",
+   "success": true
+  }
+ },
+ "SLV_925TMN": {
+  "BUY": {
+   "result": {
+    "price": "498000",
+    "priceExpiresAt": "2026-10-08T07:05:21.714202Z",
+    "currentTime": "2026-10-07T07:06:07.135697Z",
+    "ttl": 86354.578505
+   },
+   "message": "عملیات با موفقیت انجام شد",
+   "success": true
+  },
+  "SELL": {
+   "result": {
+    "price": "498000",
+    "priceExpiresAt": "2026-10-08T07:05:21.717109Z",
+    "currentTime": "2026-10-07T07:06:07.211482Z",
+    "ttl": 86354.505627
+   },
+   "message": "عملیات با موفقیت انجام شد",
+   "success": true
+  }
+ }
+}

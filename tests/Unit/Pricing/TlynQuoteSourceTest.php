@@ -42,7 +42,7 @@ final class TlynQuoteSourceTest extends TestCase
     {
         $quotes = $this->quotes();
 
-        foreach (['xau-18k-g-irr', 'xau-mesghal-irr', 'xau-coin-emami-irr', 'xau-coin-half-irr', 'xau-coin-quarter-irr', 'xau-oz-usd'] as $symbol) {
+        foreach (['xau-melted-g-irr', 'xau-mesghal-irr', 'xau-coin-emami-irr', 'xau-coin-half-irr', 'xau-coin-quarter-irr', 'xau-oz-usd'] as $symbol) {
             self::assertArrayHasKey("{$symbol}:ask", $quotes, "«{$symbol}» ask nadare.");
             self::assertArrayHasKey("{$symbol}:bid", $quotes, "«{$symbol}» bid nadare.");
         }
@@ -56,7 +56,7 @@ final class TlynQuoteSourceTest extends TestCase
      */
     public function test_scales_thousand_toman_to_rial(): void
     {
-        $gold = $this->quotes()['xau-18k-g-irr:ask'];
+        $gold = $this->quotes()['xau-melted-g-irr:ask'];
 
         self::assertSame(268_910_000, $gold->price->minor);
         self::assertSame(26_891 * 1000 * 10, $gold->price->minor);
@@ -68,10 +68,10 @@ final class TlynQuoteSourceTest extends TestCase
     {
         $quotes = $this->quotes();
 
-        self::assertSame(Side::Ask, $quotes['xau-18k-g-irr:ask']->side);
-        self::assertSame(268_910_000, $quotes['xau-18k-g-irr:ask']->price->minor);
-        self::assertSame(266_770_000, $quotes['xau-18k-g-irr:bid']->price->minor);
-        self::assertGreaterThan($quotes['xau-18k-g-irr:bid']->price->minor, $quotes['xau-18k-g-irr:ask']->price->minor);
+        self::assertSame(Side::Ask, $quotes['xau-melted-g-irr:ask']->side);
+        self::assertSame(268_910_000, $quotes['xau-melted-g-irr:ask']->price->minor);
+        self::assertSame(266_770_000, $quotes['xau-melted-g-irr:bid']->price->minor);
+        self::assertGreaterThan($quotes['xau-melted-g-irr:bid']->price->minor, $quotes['xau-melted-g-irr:ask']->price->minor);
     }
 
     /** `XAU` DOLLAR ast va NABAYAD ×1000 ya ×10 beshe. */
@@ -89,13 +89,13 @@ final class TlynQuoteSourceTest extends TestCase
     {
         $quotes = $this->quotes();
 
-        self::assertSame('2026-10-06T18:48:33+00:00', $quotes['xau-18k-g-irr:ask']->upstreamAt?->toIso8601String());
+        self::assertSame('2026-10-06T18:48:33+00:00', $quotes['xau-melted-g-irr:ask']->upstreamAt?->toIso8601String());
         self::assertSame('2026-10-06T18:52:30+00:00', $quotes['xau-coin-emami-irr:ask']->upstreamAt?->toIso8601String());
     }
 
     public function test_maps_the_day_band(): void
     {
-        $gold = $this->quotes()['xau-18k-g-irr:ask'];
+        $gold = $this->quotes()['xau-melted-g-irr:ask'];
 
         self::assertSame(269_170_000, $gold->dayHigh?->minor);
         self::assertSame(265_820_000, $gold->dayLow?->minor);
