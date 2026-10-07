@@ -37,7 +37,7 @@ final class ProviderSeederTest extends TestCase
         $this->seedProviders();
 
         $this->assertSame(
-            ['estjt', 'manual', 'milli', 'mock', 'nerkh', 'nerkh-stock', 'talasea', 'technogold', 'tgju', 'tlyn'],
+            ['estjt', 'manual', 'melligold', 'milli', 'mock', 'nerkh', 'tgju', 'tlyn'],
             Provider::query()->orderBy('key')->pluck('key')->all(),
         );
     }
@@ -92,25 +92,27 @@ final class ProviderSeederTest extends TestCase
     {
         $this->seedProviders();
 
-        $kinds = Provider::query()->whereIn('key', ['milli', 'talasea', 'technogold', 'tlyn'])->pluck('kind', 'key')
+        $kinds = Provider::query()->whereIn('key', ['melligold', 'milli', 'tlyn'])->pluck('kind', 'key')
             ->map(static fn (ProviderKind $kind): string => $kind->value)->all();
         ksort($kinds);
 
-        $this->assertSame(['milli' => 'platform', 'talasea' => 'platform', 'technogold' => 'platform', 'tlyn' => 'platform'], $kinds);
+        $this->assertSame(['melligold' => 'platform', 'milli' => 'platform', 'tlyn' => 'platform'], $kinds);
         $this->assertSame(ProviderKind::Reference, Provider::query()->where('key', 'nerkh')->firstOrFail()->kind);
     }
 
-    public function test_stock_fallback_is_labeled_as_nerkh_data_without_guessed_platform_provenance(): void
+    /**
+     * 🔴 Esm e provider e `manual` «Own API» ast (darkhast e sahebe proje،
+     * 2026-10-07): gheymat e in driver chizi-e ke be customer haye API dade
+     * mishe. `key` ghofl ast va `manual` mimune (tag e Influx).
+     */
+    public function test_the_manual_provider_is_named_own_api(): void
     {
         $this->seedProviders();
-        $stock = Provider::query()->where('key', 'nerkh-stock')->firstOrFail();
+        $manual = Provider::query()->where('key', 'manual')->firstOrFail();
 
-        self::assertSame('nerkh', $stock->driver);
-        self::assertSame(['item' => 'GOLD18K_STOCK'], $stock->options);
-        self::assertSame('https://nerkh.io', $stock->website);
-        self::assertSame(ProviderKind::Reference, $stock->kind);
-        self::assertFalse($stock->is_active);
-        self::assertFalse($stock->is_trust_anchor);
+        self::assertSame('Own API', $manual->name);
+        self::assertSame('API اختصاصی', $manual->name_fa);
+        self::assertSame('manual', $manual->driver);
     }
 
     public function test_estjt_keeps_its_measured_timeout(): void

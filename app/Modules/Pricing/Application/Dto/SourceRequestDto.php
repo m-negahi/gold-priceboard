@@ -36,6 +36,14 @@ final readonly class SourceRequestDto
          * `1.1` javab mide.
          */
         public ?string $httpVersion = null,
+        /**
+         * Cookie jar e PER-REQUEST (hich halat e moshtarak — Octane-safe).
+         *
+         * melligold posht e challenge e ArvanCloud ast: pasokh e avval 307 be
+         * HAMUN URL + `Set-Cookie`؛ bedun e jar، redirect be halghe mioftad
+         * va hich vaght 200 nemigirim.
+         */
+        public bool $cookies = false,
     ) {}
 
     public function isPost(): bool

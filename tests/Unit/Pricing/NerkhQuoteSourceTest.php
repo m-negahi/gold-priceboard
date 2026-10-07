@@ -8,7 +8,6 @@ use App\Modules\Pricing\Application\Dto\RawQuoteDto;
 use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
 use App\Modules\Pricing\Domain\Enums\Side;
 use App\Modules\Pricing\Infrastructure\Sources\NerkhQuoteSource;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -222,31 +221,22 @@ final class NerkhQuoteSourceTest extends TestCase
         self::assertSame('nerkh', (new NerkhQuoteSource)->key());
     }
 
-    public static function fallbackItems(): array
+    /**
+     * `item` faghat kelid haye MAP ro ghabul mikone (item haye platform —
+     * `GOLD18K_STOCK`، … — 2026-10-07 hazf shodan).
+     */
+    public function test_an_item_option_reads_only_its_quote_with_a_distinct_provider_key(): void
     {
-        return [
-            'stock' => ['GOLD18K_STOCK', 263_995_000],
-            'milli' => ['MILLI_GOLD18K', 265_050_000],
-            'talasea' => ['TALASEA_GOLD_18K', 267_000_000],
-            'technogold' => ['TECHNOGOLD_GOLD_18K', 267_601_350],
-        ];
-    }
-
-    #[DataProvider('fallbackItems')]
-    public function test_an_item_fallback_reads_only_its_fixture_quote_with_a_distinct_provider_key(string $item, int $expectedMinor): void
-    {
-        $source = new NerkhQuoteSource(options: ['item' => $item], providerKey: 'nerkh-stock');
+        $source = new NerkhQuoteSource(options: ['item' => 'GOLD18K'], providerKey: 'nerkh-gold18');
         $result = $source->parse($this->payload());
 
-        self::assertSame('nerkh-stock', $source->key());
+        self::assertSame('nerkh-gold18', $source->key());
         self::assertCount(1, $result->quotes);
         self::assertSame([], $result->unmappedLabels);
-        self::assertSame('nerkh-stock', $result->quotes[0]->providerKey);
+        self::assertSame('nerkh-gold18', $result->quotes[0]->providerKey);
         self::assertSame('xau-18k-g-irr', $result->quotes[0]->instrument->value);
-        self::assertSame($expectedMinor, $result->quotes[0]->price->minor);
         self::assertSame(QuoteCurrency::IRR, $result->quotes[0]->price->quote);
         self::assertSame(Side::Last, $result->quotes[0]->side);
-        self::assertSame('2026-10-06T16:53:11+00:00', $result->quotes[0]->upstreamAt?->toIso8601String());
     }
 
     public function test_unknown_item_fallback_does_not_silently_return_the_general_feed(): void
@@ -254,5 +244,13 @@ final class NerkhQuoteSourceTest extends TestCase
         $this->expectException(RuntimeException::class);
 
         (new NerkhQuoteSource(options: ['item' => 'UNKNOWN']))->parse($this->payload());
+    }
+
+    /** Item e platform e hazf-shode dige ghabul nemishe. */
+    public function test_a_removed_platform_item_is_rejected(): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        (new NerkhQuoteSource(options: ['item' => 'GOLD18K_STOCK']))->parse($this->payload());
     }
 }

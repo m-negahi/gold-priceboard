@@ -47,12 +47,13 @@ use Throwable;
  *    na vaght e update e un symbol (90 saniye jadid-tar bud).
  * 4. Hich User-Agent ya header e khassi lazem nist (bedun e UA ham 200 dad،
  *    ~0.3s). `Cache-Control: max-age=30` — pas poll e zir e 30s bi-faide-ast.
- * 5. Feed gheymat e 18 ayar e chand PLATFORM ro ham mide (`MILLI_GOLD18K`،
- *    `TALASEA_GOLD_18K`، `TECHNOGOLD_GOLD_18K`، `GOLD18K_STOCK`) + crypto +
- *    arz haye digar. Inja faghat radif haye MARJA' map shodan؛ baghi amdan
+ * 5. Feed gheymat e 18 ayar e chand PLATFORM + crypto + arz haye digar ro
+ *    ham mide. Inja faghat radif haye MARJA' map shodan؛ baghi amdan
  *    unmapped NISTAN (jaye `missing` faghat kelid haye map-shode ye gom-shode
  *    gozaresh mishan — mesle tgju — vagarna har tick 40 label e bi-rabt log
- *    mishod).
+ *    mishod). Item haye platform (`GOLD18K_STOCK`، …) 2026-10-07 ba darkhast
+ *    e sahebe proje hazf shodan — platform ha ya API e khodeshun ro daran ya
+ *    aslan nemiyan.
  *
  * `MESGHAL` (na `MAZANEH`) be `xau-mesghal-irr` map shode — tasmim e sahebe
  * proje (2026-10-06).
@@ -89,9 +90,6 @@ final readonly class NerkhQuoteSource implements QuoteSourcePort
 
         'USD' => ['section' => 'currency', 'symbol' => Instrument::UsdIrr, 'unit' => UpstreamUnit::Toman],
     ];
-
-    /** @var list<string> Gheymat e tanha; hich provenance e platform ya bid/ask hads nemishe. */
-    private const PLATFORM_ITEMS = ['MILLI_GOLD18K', 'TALASEA_GOLD_18K', 'TECHNOGOLD_GOLD_18K', 'GOLD18K_STOCK'];
 
     /** @param array<string, mixed> $options */
     public function __construct(
@@ -288,7 +286,7 @@ final readonly class NerkhQuoteSource implements QuoteSourcePort
     /** @return list<string> */
     public static function itemKeys(): array
     {
-        return [...array_keys(self::MAP), ...self::PLATFORM_ITEMS];
+        return array_keys(self::MAP);
     }
 
     /** @return array<string, array{section: string, symbol: Instrument, unit: UpstreamUnit}> */
@@ -300,10 +298,10 @@ final readonly class NerkhQuoteSource implements QuoteSourcePort
 
         $item = $this->options['item'];
 
-        if (! is_string($item) || ! in_array($item, self::itemKeys(), true)) {
+        if (! is_string($item) || ! isset(self::MAP[$item])) {
             throw new RuntimeException('nerkh: option e item e nashenas; hich radif-i parse nashod.');
         }
 
-        return [$item => self::MAP[$item] ?? ['section' => 'gold', 'symbol' => Instrument::Gold18Gram, 'unit' => UpstreamUnit::Toman]];
+        return [$item => self::MAP[$item]];
     }
 }

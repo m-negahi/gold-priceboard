@@ -16,6 +16,7 @@ use App\Modules\Pricing\Domain\Ports\UpstreamLogPort;
 use App\Modules\Pricing\Domain\Services\SensitiveRedactor;
 use App\Modules\Pricing\Domain\Services\TransientFailure;
 use Carbon\CarbonImmutable;
+use GuzzleHttp\Cookie\CookieJar;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Facades\Http;
 use Throwable;
@@ -185,6 +186,11 @@ final readonly class FetchStage implements Stage
                 if ($request->httpVersion !== null) {
                     // estjt bedun e in timeout mikhore.
                     $pending = $pending->withOptions(['version' => $request->httpVersion]);
+                }
+
+                if ($request->cookies) {
+                    // Jar e taze baraye HAR request (challenge e Arvan e melligold).
+                    $pending = $pending->withOptions(['cookies' => new CookieJar]);
                 }
 
                 $requests[] = $request->isPost()

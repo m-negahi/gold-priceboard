@@ -171,46 +171,24 @@ final class ProviderSeeder extends Seeder
             Instrument::Gold18Gram->value => 345_600,
         ]);
 
+        // talasea / technogold / nerkh-stock 2026-10-07 ba darkhast e sahebe
+        // proje hazf shodan (radif e DB ba script e dev soft-delete mishe —
+        // tarikhche ye Influx eshun dast nemikhore).
         $this->provider([
-            'key' => 'talasea',
-            'driver' => 'talasea',
-            'name' => 'Talasea',
-            'name_fa' => 'طلاسی',
-            'website' => 'https://talasea.ir',
+            'key' => 'melligold',
+            'driver' => 'melligold',
+            'name' => 'MelliGold',
+            'name_fa' => 'طلای ملی',
+            'website' => 'https://melligold.com',
             'kind' => 'platform',
             'sort' => 50,
             'timeout' => 10,
-            // `price` TOMAN e har MILLIGRAM — ×1000 tu khod e Source.
+            // toman/g؛ jofte (`price_buy` = ask، `price_sell` = bid — fe'lan barabar).
             'upstream_unit' => 'toman',
-        ], []);
-
-        $this->provider([
-            'key' => 'technogold',
-            'driver' => 'technogold',
-            'name' => 'Technogold',
-            'name_fa' => 'تکنوگلد',
-            'website' => 'https://technogold.gold',
-            'kind' => 'platform',
-            'sort' => 60,
-            'timeout' => 10,
-            // toman/g؛ jofte bid/ask e VAGHEI (`buy_price` = ask، `sell_price` = bid).
-            'upstream_unit' => 'toman',
-        ], []);
-
-        // Hoviat e asli ye STOCK az fixture ma'lum nist; esm va website faghat manba' e Nerkh ro migan.
-        $this->provider([
-            'key' => 'nerkh-stock',
-            'driver' => 'nerkh',
-            'name' => 'GOLD18K_STOCK via Nerkh',
-            'name_fa' => 'GOLD18K_STOCK (داده نرخ)',
-            'website' => 'https://nerkh.io',
-            'kind' => 'reference',
-            'sort' => 70,
-            'timeout' => 10,
-            'poll_interval_seconds' => 30,
-            'upstream_unit' => 'toman',
-            'options' => ['item' => 'GOLD18K_STOCK'],
-        ], [Instrument::Gold18Gram->value => 345_600]);
+        ], [
+            // Timestamp e epoch mide؛ shab/ta'til yakh mizane — hamun override e milli.
+            Instrument::Gold18Gram->value => 345_600,
+        ]);
 
         $this->provider([
             'key' => 'tlyn',
@@ -236,17 +214,20 @@ final class ProviderSeeder extends Seeder
         ]);
 
         /*
-         * 🔴 Manual — fallback e dasti (khaste ye sahebe proje). `sort = 80`
-         * ya'ni AKHARIN olaviat (provider haye vaghei avval، manual akhar).
-         * Khamoosh shoru' mishe؛ admin roshan mikone va az panel e «قیمت
-         * دستی» por/seed esh mikone. Timestamp nemide pas hargez stale rad
-         * nemishe — fallback e akhar ast.
+         * 🔴 Own API — gheymat e KHOD e ma (rename e «دستی (پشتیبان)»، darkhast
+         * e sahebe proje 2026-10-07). Hadaf: har gheymati ke IN driver dare be
+         * customer haye API dade mishe — backup e khodkar az zanjire ye olaviat
+         * por esh mikone (P1-32) va admin mitune per-symbol override/فقط-دستی
+         * kone. `sort = 80` ya'ni AKHARIN olaviat e zanjire (provider haye
+         * vaghei avval). Timestamp nemide pas hargez stale rad nemishe —
+         * fallback e akhar e feed ham hast. `key` ghofl ast (tag e Influx)
+         * va `manual` mimune؛ faghat esm avaz shod.
          */
         $this->provider([
             'key' => 'manual',
             'driver' => 'manual',
-            'name' => 'Manual',
-            'name_fa' => 'دستی (پشتیبان)',
+            'name' => 'Own API',
+            'name_fa' => 'API اختصاصی',
             'kind' => 'reference',
             'sort' => 80,
         ], []);

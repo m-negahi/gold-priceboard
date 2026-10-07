@@ -979,12 +979,6 @@ parameters:
 			path: tests/Unit/Pricing/MonitorQueriesTest.php
 
 		-
-			message: '#^Method Tests\\Unit\\Pricing\\NerkhQuoteSourceTest\:\:fallbackItems\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: tests/Unit/Pricing/NerkhQuoteSourceTest.php
-
-		-
 			message: '#^Method Tests\\Unit\\Pricing\\NerkhQuoteSourceTest\:\:quotes\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -1019,18 +1013,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: tests/Unit/Pricing/RealPayloadTest.php
-
-		-
-			message: '#^Method Tests\\Unit\\Pricing\\SourceFixtureMatrixTest\:\:test_the_platform_matrix_is_exhaustive\(\) has parameter \$matrix with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: tests/Unit/Pricing/SourceFixtureMatrixTest.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Modules\\Pricing\\Domain\\Ports\\QuoteSourcePort is not subtype of native type App\\Modules\\Pricing\\Infrastructure\\Sources\\EstjtQuoteSource\|App\\Modules\\Pricing\\Infrastructure\\Sources\\MilliQuoteSource\|App\\Modules\\Pricing\\Infrastructure\\Sources\\NerkhQuoteSource\|App\\Modules\\Pricing\\Infrastructure\\Sources\\TalaseaQuoteSource\|App\\Modules\\Pricing\\Infrastructure\\Sources\\TechnogoldQuoteSource\|App\\Modules\\Pricing\\Infrastructure\\Sources\\TgjuQuoteSource\|App\\Modules\\Pricing\\Infrastructure\\Sources\\TlynQuoteSource\.$#'
-			identifier: varTag.nativeType
-			count: 1
-			path: tests/Unit/Pricing/SourceFixtureMatrixTest.php
 
 		-
 			message: '#^Method Tests\\Unit\\Pricing\\SpreadPricerTest\:\:candles\(\) return type has no value type specified in iterable type array\.$#'

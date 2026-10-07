@@ -7,12 +7,10 @@ namespace Tests\Unit\Pricing;
 use App\Modules\Pricing\Application\Dto\RawQuoteDto;
 use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
-use App\Modules\Pricing\Domain\Ports\QuoteSourcePort;
 use App\Modules\Pricing\Infrastructure\Sources\EstjtQuoteSource;
+use App\Modules\Pricing\Infrastructure\Sources\MelligoldQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\MilliQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\NerkhQuoteSource;
-use App\Modules\Pricing\Infrastructure\Sources\TalaseaQuoteSource;
-use App\Modules\Pricing\Infrastructure\Sources\TechnogoldQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\TgjuQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\TlynQuoteSource;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -137,10 +135,10 @@ final class SourceFixtureMatrixTest extends TestCase
      * Platform ha (2026-10-06، API e khod e site) — faghat 18 ayar.
      *
      *   milli:      `price18 = 265100` RIAL/MILLIGRAM → ×1000
-     *   talasea:    `price = "26689"` TOMAN/MILLIGRAM (string) → ×1000 ×10
-     *   technogold: toman/g، jofte VAGHEI: `buy_price` = ask، `sell_price` = bid
+     *   melligold:  toman/g، jofte (`price_buy` = ask، `price_sell` = bid —
+     *               dar fixture barabar)
      *
-     * Se zarib e motefavet (1000، 10000، 10) — daghighan jayi ke yek
+     * Do zarib e motefavet (1000، 10) — daghighan jayi ke yek
      * `upstream_unit` e provider-level kafi nist.
      *
      * @return array<string, array{0: string, 1: int, 2: QuoteCurrency}>
@@ -151,17 +149,11 @@ final class SourceFixtureMatrixTest extends TestCase
     }
 
     /** @return array<string, array{0: string, 1: int, 2: QuoteCurrency}> */
-    public static function talaseaMatrix(): array
-    {
-        return self::rows(['xau-18k-g-irr:last' => [266_890_000, QuoteCurrency::IRR]]);
-    }
-
-    /** @return array<string, array{0: string, 1: int, 2: QuoteCurrency}> */
-    public static function technogoldMatrix(): array
+    public static function melligoldMatrix(): array
     {
         return self::rows([
-            'xau-18k-g-irr:ask' => [267_561_150, QuoteCurrency::IRR],
-            'xau-18k-g-irr:bid' => [264_233_280, QuoteCurrency::IRR],
+            'xau-18k-g-irr:ask' => [265_536_240, QuoteCurrency::IRR],
+            'xau-18k-g-irr:bid' => [265_536_240, QuoteCurrency::IRR],
         ]);
     }
 
@@ -251,16 +243,10 @@ final class SourceFixtureMatrixTest extends TestCase
         self::assertQuote('milli', $key, $minor, $currency);
     }
 
-    #[DataProvider('talaseaMatrix')]
-    public function test_talasea_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
+    #[DataProvider('melligoldMatrix')]
+    public function test_melligold_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
     {
-        self::assertQuote('talasea', $key, $minor, $currency);
-    }
-
-    #[DataProvider('technogoldMatrix')]
-    public function test_technogold_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
-    {
-        self::assertQuote('technogold', $key, $minor, $currency);
+        self::assertQuote('melligold', $key, $minor, $currency);
     }
 
     #[DataProvider('tlynMatrix')]
@@ -269,6 +255,7 @@ final class SourceFixtureMatrixTest extends TestCase
         self::assertQuote('tlyn', $key, $minor, $currency);
     }
 
+    /** @param array<string, array{0: string, 1: int, 2: QuoteCurrency}> $matrix */
     #[DataProvider('platformMatrices')]
     public function test_the_platform_matrix_is_exhaustive(string $source, array $matrix): void
     {
@@ -280,8 +267,7 @@ final class SourceFixtureMatrixTest extends TestCase
     {
         return [
             'milli' => ['milli', self::milliMatrix()],
-            'talasea' => ['talasea', self::talaseaMatrix()],
-            'technogold' => ['technogold', self::technogoldMatrix()],
+            'melligold' => ['melligold', self::melligoldMatrix()],
             'tlyn' => ['tlyn', self::tlynMatrix()],
         ];
     }
@@ -350,11 +336,10 @@ final class SourceFixtureMatrixTest extends TestCase
         return [
             'estjt' => ['estjt', 9],
             'nerkh' => ['nerkh', 11],
-            // Platform ha faghat 18 ayar midan؛ technogold bid/ask dare ke
-            // ba `last` e tgju kelid e moshtarak nadare — bebin
-            // `test_technogold_sides_bracket_the_reference_price`.
+            // Platform ha faghat 18 ayar midan؛ melligold/tlyn bid/ask daran
+            // ke ba `last` e tgju kelid e moshtarak nadare — bebin
+            // `test_platform_sides_bracket_the_reference_price`.
             'milli' => ['milli', 1],
-            'talasea' => ['talasea', 1],
         ];
     }
 
@@ -397,7 +382,7 @@ final class SourceFixtureMatrixTest extends TestCase
     /** @return array<string, array{0: string}> */
     public static function twoSidedPlatforms(): array
     {
-        return ['technogold' => ['technogold'], 'tlyn' => ['tlyn']];
+        return ['melligold' => ['melligold'], 'tlyn' => ['tlyn']];
     }
 
     // ── Helper ──────────────────────────────────────────────────
@@ -453,13 +438,11 @@ final class SourceFixtureMatrixTest extends TestCase
             'estjt' => [new EstjtQuoteSource, 'estjt-new-price.json'],
             'nerkh' => [new NerkhQuoteSource, 'nerkh-prices.json'],
             'milli' => [new MilliQuoteSource, 'milli-price-external.json'],
-            'talasea' => [new TalaseaQuoteSource, 'talasea-get-gold-price.json'],
-            'technogold' => [new TechnogoldQuoteSource, 'technogold-only-price.json'],
+            'melligold' => [new MelligoldQuoteSource, 'melligold-buy-sell.json'],
             'tlyn' => [new TlynQuoteSource, 'tlyn-price.json'],
             default => self::fail("source e nashenas: {$source}"),
         };
 
-        /** @var QuoteSourcePort $adapter */
         $json = (string) file_get_contents(__DIR__.'/../../Fixtures/'.$fixture);
         $result = $adapter->parse(json_decode($json, true, 512, JSON_THROW_ON_ERROR));
 
@@ -475,7 +458,7 @@ final class SourceFixtureMatrixTest extends TestCase
     /** Har kelid e jadval bayad be yek `Instrument` e vaghei eshare kone. */
     public function test_every_matrix_key_names_a_real_instrument(): void
     {
-        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix()), ...array_keys(self::nerkhMatrix()), ...array_keys(self::milliMatrix()), ...array_keys(self::talaseaMatrix()), ...array_keys(self::technogoldMatrix()), ...array_keys(self::tlynMatrix())] as $key) {
+        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix()), ...array_keys(self::nerkhMatrix()), ...array_keys(self::milliMatrix()), ...array_keys(self::melligoldMatrix()), ...array_keys(self::tlynMatrix())] as $key) {
             $symbol = explode(':', $key)[0];
 
             self::assertNotNull(

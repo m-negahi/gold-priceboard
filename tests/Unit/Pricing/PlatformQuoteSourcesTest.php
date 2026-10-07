@@ -7,19 +7,19 @@ namespace Tests\Unit\Pricing;
 use App\Modules\Pricing\Application\Dto\SourceResultDto;
 use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
 use App\Modules\Pricing\Domain\Enums\Side;
+use App\Modules\Pricing\Infrastructure\Sources\MelligoldQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\MilliQuoteSource;
-use App\Modules\Pricing\Infrastructure\Sources\TalaseaQuoteSource;
-use App\Modules\Pricing\Infrastructure\Sources\TechnogoldQuoteSource;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 /**
- * Se platform e 18 ayar ru payload e VAGHEI (2026-10-06):
- *   `tests/Fixtures/milli-price-external.json`
- *   `tests/Fixtures/talasea-get-gold-price.json`
- *   `tests/Fixtures/technogold-only-price.json`
+ * Platform haye 18 ayar ru payload e VAGHEI:
+ *   `tests/Fixtures/milli-price-external.json` (2026-10-06)
+ *   `tests/Fixtures/melligold-buy-sell.json` (2026-10-07)
  *
- * 🔴 Har kodum zarib e vahed e KHODESH ro dare (rial/mg، toman/mg، toman/g).
+ * (talasea/technogold 2026-10-07 ba darkhast e sahebe proje hazf shodan.)
+ *
+ * 🔴 Har kodum zarib e vahed e KHODESH ro dare (rial/mg، toman/g).
  * Meghdar haye daghigh tu `SourceFixtureMatrixTest`؛ inja raftar.
  */
 final class PlatformQuoteSourcesTest extends TestCase
@@ -95,133 +95,83 @@ final class PlatformQuoteSourcesTest extends TestCase
         self::assertSame('milli', (new MilliQuoteSource)->key());
     }
 
-    // ── talasea ──────────────────────────────────────────────────
-
-    /** `"26689"` toman/MILLIGRAM → ×1000 toman/g → ×10 = 266,890,000 rial/g. */
-    public function test_talasea_scales_milligram_toman_to_rial_per_gram(): void
-    {
-        $result = (new TalaseaQuoteSource)->parse($this->fixture('talasea-get-gold-price.json'));
-
-        self::assertSame(1, $result->count());
-        $quote = $result->quotes[0];
-
-        self::assertSame('talasea', $quote->providerKey);
-        self::assertSame('xau-18k-g-irr', $quote->instrument->value);
-        self::assertSame(Side::Last, $quote->side);
-        self::assertSame(266_890_000, $quote->price->minor);
-        self::assertSame(26_689 * 1000 * 10, $quote->price->minor);
-        self::assertSame(0.62, $quote->upstreamChangePercent);
-    }
-
-    /** talasea timestamp nemide — tazegi az `payloadHash` miad. */
-    public function test_talasea_has_no_upstream_timestamp(): void
-    {
-        $result = (new TalaseaQuoteSource)->parse($this->fixture('talasea-get-gold-price.json'));
-
-        self::assertNull($result->quotes[0]->upstreamAt);
-    }
-
-    /** Agar ruzi `price` ashari beshe (`"26689.5"`)، bayad daghigh bemune. */
-    public function test_talasea_keeps_a_fractional_price_exact(): void
-    {
-        $payload = $this->fixture('talasea-get-gold-price.json');
-        $payload['price'] = '26689.5';
-
-        $result = (new TalaseaQuoteSource)->parse($payload);
-
-        self::assertSame(266_895_000, $result->quotes[0]->price->minor);
-    }
-
-    public function test_talasea_rejects_a_payload_without_price(): void
-    {
-        $this->expectException(RuntimeException::class);
-
-        (new TalaseaQuoteSource)->parse(['fee' => 0.01]);
-    }
-
-    public function test_talasea_describes_a_get_request(): void
-    {
-        $request = (new TalaseaQuoteSource)->request();
-
-        self::assertSame('GET', $request->method);
-        self::assertSame('https://api.talasea.ir/api/market/getGoldPrice', $request->url);
-        self::assertSame('talasea', (new TalaseaQuoteSource)->key());
-    }
-
-    // ── technogold ───────────────────────────────────────────────
+    // ── melligold ────────────────────────────────────────────────
 
     /**
-     * 🔴 `buy_price` = gheymati ke KARBAR mikhare = ASK؛ `sell_price` = BID.
-     * Esm ha az did e karbar-and — bar'aks e `_buy` e tgju.
+     * 🔴 `price_buy` = gheymati ke KARBAR mikhare = ASK؛ `price_sell` = BID
+     * (esm ha az did e karbar-and — hamun gharardad e technogold e sabegh).
+     * Dar fixture har do BARABAR-and؛ map e jodagane mimune.
      */
-    public function test_technogold_maps_buy_to_ask_and_sell_to_bid(): void
+    public function test_melligold_scales_toman_per_gram_and_maps_sides(): void
     {
-        $result = (new TechnogoldQuoteSource)->parse($this->fixture('technogold-only-price.json'));
+        $result = (new MelligoldQuoteSource)->parse($this->fixture('melligold-buy-sell.json'));
 
         self::assertSame(2, $result->count());
 
         $bySide = [];
         foreach ($result->quotes as $quote) {
-            self::assertSame('technogold', $quote->providerKey);
+            self::assertSame('melligold', $quote->providerKey);
             self::assertSame('xau-18k-g-irr', $quote->instrument->value);
+            self::assertSame(QuoteCurrency::IRR, $quote->price->quote);
             $bySide[$quote->side->value] = $quote->price->minor;
         }
 
         // toman/g × 10
-        self::assertSame(267_561_150, $bySide['ask']);
-        self::assertSame(264_233_280, $bySide['bid']);
-        self::assertGreaterThan($bySide['bid'], $bySide['ask']);
+        self::assertSame(265_536_240, $bySide['ask']);
+        self::assertSame(265_536_240, $bySide['bid']);
+        self::assertGreaterThanOrEqual($bySide['bid'], $bySide['ask']);
     }
 
-    public function test_technogold_has_no_upstream_timestamp(): void
+    /** `timestamp` epoch e SANIYE ast (na ms). */
+    public function test_melligold_reads_epoch_seconds_as_utc(): void
     {
-        $result = (new TechnogoldQuoteSource)->parse($this->fixture('technogold-only-price.json'));
+        $result = (new MelligoldQuoteSource)->parse($this->fixture('melligold-buy-sell.json'));
 
         foreach ($result->quotes as $quote) {
-            self::assertNull($quote->upstreamAt);
+            self::assertSame('2026-10-07T05:55:00+00:00', $quote->upstreamAt?->toIso8601String());
         }
     }
 
     /** Yek taraf e gom-shode gozaresh mishe va taraf e digar salem mimune. */
-    public function test_technogold_reports_a_missing_side(): void
+    public function test_melligold_reports_a_missing_side(): void
     {
-        $payload = $this->fixture('technogold-only-price.json');
-        unset($payload['results']['sell_price']);
+        $payload = $this->fixture('melligold-buy-sell.json');
+        unset($payload['data']['price_sell']);
 
-        $result = (new TechnogoldQuoteSource)->parse($payload);
+        $result = (new MelligoldQuoteSource)->parse($payload);
 
         self::assertSame(1, $result->count());
         self::assertSame(Side::Ask, $result->quotes[0]->side);
-        self::assertSame(['results.sell_price'], $result->unmappedLabels);
+        self::assertSame(['data.price_sell'], $result->unmappedLabels);
     }
 
-    public function test_technogold_rejects_an_unsuccessful_payload(): void
+    public function test_melligold_rejects_a_payload_without_data(): void
     {
         $this->expectException(RuntimeException::class);
 
-        (new TechnogoldQuoteSource)->parse(['succeed' => false, 'results' => ['buy_price' => 1]]);
+        (new MelligoldQuoteSource)->parse(['message' => 'Success']);
     }
 
-    public function test_technogold_builds_the_url_from_the_tradeable_id(): void
+    /**
+     * 🔴 `cookies` bayad true bashe: melligold posht e challenge e Arvan ast
+     * (307 be hamun URL + Set-Cookie) va bedun e jar redirect halghe mishe.
+     */
+    public function test_melligold_describes_a_cookie_enabled_get_request(): void
     {
-        self::assertSame(
-            'https://api2.technogold.gold/customer/tradeables/only-price/1',
-            (new TechnogoldQuoteSource)->request()->url,
-        );
-        self::assertSame(
-            'https://example.test/customer/tradeables/only-price/7',
-            (new TechnogoldQuoteSource(['base' => 'https://example.test/', 'tradeable_id' => 7]))->request()->url,
-        );
-        self::assertSame('technogold', (new TechnogoldQuoteSource)->key());
+        $request = (new MelligoldQuoteSource)->request();
+
+        self::assertSame('GET', $request->method);
+        self::assertSame('https://melligold.com/api/v1/exchange/buy-sell-price/?symbol=XAU18', $request->url);
+        self::assertTrue($request->cookies);
+        self::assertSame('melligold', (new MelligoldQuoteSource)->key());
     }
 
     // ── moshtarak ────────────────────────────────────────────────
 
-    /** Hich kodum az se platform bedun e payload e vaghei gheymat NEMISAZE. */
+    /** Hich kodum az platform ha bedun e payload e vaghei gheymat NEMISAZE. */
     public function test_platform_results_are_source_result_dtos(): void
     {
         self::assertInstanceOf(SourceResultDto::class, (new MilliQuoteSource)->parse($this->fixture('milli-price-external.json')));
-        self::assertInstanceOf(SourceResultDto::class, (new TalaseaQuoteSource)->parse($this->fixture('talasea-get-gold-price.json')));
-        self::assertInstanceOf(SourceResultDto::class, (new TechnogoldQuoteSource)->parse($this->fixture('technogold-only-price.json')));
+        self::assertInstanceOf(SourceResultDto::class, (new MelligoldQuoteSource)->parse($this->fixture('melligold-buy-sell.json')));
     }
 }

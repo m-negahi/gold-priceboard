@@ -13,46 +13,51 @@ use App\Modules\Pricing\Domain\Enums\UpstreamUnit;
 use App\Modules\Pricing\Domain\Ports\QuoteSourcePort;
 use App\Modules\Pricing\Domain\ValueObjects\Price;
 use App\Modules\Pricing\Infrastructure\Support\NumberParser;
+use Carbon\CarbonImmutable;
+use GuzzleHttp\Cookie\CookieJar;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Throwable;
 
 /**
- * technogold.gold / تکنوگلد (platform) —
- * `GET https://api2.technogold.gold/customer/tradeables/only-price/{id}`
+ * melligold.com / طلای ملی (platform) —
+ * `GET https://melligold.com/api/v1/exchange/buy-sell-price/?symbol=XAU18`
  *
- * Pasokh (2026-10-06):
- *   {"succeed":true,"message":"…","results":{"sell_price":26423328,"buy_price":26756115}}
+ * Pasokh (2026-10-07):
+ *   {"message":"Success","data":{"price_buy":26553624,"price_sell":26553624,
+ *     "difference_price_buy":648,"difference_price_sell":648,
+ *     "lower_amounts":{...},"timestamp":1791352500}}
  *
  * ── Chiz hayi ke tu data ye VAGHEI didim ─────────────────────────────
- * 1. `{id}` = tradeable e «طلا» = `1` (tanha item e `GET /customer/tradeables`).
- *    Ba option e `tradeable_id` avaz mishe.
- * 2. 🔴 TOMAN e har GRAM، integer: `buy_price 26,756,115` → ×10 rial. (Site:
- *    «قیمت لحظه‌ای خرید هر گرم طلای ۱۸ عیار: 26,755,110 تومان».)
- * 3. 🔴 Jofte bid/ask e VAGHEI — tanha platform e in se ta:
- *      `buy_price`  = gheymati ke KARBAR mikhare  = ASK (balatar)
- *      `sell_price` = gheymati ke karbar miforushe = BID (paeen tar)
- *    Hamun gharardad e tgju (`_buy` = kharid e bazaar az karbar = bid) —
- *    vali inja esm ha az did e karbar-and، pas bar'aks map mishan. Agar
- *    bid > ask dar biad، map eshtebah shode؛ test esh hast.
- *    nerkh `TECHNOGOLD_GOLD_18K` ro az `buy_price` migire.
- * 4. Timestamp tu body nist → `upstreamAt` null، tazegi az `payloadHash`.
- * 5. Hich header e khassi lazem nist؛ `api2.` challenge e Arvan nadare.
+ * 1. 🔴 Site posht e challenge e **ArvanCloud** ast: pasokh e avval 307 be
+ *    HAMUN URL + `Set-Cookie` (`__arcsco*`). Bedun e cookie jar redirect
+ *    halghe mishe (curl ba `-L` e khali 50 bar charkhid). `cookies: true`
+ *    tu `SourceRequestDto` jar e per-request mide va dar talash e dovom
+ *    200 migirim.
+ * 2. 🔴 TOMAN e har GRAM e 18 ayar، integer: `26,553,624` (tgju ye hamun
+ *    lahze ~26.7M toman bud) → ×10 rial.
+ * 3. `price_buy` = gheymati ke KARBAR mikhare = ASK؛ `price_sell` =
+ *    foroosh e karbar = BID (hamun gharardad e technogold — esm ha az did
+ *    e karbar-and). Dar lahze ye barresi har do BARABAR budan؛ map e
+ *    jodagane mimune ta age spread vaghei shod durost namayesh dade she.
+ * 4. `timestamp` epoch e SANIYE ast (na millisecond) va ~2.5 sa'at aghab
+ *    tar az `now` e hamun lahze bud — mesl e milli shab/ta'til yakh
+ *    mizane؛ hamun override e freshness e platform ha tu seeder.
+ * 5. Faghat `XAU18` javab mide (XAU24/SEKEH/… «منبع یافت نشد») — platform
+ *    e 18 ayar ast، mesl e milli.
  */
-final readonly class TechnogoldQuoteSource implements QuoteSourcePort
+final readonly class MelligoldQuoteSource implements QuoteSourcePort
 {
-    public const KEY = 'technogold';
+    public const KEY = 'melligold';
 
-    private const DEFAULT_BASE = 'https://api2.technogold.gold';
-
-    private const DEFAULT_TRADEABLE_ID = 1;
+    private const DEFAULT_URL = 'https://melligold.com/api/v1/exchange/buy-sell-price/?symbol=XAU18';
 
     /**
      * @var array<string, Side>
      */
     private const SIDES = [
-        'buy_price' => Side::Ask,
-        'sell_price' => Side::Bid,
+        'price_buy' => Side::Ask,
+        'price_sell' => Side::Bid,
     ];
 
     /** @param array<string, mixed> $options */
@@ -73,28 +78,31 @@ final readonly class TechnogoldQuoteSource implements QuoteSourcePort
             url: $this->url(),
             headers: ['User-Agent' => $this->userAgent(), 'Accept' => 'application/json'],
             timeout: $this->timeout,
+            cookies: true,
         );
     }
 
     public function fetch(): SourceResultDto
     {
         try {
+            // Jar e taze per-request — challenge e Arvan (docblock e bala).
             $response = Http::timeout($this->timeout)
                 ->withHeaders(['User-Agent' => $this->userAgent()])
+                ->withOptions(['cookies' => new CookieJar])
                 ->acceptJson()
                 ->get($this->url());
         } catch (Throwable $e) {
-            throw new RuntimeException("technogold: request shekast khord — {$e->getMessage()}", previous: $e);
+            throw new RuntimeException("melligold: request shekast khord — {$e->getMessage()}", previous: $e);
         }
 
         if (! $response->successful()) {
-            throw new RuntimeException("technogold: pasokh e na-movafagh ({$response->status()}).");
+            throw new RuntimeException("melligold: pasokh e na-movafagh ({$response->status()}).");
         }
 
         $payload = $response->json();
 
         if (! is_array($payload)) {
-            throw new RuntimeException('technogold: pasokh JSON nist.');
+            throw new RuntimeException('melligold: pasokh JSON nist.');
         }
 
         $body = $response->body();
@@ -103,25 +111,26 @@ final readonly class TechnogoldQuoteSource implements QuoteSourcePort
     }
 
     /**
-     * @param  array<string, mixed>  $payload  body e kamel (ba `results.buy_price`/`sell_price`)
+     * @param  array<string, mixed>  $payload  body e kamel (ba `data.price_buy`/`price_sell`)
      */
     public function parse(array $payload): SourceResultDto
     {
-        $results = $payload['results'] ?? null;
+        $data = $payload['data'] ?? null;
 
-        if (! is_array($results) || ($payload['succeed'] ?? null) !== true) {
-            throw new RuntimeException('technogold: payload shekl e entezari nadare (`succeed`/`results` nist).');
+        if (! is_array($data)) {
+            throw new RuntimeException('melligold: payload shekl e entezari nadare (`data` nist).');
         }
 
         $instrument = Instrument::Gold18Gram;
+        $upstreamAt = $this->epochSecondsToUtc($data['timestamp'] ?? null);
         $quotes = [];
         $missing = [];
 
         foreach (self::SIDES as $field => $side) {
-            $minor = $this->toMinor($results[$field] ?? null);
+            $minor = $this->toMinor($data[$field] ?? null);
 
             if ($minor === null || $minor <= 0) {
-                $missing[] = "results.{$field}";
+                $missing[] = "data.{$field}";
 
                 continue;
             }
@@ -131,8 +140,7 @@ final readonly class TechnogoldQuoteSource implements QuoteSourcePort
                 instrument: $instrument,
                 side: $side,
                 price: new Price($minor, $instrument->quote()),
-                // technogold timestamp nemide — tazegi az `payloadHash` miad.
-                upstreamAt: null,
+                upstreamAt: $upstreamAt,
             );
         }
 
@@ -151,16 +159,19 @@ final readonly class TechnogoldQuoteSource implements QuoteSourcePort
         return $toman === null ? null : $toman * UpstreamUnit::Toman->multiplier();
     }
 
-    private function url(): string
+    /** Epoch e SANIYE (na ms — `1791352500` ≈ 2026). Sefr/na-adad → null. */
+    private function epochSecondsToUtc(mixed $raw): ?CarbonImmutable
     {
-        if (isset($this->options['url'])) {
-            return (string) $this->options['url'];
+        if (! is_numeric($raw) || (int) $raw <= 0) {
+            return null;
         }
 
-        $base = rtrim((string) ($this->options['base'] ?? self::DEFAULT_BASE), '/');
-        $id = (int) ($this->options['tradeable_id'] ?? self::DEFAULT_TRADEABLE_ID);
+        return CarbonImmutable::createFromTimestamp((int) $raw, 'UTC');
+    }
 
-        return "{$base}/customer/tradeables/only-price/{$id}";
+    private function url(): string
+    {
+        return (string) ($this->options['url'] ?? self::DEFAULT_URL);
     }
 
     private function userAgent(): string
