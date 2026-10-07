@@ -157,9 +157,11 @@ final class SourceFixtureMatrixTest extends TestCase
     /** @return array<string, array{0: string, 1: int, 2: QuoteCurrency}> */
     public static function wallgoldMatrix(): array
     {
+        // 🔴 «18 ayar» e wallgold ham ABSHODE ye moamelati-e (hame ye
+        // platform ha hamin-tor-and).
         return self::rows([
-            'xau-18k-g-irr:ask' => [265_300_000, QuoteCurrency::IRR],
-            'xau-18k-g-irr:bid' => [265_300_000, QuoteCurrency::IRR],
+            'xau-melted-g-irr:ask' => [265_300_000, QuoteCurrency::IRR],
+            'xau-melted-g-irr:bid' => [265_300_000, QuoteCurrency::IRR],
             'xag-925-g-irr:ask' => [4_980_000, QuoteCurrency::IRR],
             'xag-925-g-irr:bid' => [4_980_000, QuoteCurrency::IRR],
         ]);

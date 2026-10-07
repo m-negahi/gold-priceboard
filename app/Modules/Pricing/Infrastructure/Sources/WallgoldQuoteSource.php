@@ -26,9 +26,10 @@ use Throwable;
  *     "ttl":86358.6},"message":"عملیات با موفقیت انجام شد","success":true}
  *
  * ── Chiz hayi ke tu data ye VAGHEI didim ─────────────────────────────
- * 1. Do bazaar (az `GET /api/v1/markets`): `GLD_18C_750TMN` (gram e 18
- *    ayar) va `SLV_925TMN` (noghre 925). Gheymat TOMAN e har gram،
- *    integer e string — ×10 rial.
+ * 1. Do bazaar (az `GET /api/v1/markets`): `GLD_18C_750TMN` (esman 18
+ *    ayar vali dar vaghe' ABSHODE ye moamelati → `xau-melted-g-irr`) va
+ *    `SLV_925TMN` (noghre 925). Gheymat TOMAN e har gram، integer e
+ *    string — ×10 rial.
  * 2. 🔴 `side` ejbari-e va har (symbol، side) yek REQUEST e joda-st →
  *    `request()` null mide va `fetch()` khodesh 4 call mizane (masir e
  *    direct e FetchStage؛ har call ~150ms، kol < 1s).
@@ -52,7 +53,11 @@ final readonly class WallgoldQuoteSource implements QuoteSourcePort
      * @var array<string, Instrument>
      */
     private const MARKETS = [
-        'GLD_18C_750TMN' => Instrument::Gold18Gram,
+        // 🔴 Mesl e BAGHI ye platform ha، «18 ayar» e wallgold dar vaghe'
+        // gheymat e MOAMELE ye ABSHODE ast (tasmim e sahebe proje،
+        // 2026-10-07: «hame ye platform ha 18 ayareshun abshode ye
+        // moamelati-e»).
+        'GLD_18C_750TMN' => Instrument::GoldMeltedGram,
         'SLV_925TMN' => Instrument::Silver925Gram,
     ];
 

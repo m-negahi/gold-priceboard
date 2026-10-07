@@ -120,9 +120,9 @@ final class PlatformQuoteSourcesTest extends TestCase
             $byKey[$quote->instrument->value.':'.$quote->side->value] = $quote->price->minor;
         }
 
-        // toman/g × 10
-        self::assertSame(265_300_000, $byKey['xau-18k-g-irr:ask']);
-        self::assertSame(265_300_000, $byKey['xau-18k-g-irr:bid']);
+        // toman/g × 10 — «18 ayar» e wallgold ham ABSHODE ye moamelati-e.
+        self::assertSame(265_300_000, $byKey['xau-melted-g-irr:ask']);
+        self::assertSame(265_300_000, $byKey['xau-melted-g-irr:bid']);
         self::assertSame(4_980_000, $byKey['xag-925-g-irr:ask']);
         self::assertSame(4_980_000, $byKey['xag-925-g-irr:bid']);
     }

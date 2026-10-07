@@ -192,8 +192,9 @@ final class ProviderSeeder extends Seeder
             'kind' => 'platform',
             'sort' => 40,
             'timeout' => 10,
-            // toman/g؛ jofte (`SELL` = ask، `BUY` = bid). API key az env
-            // (`WALLGOLD_API_KEY`) — hich secret inja.
+            // toman/g؛ jofte (`SELL` = ask، `BUY` = bid). «18 ayar» esh
+            // ABSHODE ye moamelati-e (mesl e hame ye platform ha). API key
+            // az env (`WALLGOLD_API_KEY`) — hich secret inja.
             'upstream_unit' => 'toman',
         ], []);
 
