@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Modules\Billing\Domain\Ports;
 
 /**
- * Dargah e pardakht (IPG). Adapter ha: `VandarGateway` (default)، `ZibalGateway`.
+ * Dargah e pardakht (IPG). Tanha adapter: `VandarGateway` (Zibal 2026-10-07 hazf shod).
  *
- * `track_id` shenase ye dargah ast (Zibal: adad، Vandar: token e alfanumeric)؛
- * reference e ledger `{name}:{track_id}` mishe ta do dargah ba ham ghati nashan.
+ * `track_id` shenase ye dargah ast (Vandar: token e alfanumeric)؛ reference e
+ * ledger `{name}:{track_id}` mishe ta dargah haye ehtemali ye ayande ba ham ghati nashan.
  */
 interface PaymentGatewayPort
 {
-    /** Esm e kutah e dargah (`vandar`/`zibal`) — tu reference e ledger va meta. */
+    /** Esm e kutah e dargah (`vandar`) — tu reference e ledger va meta. */
     public function name(): string;
 
     /** @return array{track_id: string, url: string} */

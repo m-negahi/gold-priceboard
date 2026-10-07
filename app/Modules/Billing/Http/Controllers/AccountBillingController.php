@@ -118,13 +118,12 @@ final readonly class AccountBillingController
 
     public function callback(Request $request): RedirectResponse
     {
-        // Vandar `token` mifreste، Zibal `trackId` — har do alfanumeric e kutah.
+        // Vandar `token` mifreste — alfanumeric e kutah.
         $data = $request->validate([
-            'token' => ['required_without:trackId', 'regex:/^[A-Za-z0-9_-]{1,128}$/'],
-            'trackId' => ['required_without:token', 'regex:/^\d{1,64}$/'],
+            'token' => ['required', 'regex:/^[A-Za-z0-9_-]{1,128}$/'],
         ]);
         try {
-            $payment = $this->topups->verify((string) ($data['token'] ?? $data['trackId']));
+            $payment = $this->topups->verify((string) $data['token']);
         } catch (RuntimeException|InvalidArgumentException $exception) {
             return redirect()->route('account.billing.wallet')->withErrors(['payment' => $exception->getMessage()]);
         }

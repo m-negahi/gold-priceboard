@@ -128,7 +128,7 @@ final class FinanceLedgerTest extends TestCase
             'track_id' => 'track-25',
             'status' => 'verified',
         ]);
-        app(WalletAction::class)->credit(app(WalletAction::class)->forOwner($customer->id), 25_000, 'topup', 'zibal:track-25');
+        app(WalletAction::class)->credit(app(WalletAction::class)->forOwner($customer->id), 25_000, 'topup', 'vandar:track-25');
 
         $settlements = app(SettleGatewayPaymentAction::class);
         $first = $settlements->execute($payment->id, $admin->id, 'bank-123');

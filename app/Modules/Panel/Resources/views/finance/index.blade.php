@@ -232,7 +232,7 @@
                 <div class="mt-3 space-y-3">
                     @forelse ($unsettledPayments as $payment)
                         <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-2 p-3 text-sm">
-                            <div><p class="font-semibold">{{ $payment['userName'] }} · <span class="num">{{ $payment['amountRial'] }} ریال</span></p><p class="ltr text-xs text-muted">Zibal {{ $payment['trackId'] }} · {{ $payment['gatewayReference'] ?? '—' }}</p></div>
+                            <div><p class="font-semibold">{{ $payment['userName'] }} · <span class="num">{{ $payment['amountRial'] }} ریال</span></p><p class="ltr text-xs text-muted">{{ $payment['trackId'] }} · {{ $payment['gatewayReference'] ?? '—' }}</p></div>
                             @can('finance.manage')
                                 <form method="POST" action="{{ route('panel.finance.settle', $payment['id']) }}" class="flex flex-wrap gap-2">
                                     @csrf

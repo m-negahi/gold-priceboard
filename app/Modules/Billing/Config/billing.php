@@ -4,20 +4,13 @@ declare(strict_types=1);
 
 return [
     /*
-     * Dargah e fa'al: `vandar` (entekhab e sahebe proje، 2026-10-06) ya `zibal`.
-     * Har do posht e `PaymentGatewayPort`؛ ta'viz faghat ba env.
+     * Tanha dargah: Vandar (tasmim e sahebe proje، 2026-10-07 — Zibal hazf shod).
      */
-    'gateway' => env('BILLING_GATEWAY', 'vandar'),
-
     'vandar' => [
         // Kelid e API e dargah (ba'd az sakht e dargah tu panel e Vandar).
         'api_key' => env('VANDAR_API_KEY', ''),
         // Nasakhe ye IPG: `v3` (mostanad e rasmi) ya `v4` (hamun shekl، faghat segment e version).
         'version' => env('VANDAR_IPG_VERSION', 'v3'),
-    ],
-
-    'zibal' => [
-        'merchant' => env('ZIBAL_MERCHANT', ''),
     ],
 
     /*

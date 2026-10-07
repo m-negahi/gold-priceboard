@@ -21,7 +21,7 @@ final class FakePaymentGateway implements PaymentGatewayPort
 
     public function redirectUrl(string $trackId): string
     {
-        return 'https://gateway.zibal.ir/start/'.$trackId;
+        return 'https://gateway.example.test/start/'.$trackId;
     }
 
     /** @return array{track_id: string, url: string} */
@@ -29,7 +29,7 @@ final class FakePaymentGateway implements PaymentGatewayPort
     {
         $this->requestCount++;
 
-        return ['track_id' => '123456', 'url' => 'https://gateway.zibal.ir/start/123456'];
+        return ['track_id' => '123456', 'url' => 'https://gateway.example.test/start/123456'];
     }
 
     /** @return array{verified: bool, amount_rial: int, reference: string|null, data: array<string, mixed>} */

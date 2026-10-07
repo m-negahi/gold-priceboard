@@ -8,7 +8,6 @@ use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Billing\Application\Actions\TopupPaymentAction;
 use App\Modules\Billing\Domain\Ports\PaymentGatewayPort;
 use App\Modules\Billing\Infrastructure\Payments\VandarGateway;
-use App\Modules\Billing\Infrastructure\Payments\ZibalGateway;
 use App\Modules\Finance\Application\Actions\SettleGatewayPaymentAction;
 use App\Modules\Wallet\Application\Actions\WalletAction;
 use App\Modules\Wallet\Application\Queries\WalletQuery;
@@ -24,13 +23,10 @@ final class TopupPaymentTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** Default Vandar (entekhab e sahebe proje)؛ `BILLING_GATEWAY=zibal` adapter e Zibal. */
-    public function test_gateway_port_is_bound_by_config(): void
+    /** Tanha dargah Vandar ast (Zibal 2026-10-07 hazf shod). */
+    public function test_gateway_port_is_bound_to_vandar(): void
     {
         self::assertInstanceOf(VandarGateway::class, app(PaymentGatewayPort::class));
-
-        config()->set('billing.gateway', 'zibal');
-        self::assertInstanceOf(ZibalGateway::class, app(PaymentGatewayPort::class));
     }
 
     public function test_verified_payment_credits_once_and_issues_an_immutable_invoice_snapshot(): void
@@ -140,27 +136,22 @@ final class TopupPaymentTest extends TestCase
         $wallets = app(WalletAction::class);
         $wallet = $wallets->forOwner($user->id);
         $wallets->block($wallet);
-        // In test adapter e VAGHEI ye Zibal ro ba Http::fake mizane — pas dargah ro Zibal kon.
-        config()->set('billing.gateway', 'zibal');
-        config()->set('billing.zibal.merchant', 'test-merchant');
+        // In test adapter e VAGHEI ye Vandar ro ba Http::fake mizane.
+        config()->set('billing.vandar.api_key', 'test-key');
         Http::preventStrayRequests();
         $verifyCalls = 0;
         $paymentId = null;
         Http::fake(static function ($request) use (&$verifyCalls, &$paymentId) {
-            if (str_ends_with($request->url(), '/v1/request')) {
-                return Http::response(['result' => 100, 'trackId' => 123456]);
+            if (str_ends_with($request->url(), '/send')) {
+                return Http::response(['status' => 1, 'token' => 'tok-recovery']);
             }
-            if (str_ends_with($request->url(), '/v1/verify')) {
-                $verifyCalls++;
+            $verifyCalls++;
 
-                return Http::response($verifyCalls === 1
-                    ? ['result' => 100, 'status' => 1, 'amount' => 10_000, 'orderId' => (string) $paymentId]
-                    : ['result' => 201]);
-            }
-
+            // Verify e dovom status 2 mide (ghablan verify shode) — masir e
+            // bazyabi ba'd az shekast e local hamin ast.
             return Http::response([
-                'result' => 100, 'status' => 1, 'amount' => 10_000,
-                'trackId' => '123456', 'orderId' => (string) $paymentId,
+                'status' => $verifyCalls === 1 ? 1 : 2, 'amount' => 10_000,
+                'transId' => 'bank-1', 'factorNumber' => (string) $paymentId,
             ]);
         });
         $payments = app(TopupPaymentAction::class);
@@ -168,13 +159,13 @@ final class TopupPaymentTest extends TestCase
         $paymentId = $started['payment']->id;
 
         try {
-            $payments->verify('123456');
+            $payments->verify('tok-recovery');
             self::fail('blocked wallet bayad local commit ra rad mikard');
         } catch (WalletException) {
             $this->assertDatabaseHas('wallet_topup_payments', ['id' => $paymentId, 'status' => 'pending']);
         }
         $wallets->unblock($wallet);
-        $verified = $payments->verify('123456');
+        $verified = $payments->verify('tok-recovery');
         self::assertSame('verified', $verified->status);
         self::assertSame(2, $verifyCalls);
         self::assertSame(10_000, $wallet->refresh()->balance_minor);

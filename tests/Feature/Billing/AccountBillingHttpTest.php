@@ -130,7 +130,7 @@ final class AccountBillingHttpTest extends TestCase
 
         $this->actingAs($user)->post(route('account.billing.topup.start'), [
             'amount_rial' => '10,000', 'request_key' => self::TOPUP_KEY,
-        ])->assertRedirect('https://gateway.zibal.ir/start/123456');
+        ])->assertRedirect('https://gateway.example.test/start/123456');
 
         $this->assertDatabaseHas('wallet_topup_payments', [
             'user_id' => $user->id, 'amount_minor' => 10_000, 'track_id' => '123456', 'status' => 'pending',
@@ -138,10 +138,10 @@ final class AccountBillingHttpTest extends TestCase
         self::assertSame(1, $gateway->requestCount);
 
         // Callback e dargah session e karbar ro lazem nadare (browser az dargah bar migarde).
-        $this->get(route('account.billing.topup.callback', ['trackId' => '123456']))
+        $this->get(route('account.billing.topup.callback', ['token' => '123456']))
             ->assertRedirect(route('account.billing.wallet'))->assertSessionHas('toast.kind', 'success');
         // Bar e dovom (refresh e callback): hamun natije، bedun e credit e dobare.
-        $this->get(route('account.billing.topup.callback', ['trackId' => '123456']))
+        $this->get(route('account.billing.topup.callback', ['token' => '123456']))
             ->assertRedirect(route('account.billing.wallet'))->assertSessionHas('toast.kind', 'success');
 
         self::assertSame(1, $gateway->verifyCount);
@@ -172,7 +172,7 @@ final class AccountBillingHttpTest extends TestCase
             'amount_rial' => '10,000', 'request_key' => self::TOPUP_KEY,
         ]);
 
-        $this->get(route('account.billing.topup.callback', ['trackId' => '123456']))
+        $this->get(route('account.billing.topup.callback', ['token' => '123456']))
             ->assertRedirect(route('account.billing.wallet'))->assertSessionHasErrors('payment');
 
         $this->assertDatabaseHas('wallet_topup_payments', ['track_id' => '123456', 'status' => 'mismatch']);
@@ -181,7 +181,7 @@ final class AccountBillingHttpTest extends TestCase
 
     public function test_callback_for_an_unknown_track_id_is_rejected(): void
     {
-        $this->get(route('account.billing.topup.callback', ['trackId' => '999']))
+        $this->get(route('account.billing.topup.callback', ['token' => '999']))
             ->assertRedirect(route('account.billing.wallet'))->assertSessionHasErrors('payment');
     }
 
