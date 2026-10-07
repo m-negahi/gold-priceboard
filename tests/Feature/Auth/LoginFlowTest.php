@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Auth;
 
 use App\Modules\Auth\Application\Actions\SendOtpAction;
+use App\Modules\Auth\Domain\Ports\OtpStorePort;
+use App\Modules\Auth\Domain\Services\OtpCode;
 use App\Modules\Auth\Infrastructure\Persistence\Models\User;
 use App\Modules\Auth\Infrastructure\Sms\FakeSms;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -184,6 +186,57 @@ final class LoginFlowTest extends TestCase
             ->assertOk()
             ->assertViewHas('initial', fn (array $i): bool => is_string($i['code'])
                 && $i['bypassPending'] === false);
+    }
+
+    /**
+     * 🔴 Code e SUZIDE (3 ghalat) nabayad reveal she: session hanuz code e
+     * ghadimi ro dare vali store batel esh karde — auto-fill e un faghat
+     * «کد درست نیست» mide. Faghat cooldown munde => `bypassPending` ham
+     * false (hich code e zende-i tu rah nist؛ bayad resend bezane).
+     */
+    public function test_a_burnt_code_is_not_revealed_on_refresh(): void
+    {
+        config()->set('otp.bypass', true);
+        $this->app->forgetInstance(SendOtpAction::class);
+
+        $this->postJson(route('login.code'), ['phone' => self::PHONE])->assertOk();
+
+        foreach (range(1, 3) as $i) {
+            $this->postJson(route('login.verify'), ['phone' => self::PHONE, 'code' => '000000'])
+                ->assertStatus(422);
+        }
+
+        $this->get('/login')
+            ->assertOk()
+            ->assertViewHas('initial', fn (array $i): bool => $i['step'] === 'code'
+                && $i['code'] === null
+                && $i['bypassPending'] === false);
+    }
+
+    /**
+     * 🔴 Code-i ke tab/session e DIGAR jaygozin karde (`put` entry ro kamel
+     * avaz mikone) nabayad az session e ghadimi reveal she — hash e store
+     * ba code e session moghayese mishe.
+     */
+    public function test_a_code_replaced_elsewhere_is_not_revealed_but_flags_pending(): void
+    {
+        config()->set('otp.bypass', true);
+        $this->app->forgetInstance(SendOtpAction::class);
+
+        $this->postJson(route('login.code'), ['phone' => self::PHONE])->assertOk();
+
+        // Tab e digar resend zade: entry e store ba code e JADID jaygozin
+        // mishe (inja mostaghim ru store، chun cooldown resend e HTTP ro
+        // band miare — raftar e `put` hamun ast).
+        $otp = $this->app->make(OtpCode::class);
+        $this->app->make(OtpStorePort::class)
+            ->put(self::E164, $otp->hash(self::E164, '424242'), 120);
+
+        $this->get('/login')
+            ->assertOk()
+            ->assertViewHas('initial', fn (array $i): bool => $i['step'] === 'code'
+                && $i['code'] === null
+                && $i['bypassPending'] === true);
     }
 
     public function test_an_invalid_phone_is_a_validation_error(): void

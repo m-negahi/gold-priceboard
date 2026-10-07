@@ -6,6 +6,7 @@ namespace App\Modules\Auth\Application\Queries;
 
 use App\Modules\Auth\Application\Dto\OtpChallengeDto;
 use App\Modules\Auth\Domain\Ports\OtpStorePort;
+use App\Modules\Auth\Domain\Services\OtpCode;
 use App\Modules\Common\Helpers\PhoneHelper;
 
 /**
@@ -17,7 +18,7 @@ use App\Modules\Common\Helpers\PhoneHelper;
  */
 final readonly class PendingOtpQuery
 {
-    public function __construct(private OtpStorePort $store) {}
+    public function __construct(private OtpStorePort $store, private OtpCode $otp) {}
 
     /** `null` ya'ni chizi baraye edame nist: na code e zende، na cooldown. */
     public function challengeFor(string $phone): ?OtpChallengeDto
@@ -36,5 +37,27 @@ final readonly class PendingOtpQuery
         }
 
         return new OtpChallengeDto($normalized, $resendIn, $expiresIn);
+    }
+
+    /**
+     * Aya in code hamun code e ZENDE ye store ast?
+     *
+     * Masraf: reveal e bypass (dev). Session mitune code e KOHNE dashte
+     * bashe — code-i ke suzide (3 ghalat)، expire shode، ya tu tab/session
+     * e digar jaygozin shode (`put` entry ro KAMEL avaz mikone). Auto-fill
+     * e un code faghat «کد درست نیست» mide؛ pas ghabl e reveal moghayese
+     * mikonim. FAGHAT mikhune — hich talash-i sabt nemishe.
+     */
+    public function matchesLiveCode(string $phone, string $code): bool
+    {
+        $normalized = PhoneHelper::normalize($phone);
+
+        if ($normalized === null) {
+            return false;
+        }
+
+        $entry = $this->store->get($normalized);
+
+        return $entry !== null && $this->otp->verify($normalized, $code, $entry->codeHash);
     }
 }

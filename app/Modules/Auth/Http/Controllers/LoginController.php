@@ -165,7 +165,12 @@ final readonly class LoginController
 
         $bypass = (bool) config('otp.bypass', false);
         $stored = $request->session()->get(self::SESSION_CODE);
-        $code = is_string($stored) && $bypass ? $stored : null;
+        // 🔴 Code e session faghat vaghti reveal mishe ke (a) code-i ZENDE
+        // bashe (na faghat cooldown — code e suzide/expire-shode auto-fill
+        // e «کد درست نیست» mide) va (b) hamun code e store bashe (tab/
+        // session e digar mitune ba resend jaygozin esh karde bashe).
+        $code = is_string($stored) && $bypass && $challenge->expiresInSeconds > 0
+            && $this->pending->matchesLiveCode($challenge->phone, $stored) ? $stored : null;
 
         return [
             'step' => 'code',
@@ -174,8 +179,10 @@ final readonly class LoginController
             'expiresIn' => $challenge->expiresInSeconds,
             'code' => $code,
             // Zire bypass، code-i zende-st vali in session nadaresh (tu
-            // session e digar sakhte shode) — UI bayad tozih bede.
-            'bypassPending' => $bypass && $code === null,
+            // session e digar sakhte ya jaygozin shode) — UI bayad tozih
+            // bede. Faghat cooldown e bedun e code e zende => false (karbar
+            // bayad sabr kone va resend bezane، na montazer e code e dige).
+            'bypassPending' => $bypass && $code === null && $challenge->expiresInSeconds > 0,
         ];
     }
 
