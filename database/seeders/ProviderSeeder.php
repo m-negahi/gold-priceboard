@@ -49,13 +49,18 @@ final class ProviderSeeder extends Seeder
             'upstream_unit' => 'rial',
         ], [
             /*
-             * 🔴 Jahani ha (ons/mes): tu feed e tgju faghat RUZANE be-rooz
-             * mishan (`ts` = nime-shab e rooz e ghabl). Default e 180s
-             * radeshun mikone.
+             * 🔴 Jahani ha (ons/noghre/mes): tu feed e tgju faghat RUZANE
+             * be-rooz mishan (`ts` = nime-shab e rooz e ghabl) va default e
+             * 180s radeshun mikone. 90,000 (25h) KAFI NABUD — andaze-giri
+             * (2026-10-07): mes 122,895s (34h) lag dasht va hich vaght
+             * ghabul nemishod. Bazaar e JAHANI jom'e-ta-doshanbe baste-ast
+             * (ta ~3 rooz bedun e update) → 259,200 (3 rooz)، hamun
+             * estedlal e dollar/akhar-e-hafte. Badge e «کهنه» sen ro neshun
+             * mide (PLAN §1.8: bazaar e baste = akharin nerkh، na gap).
              */
-            Instrument::GoldOunce->value => 90_000,
-            Instrument::SilverOunce->value => 90_000,
-            Instrument::CopperPound->value => 90_000,
+            Instrument::GoldOunce->value => 259_200,
+            Instrument::SilverOunce->value => 259_200,
+            Instrument::CopperPound->value => 259_200,
             /*
              * 🔴 GOLD/SEKKE/NOGHRE ye IRR — override ejbari (2026-10-06،
              * khaste ye sahebe proje: «tgju ham hame symbol ha ro biar»).
@@ -113,7 +118,7 @@ final class ProviderSeeder extends Seeder
             // estjt timestamp NEMIDE، pas `upstreamAt` null ast va check e
             // tazegi aslan ejra nemishe. In meghdar ha faghat baraye zaman-i
             // ast ke ruzi timestamp ezafe konan.
-            Instrument::GoldOunce->value => 90_000,
+            Instrument::GoldOunce->value => 259_200,
         ]);
 
         $this->provider([
@@ -136,8 +141,8 @@ final class ProviderSeeder extends Seeder
              * asymmetry e tgju. Hamun override ha: 4 rooz baraye tala/sekke،
              * 2 rooz dollar، ~1 rooz jahani ha. Dalil e kamel bala (tgju).
              */
-            Instrument::GoldOunce->value => 90_000,
-            Instrument::SilverOunce->value => 90_000,
+            Instrument::GoldOunce->value => 259_200,
+            Instrument::SilverOunce->value => 259_200,
             Instrument::Gold18Gram->value => 345_600,
             Instrument::Gold24Gram->value => 345_600,
             Instrument::GoldMesghal->value => 345_600,
@@ -205,7 +210,7 @@ final class ProviderSeeder extends Seeder
         ], [
             // Timestamp e UTC e daghigh mide؛ shab/ta'til yakh mizane — hamun
             // override haye tgju.
-            Instrument::GoldOunce->value => 90_000,
+            Instrument::GoldOunce->value => 259_200,
             Instrument::Gold18Gram->value => 345_600,
             Instrument::GoldMesghal->value => 345_600,
             Instrument::CoinEmami->value => 345_600,

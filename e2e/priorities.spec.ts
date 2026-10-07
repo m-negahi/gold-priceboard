@@ -50,7 +50,7 @@ test.describe('symbol priorities', () => {
 
         await expect(page.getByRole('heading', { level: 1, name: 'تنظیم قیمت نمادها' })).toBeVisible();
         await expect(badge()).toHaveText('پیش‌فرض');
-        await expect(chips().last()).toContainText('دستی');
+        await expect(chips().last()).toContainText('API اختصاصی');
     });
 
     test('jabeja + save -> sefareshi va paydar ba\'d az reload', async () => {
@@ -72,7 +72,7 @@ test.describe('symbol priorities', () => {
         await expect(badge()).toHaveText('سفارشی');
         await expect(chips().first()).toHaveText(firstAfter);
         // Manual hamchenan akhar.
-        await expect(chips().last()).toContainText('دستی');
+        await expect(chips().last()).toContainText('API اختصاصی');
     });
 
     test('bargasht be pish-farz', async () => {

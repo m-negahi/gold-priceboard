@@ -30,7 +30,11 @@ async function collapseRail(): Promise<void> {
         await page.getByRole('button', { name: 'باز و بسته کردن منو' }).click();
     }
 
-    await expect.poll(async () => (await aside.boundingBox())?.width ?? 0).toBeLessThan(100);
+    // 🔴 Zire load e FULL suite transition e rail kond mishe va 5s e default
+    // gah-gahi kam miad (hamun «flaky e 1 az 5» e TASKS — 2026-10-07 esm esh
+    // dar umad: width 128px vasat e transition mund). Assertion avaz nashode،
+    // faghat mohlat.
+    await expect.poll(async () => (await aside.boundingBox())?.width ?? 0, { timeout: 10_000 }).toBeLessThan(100);
 }
 
 test.describe('sidebar rail tooltip', () => {

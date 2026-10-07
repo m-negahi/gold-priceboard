@@ -63,11 +63,12 @@ final class ProviderSeederTest extends TestCase
             ->pluck('freshness_seconds', 'symbol')
             ->all();
 
-        // Jahani ha (faghat ruzane be-rooz mishan): default e 180s radeshun
-        // mikone.
-        $this->assertSame(90_000, (int) $overrides[Instrument::GoldOunce->value]);
-        $this->assertSame(90_000, (int) $overrides[Instrument::SilverOunce->value]);
-        $this->assertSame(90_000, (int) $overrides[Instrument::CopperPound->value]);
+        // Jahani ha: ruzane be-rooz mishan VA bazaar e jahani ta ~3 rooz
+        // (jom'e-ta-doshanbe) yakh mizane — 25h kafi nabud (mes 34h lag e
+        // vaghei dasht، 2026-10-07).
+        $this->assertSame(259_200, (int) $overrides[Instrument::GoldOunce->value]);
+        $this->assertSame(259_200, (int) $overrides[Instrument::SilverOunce->value]);
+        $this->assertSame(259_200, (int) $overrides[Instrument::CopperPound->value]);
 
         // 🔴 Gold/sekke/noghre ye IRR — 4 rooz (khaste ye sahebe proje،
         // 2026-10-06): tgju in ha ro ba timestamp mide va bazaar e baste
