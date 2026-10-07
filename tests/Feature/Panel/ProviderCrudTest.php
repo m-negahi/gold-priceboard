@@ -103,6 +103,25 @@ final class ProviderCrudTest extends TestCase
         self::assertSame(10, (int) $provider->timeout, 'flags nabayad soton e tanzimi ro avaz kone.');
     }
 
+    /** Toggle e AJAX (bedun e reload): JSON vaziat e jadid ro bar migardune. */
+    public function test_the_flags_endpoint_answers_json_for_the_spa_toggle(): void
+    {
+        $this->actingAs($this->admin())->post(route('panel.providers.store'), $this->payload());
+
+        $this->actingAs($this->admin())
+            ->postJson(route('panel.providers.flags', 'wallgold'), ['is_active' => 1])
+            ->assertOk()
+            ->assertJsonPath('is_active', true)
+            ->assertJsonPath('toast.kind', 'success');
+
+        self::assertTrue(Provider::query()->where('key', 'wallgold')->firstOrFail()->is_active);
+
+        $this->actingAs($this->admin())
+            ->postJson(route('panel.providers.flags', 'wallgold'), ['is_active' => 0])
+            ->assertOk()
+            ->assertJsonPath('is_active', false);
+    }
+
     public function test_the_list_page_shows_providers(): void
     {
         $this->actingAs($this->admin())->post(route('panel.providers.store'), $this->payload());

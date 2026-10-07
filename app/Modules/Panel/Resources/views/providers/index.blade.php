@@ -1,6 +1,6 @@
 {{-- Tanzimat va salamat e har manba' dar yek kart; polling e upstream hichvaght az safhe seda nemishe. --}}
 <x-layouts.panel title="منابع قیمت" current="providers" :breadcrumbs="['پنل', 'منابع قیمت']">
-    <div x-data="providerMonitor({ route: @js(route('panel.providers.index')), health: @js($liveHealth) })">
+    <div x-data="providerMonitor({ route: @js(route('panel.providers.index')), health: @js($liveHealth), active: @js(collect($rows)->pluck('isActive', 'key')) })">
     <p x-show="delayed" x-cloak class="mb-3 rounded-xl bg-warn-soft p-3 text-sm text-warn" role="status">به‌روزرسانی سلامت قطع شده است؛ آخرین وضعیت خوانده‌شده نمایش داده می‌شود.</p>
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div><h1 class="text-2xl font-extrabold text-ink md:text-3xl">منابع قیمت</h1><p class="mt-1 text-sm text-muted">تنظیمات، سلامت و آخرین خطای هر منبع را کنار هم بررسی کنید.</p></div>
@@ -27,7 +27,7 @@
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div><h2 class="text-base font-bold text-ink">{{ $row['name'] }}</h2><p class="ltr mt-1 text-xs text-muted"><span>{{ $row['key'] }}</span> · <span>{{ $row['driver'] }}</span></p></div>
                     <div class="flex flex-wrap items-center gap-2"><span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" :class="tone(@js($row['key']))" x-text="health[@js($row['key'])]?.stateLabel || 'نامشخص'">{{ ($row['health']['state'] ?? $row['healthState'])->label() }}</span>
-                        @if ($row['deleted'])<x-panel.pill tone="down">حذف‌شده</x-panel.pill>@elseif (! $row['isActive'])<x-panel.pill tone="flat">خاموش</x-panel.pill>@endif
+                        @if ($row['deleted'])<x-panel.pill tone="down">حذف‌شده</x-panel.pill>@else<span x-show="!active[@js($row['key'])]" @if ($row['isActive']) x-cloak @endif><x-panel.pill tone="flat">خاموش</x-panel.pill></span>@endif
                         @if ($row['isTrustAnchor'])<x-panel.pill tone="info">مرجع اعتماد</x-panel.pill>@endif
                         <span x-show="health[@js($row['key'])]?.retried" x-cloak class="rounded-full bg-warn-soft px-2 py-1 text-xs text-warn">تلاش دوباره</span>
                     </div>
@@ -46,7 +46,8 @@
                         <div class="flex flex-wrap items-center gap-1.5"><x-panel.pill tone="flat">{{ $row['kind']->label() }}</x-panel.pill>@if ($row['inComparison'])<x-panel.pill tone="flat">مقایسه</x-panel.pill>@endif @if ($row['onBoard'])<x-panel.pill tone="flat">تابلو</x-panel.pill>@endif @if ($row['inChart'])<x-panel.pill tone="flat">نمودار</x-panel.pill>@endif</div>
                         @can('providers.manage')
                         <div class="flex flex-wrap items-center gap-2">
-                            <form method="POST" action="{{ route('panel.providers.flags', $row['key']) }}">@csrf<input type="hidden" name="is_active" value="{{ $row['isActive'] ? 0 : 1 }}"><button type="submit" class="h-11 rounded-xl border border-line px-3 text-sm font-medium hover:bg-surface-2">{{ $row['isActive'] ? 'خاموش کردن' : 'روشن کردن' }}</button></form>
+                            {{-- Roshan/khamoosh bedun e reload (AJAX) — matn e dokme SSR dorost-e va ba'd az init e Alpine reactive mishe. --}}
+                            <button type="button" data-provider-toggle @click="toggleActive(@js($row['key']), @js(route('panel.providers.flags', $row['key'])))" :disabled="busyKey === @js($row['key'])" class="h-11 rounded-xl border border-line px-3 text-sm font-medium hover:bg-surface-2 disabled:opacity-50" x-text="active[@js($row['key'])] ? 'خاموش کردن' : 'روشن کردن'">{{ $row['isActive'] ? 'خاموش کردن' : 'روشن کردن' }}</button>
                             <a wire:navigate href="{{ route('panel.providers.spreads', $row['key']) }}" class="inline-flex h-11 items-center gap-1.5 rounded-xl px-3 text-sm text-muted hover:bg-surface-2" aria-label="اسپرد {{ $row['name'] }}"><x-icon name="tag" class="size-4" />اسپرد</a>
                             <a wire:navigate href="{{ route('panel.providers.edit', $row['key']) }}" class="inline-flex h-11 items-center gap-1.5 rounded-xl bg-brand-soft px-3 text-sm font-semibold text-brand-2" aria-label="ویرایش {{ $row['name'] }}"><x-icon name="pencil" class="size-4" />ویرایش</a>
                         </div>

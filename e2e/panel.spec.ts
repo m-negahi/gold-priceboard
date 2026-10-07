@@ -62,6 +62,29 @@ test.describe('panel', () => {
         await expect(page.getByLabel('درایور')).toHaveValue('tgju');
     });
 
+    test('manba\' ha: toggle e roshan/khamoosh SPA ast — bedun e reload', async () => {
+        await page.goto('/dashboard/providers');
+
+        // Marker e window: age safhe reload she gom mishe.
+        await page.evaluate(() => { (window as never as { __pbMarker?: string }).__pbMarker = 'alive'; });
+
+        // Ru provider e `mock` (khamoosh e default) do bar toggle mizanim ta
+        // state e dev dast nakhore.
+        const card = page.locator('[data-provider-row="mock"]');
+        const toggle = card.locator('[data-provider-toggle]');
+        const before = (await toggle.innerText()).trim();
+
+        await toggle.click();
+        await expect(toggle).not.toHaveText(before);
+        await expect(page.getByText('وضعیت منبع تغییر کرد.').first()).toBeVisible();
+
+        await toggle.click();
+        await expect(toggle).toHaveText(before);
+
+        // Hich navigation-i rokh nadade.
+        expect(await page.evaluate(() => (window as never as { __pbMarker?: string }).__pbMarker)).toBe('alive');
+    });
+
     test('spread: 16 radif + preview e server-side', async () => {
         await page.goto('/dashboard/providers/estjt/spreads');
 

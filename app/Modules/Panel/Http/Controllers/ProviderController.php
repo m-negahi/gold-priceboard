@@ -110,8 +110,14 @@ final readonly class ProviderController
         ]);
     }
 
-    /** Toggle haye lista — faghat 4 flag e mojaz (`ProviderAction::setFlags`). */
-    public function flags(Request $request, string $key): RedirectResponse
+    /**
+     * Toggle haye lista — faghat 4 flag e mojaz (`ProviderAction::setFlags`).
+     *
+     * JSON (darkhast e `panelRequest` e Alpine) ham javab mide ta roshan/
+     * khamoosh bedun e reload e safhe anjam she (hamun estesna ye sabt-shode
+     * ye safhe haye AJAX e panel — darkhast e sahebe proje، 2026-10-07).
+     */
+    public function flags(Request $request, string $key): RedirectResponse|JsonResponse
     {
         $provider = $this->providers->findByKeyOrFail($key);
 
@@ -123,17 +129,26 @@ final readonly class ProviderController
             'is_trust_anchor' => ['sometimes', 'boolean'],
         ]);
 
+        $toast = ['kind' => 'success', 'title' => 'اعمال شد', 'message' => 'وضعیت منبع تغییر کرد.'];
+
         try {
             $this->action->setFlags($provider, array_map(static fn ($v): bool => (bool) $v, $flags));
         } catch (InvalidProviderException $exception) {
+            if ($request->expectsJson()) {
+                return new JsonResponse([
+                    'message' => $exception->getMessage(),
+                    'errors' => ['is_trust_anchor' => [$exception->getMessage()]],
+                ], 422);
+            }
+
             return back()->withErrors(['is_trust_anchor' => $exception->getMessage()]);
         }
 
-        return back()->with('toast', [
-            'kind' => 'success',
-            'title' => 'اعمال شد',
-            'message' => 'وضعیت منبع تغییر کرد.',
-        ]);
+        if ($request->expectsJson()) {
+            return new JsonResponse(['is_active' => (bool) $provider->refresh()->is_active, 'toast' => $toast]);
+        }
+
+        return back()->with('toast', $toast);
     }
 
     /** @return array<string, mixed>|null */
