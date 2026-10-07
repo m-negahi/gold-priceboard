@@ -39,7 +39,7 @@ final readonly class ChartController
         $chartProviders = [];
 
         foreach ($this->providers->panelRows() as $provider) {
-            if ($provider['isActive'] && $provider['inChart'] && ! $provider['deleted'] && isset($names[$provider['key']])) {
+            if ($provider['isActive'] && $provider['inChart'] && isset($names[$provider['key']])) {
                 $chartProviders[$provider['key']] = $names[$provider['key']];
             }
         }

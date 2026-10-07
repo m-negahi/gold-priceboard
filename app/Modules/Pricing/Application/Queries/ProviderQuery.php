@@ -94,8 +94,13 @@ final readonly class ProviderQuery
     }
 
     /**
-     * Radif haye safhe ye lista ye panel — hame ye provider ha (hatta
-     * khamoosh/hazf-shode)، faghat soton haye TANZIMI + state.
+     * Radif haye safhe ye lista ye panel — hame ye provider ha ye hazf-
+     * nashode (khamoosh ham)، faghat soton haye TANZIMI + state.
+     *
+     * 🔴 Hazf-shode ha AMDAN nemiyan (darkhast e sahebe proje، 2026-10-07:
+     * «hazf shode ha ro nabinin») — radif e DB soft-delete mimune ta
+     * tarikhche ye Influx yatim nashe، vali UI nadide migire. Bargardundan
+     * faghat az DB (restore) ba tasmim e sarih.
      *
      * Khoruji array e sade ast (na Model) ta Blade be Eloquent dast nazane.
      *
@@ -105,7 +110,7 @@ final readonly class ProviderQuery
     {
         $rows = [];
 
-        foreach (Provider::withTrashed()->orderBy('sort')->get() as $provider) {
+        foreach (Provider::query()->orderBy('sort')->get() as $provider) {
             $rows[] = [
                 'key' => $provider->key,
                 'name' => $provider->name_fa ?: $provider->name,
@@ -122,7 +127,6 @@ final readonly class ProviderQuery
                 'pollIntervalSeconds' => (int) $provider->poll_interval_seconds,
                 'healthState' => $provider->health_state,
                 'sort' => (int) $provider->sort,
-                'deleted' => $provider->trashed(),
             ];
         }
 

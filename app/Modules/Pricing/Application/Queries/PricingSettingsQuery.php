@@ -39,7 +39,7 @@ final readonly class PricingSettingsQuery
         $autoNames = [];
 
         foreach ($this->providers->panelRows() as $provider) {
-            if (! $provider['deleted'] && $provider['key'] !== 'manual') {
+            if ($provider['key'] !== 'manual') {
                 $autoNames[$provider['key']] = $provider['name'];
             }
         }

@@ -23,11 +23,11 @@
     @endif
     <section class="mt-5 grid gap-4 xl:grid-cols-2" aria-label="منابع و سلامت">
         @forelse ($rows as $row)
-            <article @class(['rounded-2xl bg-surface card-p shadow-xs', 'opacity-60' => $row['deleted']]) data-provider-row="{{ $row['key'] }}">
+            <article class="rounded-2xl bg-surface card-p shadow-xs" data-provider-row="{{ $row['key'] }}">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div><h2 class="text-base font-bold text-ink">{{ $row['name'] }}</h2><p class="ltr mt-1 text-xs text-muted"><span>{{ $row['key'] }}</span> · <span>{{ $row['driver'] }}</span></p></div>
                     <div class="flex flex-wrap items-center gap-2"><span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" :class="tone(@js($row['key']))" x-text="health[@js($row['key'])]?.stateLabel || 'نامشخص'">{{ ($row['health']['state'] ?? $row['healthState'])->label() }}</span>
-                        @if ($row['deleted'])<x-panel.pill tone="down">حذف‌شده</x-panel.pill>@else<span x-show="!active[@js($row['key'])]" @if ($row['isActive']) x-cloak @endif><x-panel.pill tone="flat">خاموش</x-panel.pill></span>@endif
+                        <span x-show="!active[@js($row['key'])]" @if ($row['isActive']) x-cloak @endif><x-panel.pill tone="flat">خاموش</x-panel.pill></span>
                         @if ($row['isTrustAnchor'])<x-panel.pill tone="info">مرجع اعتماد</x-panel.pill>@endif
                         <span x-show="health[@js($row['key'])]?.retried" x-cloak class="rounded-full bg-warn-soft px-2 py-1 text-xs text-warn">تلاش دوباره</span>
                     </div>
@@ -41,7 +41,6 @@
                 <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted"><span>فاصله / مهلت: <span class="num">{{ $row['pollIntervalSeconds'] }} / {{ $row['timeout'] }} s</span></span><span>آخرین موفق: <span class="num" x-text="health[@js($row['key'])]?.lastSuccessDisplay || '—'">{{ $row['lastSuccessDisplay'] }}</span></span></div>
                 <div x-show="health[@js($row['key'])]?.error" x-cloak class="mt-3 rounded-xl bg-danger-soft p-3"><p class="text-xs font-semibold text-danger">آخرین خطا</p><p class="ltr mt-1 break-all text-start text-xs text-danger" x-text="health[@js($row['key'])]?.error">{{ $row['health']['error'] ?? '' }}</p></div>
                 <p x-show="!health[@js($row['key'])]?.error" class="mt-3 text-xs text-muted-3">خطایی ثبت نشده است.</p>
-                @unless ($row['deleted'])
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line-2 pt-3">
                         <div class="flex flex-wrap items-center gap-1.5"><x-panel.pill tone="flat">{{ $row['kind']->label() }}</x-panel.pill>@if ($row['inComparison'])<x-panel.pill tone="flat">مقایسه</x-panel.pill>@endif @if ($row['onBoard'])<x-panel.pill tone="flat">تابلو</x-panel.pill>@endif @if ($row['inChart'])<x-panel.pill tone="flat">نمودار</x-panel.pill>@endif</div>
                         @can('providers.manage')
@@ -53,7 +52,6 @@
                         </div>
                         @endcan
                     </div>
-                @endunless
             </article>
         @empty
             <div class="rounded-2xl bg-surface p-8 text-center text-muted">هنوز منبعی ثبت نشده است.</div>

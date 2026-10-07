@@ -288,13 +288,12 @@ Har provider = yek radif tu `providers` (`key` + `driver`) + yek class tu `app/M
 | `tgju` | `tgju` | reference | 20 | IRR ha **rial**؛ `ons`/`silver`/`copperp` USD — unit **per-entry** | `ts` vaght e Tehran bedun e offset | `last`؛ `tgju_gold_irg18` + `_buy` = ask/bid (abshode) | `ons`/`silver`/`copperp`/`gerami` faghat **ruzane** be-rooz mishan → `freshness_seconds` e `provider_spreads` baraye tgju override |
 | `estjt` | `estjt` | reference | 10 | **toman** ×10؛ «انس طلا» USD (per-instrument) | **nadare** → `payloadHash` (md5 e HTML) | `last` | `POST admin-ajax.php action=new_price`؛ UA e browser + HTTP/1.1 ejbari؛ separator e hezargan `٫` (U+066B) |
 | `nerkh` | `nerkh` | reference | 30 | **toman** ×10؛ `OUNCE`/`OUNCE_SILVER` USD | `update` e har radif **Jalali** (Tehran) → UTC؛ `timestamp` e bala faghat fallback | `last` | `Cache-Control: max-age=30`؛ faghat radif haye marja' map shodan |
-| `milli` | `milli` | platform | 40 | **rial e har milligram** → scale 3 (×1000) | `date` ISO e Tehran bedun e offset | `last` (kharid = foroosh) | `GET /api/v1/public/milli-price/external` |
 | `melligold` | `melligold` | platform | 50 | **toman e har gram** ×10 | `timestamp` epoch e **saniye** | `price_buy`=ask، `price_sell`=bid (fe'lan barabar) | challenge e **ArvanCloud**: 307 be hamun URL + Set-Cookie → `SourceRequestDto::cookies` jar e per-request mide |
 | `tlyn` | `tlyn` | platform | 70 | IRR ha **hezar toman** → ×1000 ×10؛ `XAU` USD | `date.utc_timestamp` ISO ba `Z` | `buy`=bid، `sell`=ask؛ sekke ha yek gheymat ru har do side | `status=disabled` rad mishe؛ `GOLD18_INTL`/`GOLD_BUBBLE_*` amdan map nashodan |
 | `manual` | `manual` | reference | 80 | az `manual_prices` (SourceManager mikhune va pass mide) | **nadare (amdan)** → hargez «kohne» rad nemishe | `last` | esm: **«Own API / API اختصاصی»** (2026-10-07) — gheymat e in driver chizi-e ke be customer haye API dade mishe؛ HTTP nadare؛ `FetchStage` mostaghim `fetch()` ro seda mizane |
 | `mock` | `mock` | reference | 90 | — (tabe' e mahz e zaman × seed) | `ClockPort` | `last` + bid/ask baraye jofte ye vaghei | dev e offline؛ hich IO؛ ba `FrozenClock` determinist |
 
-(`talasea`/`technogold`/`nerkh-stock` 2026-10-07 ba darkhast e sahebe proje hazf shodan — radif e DB soft-delete ast ta tarikhche ye Influx yatim nashe.)
+(`talasea`/`technogold`/`nerkh-stock`/`milli` 2026-10-07 ba darkhast e sahebe proje hazf shodan — radif e DB soft-delete ast ta tarikhche ye Influx yatim nashe، vali hich UI-i neshuneshun nemide.)
 
 Vahed ha az enum e `UpstreamUnit` (`rial`/`toman`/`none`) va side ha az `Side` (`last`/`bid`/`ask`) miyan. `providers.upstream_unit` faghat **default** ast — unit e vaghei tu map e har entry e Source mineshine (dars e estjt: ons USD vasat e radif haye toman).
 

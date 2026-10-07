@@ -155,30 +155,13 @@ final class ProviderSeeder extends Seeder
         ]);
 
         /*
-         * ── Platform ha (API e khod e site، na az nerkh) — 2026-10-06 ─────
+         * ── Platform ha (API e khod e site، na az nerkh) ───────────────────
          * `kind = platform`: kharid/foroosh eshun vaghei-e va nabayad marker
          * e «محاسبه‌شده» begiran. Faghat 18 ayar midan. Barresi ye API ha tu
-         * docblock e har Source.
+         * docblock e har Source. (Provider e hazf-shode hich radi inja
+         * nadare — radif e DB esh soft-delete mishe ta tarikhche ye Influx
+         * yatim nashe.)
          */
-        $this->provider([
-            'key' => 'milli',
-            'driver' => 'milli',
-            'name' => 'Milli',
-            'name_fa' => 'میلی',
-            'website' => 'https://milli.gold',
-            'kind' => 'platform',
-            'sort' => 40,
-            'timeout' => 10,
-            // `price18` RIAL e har MILLIGRAM — ×1000 tu khod e Source.
-            'upstream_unit' => 'rial',
-        ], [
-            // Timestamp e daghighe-i mide؛ shab/ta'til mitune yakh bezane.
-            Instrument::Gold18Gram->value => 345_600,
-        ]);
-
-        // talasea / technogold / nerkh-stock 2026-10-07 ba darkhast e sahebe
-        // proje hazf shodan (radif e DB ba script e dev soft-delete mishe —
-        // tarikhche ye Influx eshun dast nemikhore).
         $this->provider([
             'key' => 'melligold',
             'driver' => 'melligold',

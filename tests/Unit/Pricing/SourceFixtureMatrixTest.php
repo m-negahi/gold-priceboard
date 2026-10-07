@@ -9,7 +9,6 @@ use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
 use App\Modules\Pricing\Infrastructure\Sources\EstjtQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\MelligoldQuoteSource;
-use App\Modules\Pricing\Infrastructure\Sources\MilliQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\NerkhQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\TgjuQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\TlynQuoteSource;
@@ -132,23 +131,13 @@ final class SourceFixtureMatrixTest extends TestCase
     }
 
     /**
-     * Platform ha (2026-10-06، API e khod e site) — faghat 18 ayar.
+     * Platform ha (API e khod e site) — faghat 18 ayar.
      *
-     *   milli:      `price18 = 265100` RIAL/MILLIGRAM → ×1000
      *   melligold:  toman/g، jofte (`price_buy` = ask، `price_sell` = bid —
      *               dar fixture barabar)
      *
-     * Do zarib e motefavet (1000، 10) — daghighan jayi ke yek
-     * `upstream_unit` e provider-level kafi nist.
-     *
      * @return array<string, array{0: string, 1: int, 2: QuoteCurrency}>
      */
-    public static function milliMatrix(): array
-    {
-        return self::rows(['xau-18k-g-irr:last' => [265_100_000, QuoteCurrency::IRR]]);
-    }
-
-    /** @return array<string, array{0: string, 1: int, 2: QuoteCurrency}> */
     public static function melligoldMatrix(): array
     {
         return self::rows([
@@ -237,12 +226,6 @@ final class SourceFixtureMatrixTest extends TestCase
 
     // ── platform ha ─────────────────────────────────────────────
 
-    #[DataProvider('milliMatrix')]
-    public function test_milli_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
-    {
-        self::assertQuote('milli', $key, $minor, $currency);
-    }
-
     #[DataProvider('melligoldMatrix')]
     public function test_melligold_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
     {
@@ -266,7 +249,6 @@ final class SourceFixtureMatrixTest extends TestCase
     public static function platformMatrices(): array
     {
         return [
-            'milli' => ['milli', self::milliMatrix()],
             'melligold' => ['melligold', self::melligoldMatrix()],
             'tlyn' => ['tlyn', self::tlynMatrix()],
         ];
@@ -336,10 +318,9 @@ final class SourceFixtureMatrixTest extends TestCase
         return [
             'estjt' => ['estjt', 9],
             'nerkh' => ['nerkh', 11],
-            // Platform ha faghat 18 ayar midan؛ melligold/tlyn bid/ask daran
-            // ke ba `last` e tgju kelid e moshtarak nadare — bebin
+            // Platform ha faghat 18 ayar midan va bid/ask daran ke ba `last`
+            // e tgju kelid e moshtarak nadare — bebin
             // `test_platform_sides_bracket_the_reference_price`.
-            'milli' => ['milli', 1],
         ];
     }
 
@@ -437,7 +418,6 @@ final class SourceFixtureMatrixTest extends TestCase
             'tgju' => [new TgjuQuoteSource, 'tgju-ajax.json'],
             'estjt' => [new EstjtQuoteSource, 'estjt-new-price.json'],
             'nerkh' => [new NerkhQuoteSource, 'nerkh-prices.json'],
-            'milli' => [new MilliQuoteSource, 'milli-price-external.json'],
             'melligold' => [new MelligoldQuoteSource, 'melligold-buy-sell.json'],
             'tlyn' => [new TlynQuoteSource, 'tlyn-price.json'],
             default => self::fail("source e nashenas: {$source}"),
@@ -458,7 +438,7 @@ final class SourceFixtureMatrixTest extends TestCase
     /** Har kelid e jadval bayad be yek `Instrument` e vaghei eshare kone. */
     public function test_every_matrix_key_names_a_real_instrument(): void
     {
-        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix()), ...array_keys(self::nerkhMatrix()), ...array_keys(self::milliMatrix()), ...array_keys(self::melligoldMatrix()), ...array_keys(self::tlynMatrix())] as $key) {
+        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix()), ...array_keys(self::nerkhMatrix()), ...array_keys(self::melligoldMatrix()), ...array_keys(self::tlynMatrix())] as $key) {
             $symbol = explode(':', $key)[0];
 
             self::assertNotNull(

@@ -29,7 +29,6 @@ final readonly class SourceManager
             TgjuQuoteSource::KEY => new TgjuQuoteSource($config->options, $config->timeout),
             EstjtQuoteSource::KEY => new EstjtQuoteSource($config->options, $config->timeout),
             NerkhQuoteSource::KEY => new NerkhQuoteSource($config->options, $config->timeout, $config->key),
-            MilliQuoteSource::KEY => new MilliQuoteSource($config->options, $config->timeout),
             MelligoldQuoteSource::KEY => new MelligoldQuoteSource($config->options, $config->timeout),
             TlynQuoteSource::KEY => new TlynQuoteSource($config->options, $config->timeout),
             MockQuoteSource::KEY => new MockQuoteSource($this->clock, $this->seeds($config)),
@@ -75,7 +74,7 @@ final readonly class SourceManager
     {
         return [
             TgjuQuoteSource::KEY, EstjtQuoteSource::KEY, NerkhQuoteSource::KEY,
-            MilliQuoteSource::KEY, MelligoldQuoteSource::KEY, TlynQuoteSource::KEY,
+            MelligoldQuoteSource::KEY, TlynQuoteSource::KEY,
             ManualQuoteSource::KEY, MockQuoteSource::KEY,
         ];
     }
