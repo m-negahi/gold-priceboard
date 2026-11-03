@@ -7,6 +7,7 @@ namespace Tests\Unit\Pricing;
 use App\Modules\Pricing\Application\Dto\RawQuoteDto;
 use App\Modules\Pricing\Domain\Enums\Instrument;
 use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
+use App\Modules\Pricing\Infrastructure\Sources\EcogoldQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\EstjtQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\MelligoldQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\NerkhQuoteSource;
@@ -193,6 +194,28 @@ final class SourceFixtureMatrixTest extends TestCase
     }
 
     /**
+     * ecogold (اکوگلد): toman ba 8 ashar e sefr → ×10؛ jofte vaghei
+     * (`buy_price`=ask، `sell_price`=bid). «18 ayar» ABSHODE + noghre 999.
+     *
+     * @return array<string, array{0: string, 1: int, 2: QuoteCurrency}>
+     */
+    public static function ecogoldMatrix(): array
+    {
+        return self::rows([
+            'xau-melted-g-irr:ask' => [257_830_000, QuoteCurrency::IRR],
+            'xau-melted-g-irr:bid' => [257_810_000, QuoteCurrency::IRR],
+            'xau-coin-emami-irr:ask' => [2_653_200_000, QuoteCurrency::IRR],
+            'xau-coin-emami-irr:bid' => [2_637_000_000, QuoteCurrency::IRR],
+            'xau-coin-half-irr:ask' => [1_421_000_000, QuoteCurrency::IRR],
+            'xau-coin-half-irr:bid' => [1_414_000_000, QuoteCurrency::IRR],
+            'xau-coin-quarter-irr:ask' => [760_000_000, QuoteCurrency::IRR],
+            'xau-coin-quarter-irr:bid' => [756_760_000, QuoteCurrency::IRR],
+            'xag-999-g-irr:ask' => [4_730_000, QuoteCurrency::IRR],
+            'xag-999-g-irr:bid' => [4_650_000, QuoteCurrency::IRR],
+        ]);
+    }
+
+    /**
      * @param  array<string, array{0: int, 1: QuoteCurrency}>  $matrix
      * @return array<string, array{0: string, 1: int, 2: QuoteCurrency}>
      */
@@ -266,6 +289,12 @@ final class SourceFixtureMatrixTest extends TestCase
         self::assertQuote('tlyn', $key, $minor, $currency);
     }
 
+    #[DataProvider('ecogoldMatrix')]
+    public function test_ecogold_parses_the_exact_minor_value(string $key, int $minor, QuoteCurrency $currency): void
+    {
+        self::assertQuote('ecogold', $key, $minor, $currency);
+    }
+
     /** @param array<string, array{0: string, 1: int, 2: QuoteCurrency}> $matrix */
     #[DataProvider('platformMatrices')]
     public function test_the_platform_matrix_is_exhaustive(string $source, array $matrix): void
@@ -280,6 +309,7 @@ final class SourceFixtureMatrixTest extends TestCase
             'melligold' => ['melligold', self::melligoldMatrix()],
             'wallgold' => ['wallgold', self::wallgoldMatrix()],
             'tlyn' => ['tlyn', self::tlynMatrix()],
+            'ecogold' => ['ecogold', self::ecogoldMatrix()],
         ];
     }
 
@@ -384,12 +414,17 @@ final class SourceFixtureMatrixTest extends TestCase
      * Platform haye bid/ask `last` nadaran، pas moghayese ye bala un ha ro
      * nemigire. Har jofte bayad ask >= bid bashe (map e bar-aks = spread e
      * manfi) va har do ta 3% az `last` e tgju fasele dashte bashan.
+     *
+     * 🔴 Marja' bayad snapshot e tgju e HAMUN LAHZE ye fixture e platform
+     * bashe — bazaar tu yek mah 4%+ jabeja mishe (emami 2,753M → 2,635M)
+     * va moghayese ba fixture e ghadimi khata ye martabe ro az harekat e
+     * bazaar joda nemikone.
      */
     #[DataProvider('twoSidedPlatforms')]
-    public function test_platform_sides_bracket_the_reference_price(string $source): void
+    public function test_platform_sides_bracket_the_reference_price(string $source, string $reference = 'tgju'): void
     {
         $quotes = self::quotes($source);
-        $tgju = self::quotes('tgju');
+        $tgju = self::quotes($reference);
         $checked = 0;
 
         foreach ($quotes as $key => $quote) {
@@ -417,10 +452,13 @@ final class SourceFixtureMatrixTest extends TestCase
         self::assertGreaterThan(0, $checked, "{$source}: hich symbol e moshtarak ba tgju nabud.");
     }
 
-    /** @return array<string, array{0: string}> */
+    /** @return array<string, array{0: string, 1?: string}> */
     public static function twoSidedPlatforms(): array
     {
-        return ['melligold' => ['melligold'], 'wallgold' => ['wallgold'], 'tlyn' => ['tlyn']];
+        return ['melligold' => ['melligold'], 'wallgold' => ['wallgold'], 'tlyn' => ['tlyn'],
+            // Fixture e ecogold 2026-11-02 ast — ba tgju e hamun daghighe.
+            'ecogold' => ['ecogold', 'tgju-2026-11-02'],
+        ];
     }
 
     // ── Helper ──────────────────────────────────────────────────
@@ -473,11 +511,13 @@ final class SourceFixtureMatrixTest extends TestCase
 
         [$adapter, $fixture] = match ($source) {
             'tgju' => [new TgjuQuoteSource, 'tgju-ajax.json'],
+            'tgju-2026-11-02' => [new TgjuQuoteSource, 'tgju-ajax-2026-11-02.json'],
             'estjt' => [new EstjtQuoteSource, 'estjt-new-price.json'],
             'nerkh' => [new NerkhQuoteSource, 'nerkh-prices.json'],
             'melligold' => [new MelligoldQuoteSource, 'melligold-buy-sell.json'],
             'wallgold' => [new WallgoldQuoteSource, 'wallgold-price.json'],
             'tlyn' => [new TlynQuoteSource, 'tlyn-price.json'],
+            'ecogold' => [new EcogoldQuoteSource, 'ecogold-otc.json'],
             default => self::fail("source e nashenas: {$source}"),
         };
 
@@ -496,7 +536,7 @@ final class SourceFixtureMatrixTest extends TestCase
     /** Har kelid e jadval bayad be yek `Instrument` e vaghei eshare kone. */
     public function test_every_matrix_key_names_a_real_instrument(): void
     {
-        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix()), ...array_keys(self::nerkhMatrix()), ...array_keys(self::melligoldMatrix()), ...array_keys(self::wallgoldMatrix()), ...array_keys(self::tlynMatrix())] as $key) {
+        foreach ([...array_keys(self::tgjuMatrix()), ...array_keys(self::estjtMatrix()), ...array_keys(self::nerkhMatrix()), ...array_keys(self::melligoldMatrix()), ...array_keys(self::wallgoldMatrix()), ...array_keys(self::tlynMatrix()), ...array_keys(self::ecogoldMatrix())] as $key) {
             $symbol = explode(':', $key)[0];
 
             self::assertNotNull(

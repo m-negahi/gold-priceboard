@@ -291,6 +291,7 @@ Har provider = yek radif tu `providers` (`key` + `driver`) + yek class tu `app/M
 | `melligold` | `melligold` | platform | 50 | **toman e har gram** ×10 | `timestamp` epoch e **saniye** | `price_buy`=ask، `price_sell`=bid (fe'lan barabar) | 🔴 **ABSHODE** (na 18 ayar) → `xau-melted-g-irr`؛ challenge e **ArvanCloud**: 307 + Set-Cookie → `SourceRequestDto::cookies` jar e per-request |
 | `wallgold` | `wallgold` | platform | 40 | **toman e har gram** ×10 | **nadare** (`currentTime` = sa'at e server) → `payloadHash` | `SELL`=ask، `BUY`=bid (did e bazaar، mesl e `_buy` e tgju) | 2 bazaar: 🔴 **ABSHODE** (`GLD_18C_750TMN` → `xau-melted-g-irr`) + **noghre 925**؛ har (symbol،side) yek request → `request()` null (masir e direct)؛ **Bearer key az `WALLGOLD_API_KEY`** (hich vaght tu DB/seeder) |
 | `tlyn` | `tlyn` | platform | 70 | IRR ha **hezar toman** → ×1000 ×10؛ `XAU` USD | `date.utc_timestamp` ISO ba `Z` | `buy`=bid، `sell`=ask؛ sekke ha yek gheymat ru har do side | 🔴 `GOLD18` dar vaghe' **ABSHODE** ast → `xau-melted-g-irr`؛ `status=disabled` rad mishe؛ `GOLD18_INTL`/`GOLD_BUBBLE_*` amdan map nashodan |
+| `ecogold` | `ecogold` | platform | 60 | **toman** ba 8 ashar e sefr (`"465000.00000000"`) ×10 — `decimal='.'` ejbari | `created_at` ISO ba `Z` (`valid_at` = engheza ye signature، na zaman) | `buy_price`=ask، `sell_price`=bid (did e karbar) | `GET backend.ecogold.ir/api/prices/otc`؛ 🔴 `GOLD18` **ABSHODE** → `xau-melted-g-irr`؛ `COINFULL` = emami؛ **noghre 999**؛ `signature`/`change` estefade nemishan |
 | `manual` | `manual` | reference | 80 | az `manual_prices` (SourceManager mikhune va pass mide) | **nadare (amdan)** → hargez «kohne» rad nemishe | `last` | esm: **«Own API / API اختصاصی»** (2026-10-07) — gheymat e in driver chizi-e ke be customer haye API dade mishe؛ HTTP nadare؛ `FetchStage` mostaghim `fetch()` ro seda mizane |
 | `mock` | `mock` | reference | 90 | — (tabe' e mahz e zaman × seed) | `ClockPort` | `last` + bid/ask baraye jofte ye vaghei | dev e offline؛ hich IO؛ ba `FrozenClock` determinist |
 
@@ -463,7 +464,7 @@ docker compose -f docker-compose.local.yml exec octane php artisan test --compac
 
 ### Fixture ha — hich network
 
-`tests/Fixtures/`: `tgju-ajax.json`، `estjt-new-price.json`، `nerkh-prices.json`، `milli-price-external.json`، `talasea-get-gold-price.json`، `technogold-only-price.json`، `tlyn-price.json`، `zohal/`. Hame payload e **vaghei** e download-shode-and؛ test e har instrument e har source ru meghdar e minor e daghigh assert mikone (jaye bug e 10×). Hich test-i be tgju/estjt/nerkh/…/Zohal/Zibal/Kavenegar request nemizane.
+`tests/Fixtures/`: `tgju-ajax.json`، `estjt-new-price.json`، `nerkh-prices.json`، `milli-price-external.json`، `talasea-get-gold-price.json`، `technogold-only-price.json`، `tlyn-price.json`، `ecogold-otc.json` (+ `tgju-ajax-2026-11-02.json`: snapshot e tgju e HAMUN daghighe، marja' e bracket e ecogold)، `zohal/`. Hame payload e **vaghei** e download-shode-and؛ test e har instrument e har source ru meghdar e minor e daghigh assert mikone (jaye bug e 10×). Hich test-i be tgju/estjt/nerkh/…/Zohal/Zibal/Kavenegar request nemizane.
 
 ### Playwright (az HOST)
 

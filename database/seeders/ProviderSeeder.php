@@ -222,6 +222,28 @@ final class ProviderSeeder extends Seeder
             Instrument::CoinQuarter->value => 345_600,
         ]);
 
+        $this->provider([
+            'key' => 'ecogold',
+            'driver' => 'ecogold',
+            'name' => 'EcoGold',
+            'name_fa' => 'اکوگلد',
+            'website' => 'https://ecogold.ir',
+            'kind' => 'platform',
+            'sort' => 60,
+            'timeout' => 10,
+            // Toman (`-IRT`) ba ashar e sefr؛ jofte vaghei (`buy_price` =
+            // ask، `sell_price` = bid). «18 ayar» esh ABSHODE ast + noghre 999.
+            'upstream_unit' => 'toman',
+        ], [
+            // `created_at` e har radif timestamp e vaghei ast؛ shab/ta'til
+            // yakh mizane — hamun override haye 4 rooz e tgju.
+            Instrument::GoldMeltedGram->value => 345_600,
+            Instrument::CoinEmami->value => 345_600,
+            Instrument::CoinHalf->value => 345_600,
+            Instrument::CoinQuarter->value => 345_600,
+            Instrument::Silver999Gram->value => 345_600,
+        ]);
+
         /*
          * 🔴 Own API — gheymat e KHOD e ma (rename e «دستی (پشتیبان)»، darkhast
          * e sahebe proje 2026-10-07). Hadaf: har gheymati ke IN driver dare be

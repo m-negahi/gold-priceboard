@@ -7,6 +7,7 @@ namespace Tests\Unit\Pricing;
 use App\Modules\Pricing\Application\Dto\SourceResultDto;
 use App\Modules\Pricing\Domain\Enums\QuoteCurrency;
 use App\Modules\Pricing\Domain\Enums\Side;
+use App\Modules\Pricing\Infrastructure\Sources\EcogoldQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\MelligoldQuoteSource;
 use App\Modules\Pricing\Infrastructure\Sources\WallgoldQuoteSource;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +17,7 @@ use RuntimeException;
  * Platform ha ru payload e VAGHEI:
  *   `tests/Fixtures/melligold-buy-sell.json` (2026-10-07 — ABSHODE)
  *   `tests/Fixtures/wallgold-price.json` (2026-10-07 — 18 ayar + noghre 925)
+ *   `tests/Fixtures/ecogold-otc.json` (2026-11-02 — abshode + sekke + noghre 999)
  *
  * 🔴 Zarib e vahed e har source mal e KHODESH e (toman/g inja).
  * Meghdar haye daghigh tu `SourceFixtureMatrixTest`؛ inja raftar.
@@ -164,6 +166,82 @@ final class PlatformQuoteSourcesTest extends TestCase
     {
         self::assertNull((new WallgoldQuoteSource)->request());
         self::assertSame('wallgold', (new WallgoldQuoteSource)->key());
+    }
+
+    // ── ecogold ──────────────────────────────────────────────────
+
+    /**
+     * 🔴 `buy_price` = karbar mikhare = ASK؛ `sell_price` = BID. Gheymat ha
+     * toman ba 8 ashar e sefr (`"465000.00000000"`) — noghte ASHAR ast، na
+     * separator e hezargan (vagarna 10^8 barabar).
+     */
+    public function test_ecogold_scales_decimal_toman_and_maps_user_perspective_sides(): void
+    {
+        $result = (new EcogoldQuoteSource)->parse($this->fixture('ecogold-otc.json'));
+
+        self::assertSame(10, $result->count());
+        self::assertSame([], $result->unmappedLabels);
+
+        $byKey = [];
+        foreach ($result->quotes as $quote) {
+            self::assertSame('ecogold', $quote->providerKey);
+            self::assertSame(QuoteCurrency::IRR, $quote->price->quote);
+            $byKey[$quote->instrument->value.':'.$quote->side->value] = $quote->price->minor;
+        }
+
+        self::assertSame(4_730_000, $byKey['xag-999-g-irr:ask']);
+        self::assertSame(4_650_000, $byKey['xag-999-g-irr:bid']);
+        self::assertGreaterThan($byKey['xag-999-g-irr:bid'], $byKey['xag-999-g-irr:ask']);
+    }
+
+    /** `created_at` zaman e gheymat ast — na `valid_at` (engheza) ya `time_now`. */
+    public function test_ecogold_uses_created_at_as_the_upstream_time(): void
+    {
+        $result = (new EcogoldQuoteSource)->parse($this->fixture('ecogold-otc.json'));
+
+        $silver = array_values(array_filter(
+            $result->quotes,
+            static fn ($q): bool => $q->instrument->value === 'xag-999-g-irr',
+        ));
+
+        self::assertSame('2026-11-02T08:51:34+00:00', $silver[0]->upstreamAt?->toIso8601String());
+    }
+
+    /** Symbol e gom-shode ya side e kharab gozaresh mishe va baghi salem mimunan. */
+    public function test_ecogold_reports_missing_rows_and_sides(): void
+    {
+        $payload = $this->fixture('ecogold-otc.json');
+        $payload['data'] = array_values(array_filter(
+            $payload['data'],
+            static fn (array $row): bool => $row['symbol'] !== 'COINHALF-IRT',
+        ));
+        foreach ($payload['data'] as &$row) {
+            if ($row['symbol'] === 'SILVER999-IRT') {
+                $row['buy_price'] = '0.00000000';
+            }
+        }
+        unset($row);
+
+        $result = (new EcogoldQuoteSource)->parse($payload);
+
+        self::assertSame(7, $result->count());
+        self::assertSame(['COINHALF-IRT', 'SILVER999-IRT.buy_price'], $result->unmappedLabels);
+    }
+
+    public function test_ecogold_rejects_a_payload_without_data(): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        (new EcogoldQuoteSource)->parse(['message' => 'error']);
+    }
+
+    public function test_ecogold_describes_a_plain_get_request(): void
+    {
+        $request = (new EcogoldQuoteSource)->request();
+
+        self::assertSame('GET', $request->method);
+        self::assertSame('https://backend.ecogold.ir/api/prices/otc', $request->url);
+        self::assertSame('ecogold', (new EcogoldQuoteSource)->key());
     }
 
     // ── moshtarak ────────────────────────────────────────────────
