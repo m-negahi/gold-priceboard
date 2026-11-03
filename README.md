@@ -1,272 +1,296 @@
-# PriceBoard — تابلو قیمت
+<div dir="rtl">
 
-Tablo ye **gheymat e lahze-i ye tala، sekke va noghre** ke chand manba' e Irani ro hamzaman mikhune، kenar e ham moghayese mikone، va hamun feed ro be sorat e **API e foroushi** (ba wallet، plan e eshteraki va factor e rasmi) be kasb-o-kar ha mide.
+# تابلو قیمت — PriceBoard
 
-> Falsafe ye proje: **hich adadi hads zade nemishe.** Har gheymat az yek manba' e vaghei miad، az chand laye sanity rad mishe، ba tarikhche sabt mishe — va age manba'-i oftad، nafar e ba'di bi-vaghfe jash ro migire.
+تابلوی **قیمت لحظه‌ای طلا، سکه و نقره** که چند منبع ایرانی را هم‌زمان می‌خواند، کنار هم مقایسه می‌کند و همان فید را به‌صورت **API فروشی** (با کیف پول، پلن اشتراکی و فاکتور رسمی) در اختیار کسب‌وکارها می‌گذارد.
 
-![Tablo ye omumi — moghayese ye chand manba'](docs/screenshots/public-board.png)
+> فلسفهٔ پروژه: **هیچ عددی حدس زده نمی‌شود.** هر قیمت از یک منبع واقعی می‌آید، از چند لایه کنترل سلامت عبور می‌کند و با تاریخچه ثبت می‌شود — و اگر منبعی از دسترس خارج شد، نفر بعدی بی‌وقفه جایش را می‌گیرد.
 
----
-
-## Fehrest
-
-- [Emkanat](#emkanat)
-  - [Site e omumi](#1-site-e-omumi)
-  - [Motor e gheymat](#2-motor-e-gheymat-pricing-engine)
-  - [Manba' haye gheymat](#3-manba-haye-gheymat)
-  - [Panel e admin](#4-panel-e-admin)
-  - [API e foroushi + panel e moshtari](#5-api-e-foroushi--panel-e-moshtari)
-  - [Mali va hesabdari](#6-mali-va-hesabdari)
-  - [Vorud، karbaran va dastresi](#7-vorud-karbaran-va-dastresi)
-  - [Taab-avari va monitoring](#8-taab-avari-va-monitoring)
-- [Sakhtar e fani](#sakhtar-e-fani)
-- [Quickstart (local)](#quickstart-local)
-- [Test](#test)
-- [Mostanadat](#mostanadat)
+![تابلوی عمومی — مقایسهٔ چند منبع](docs/screenshots/public-board.png)
 
 ---
 
-## Emkanat
+## فهرست
 
-### 1) Site e omumi
+- [امکانات](#امکانات)
+  - [سایت عمومی](#۱-سایت-عمومی)
+  - [موتور قیمت](#۲-موتور-قیمت-pricing-engine)
+  - [منابع قیمت](#۳-منابع-قیمت)
+  - [پنل ادمین](#۴-پنل-ادمین)
+  - [API فروشی + پنل مشتری](#۵-api-فروشی--پنل-مشتری)
+  - [مالی و حسابداری](#۶-مالی-و-حسابداری)
+  - [ورود، کاربران و دسترسی](#۷-ورود-کاربران-و-دسترسی)
+  - [تاب‌آوری و مانیتورینگ](#۸-تاب‌آوری-و-مانیتورینگ)
+- [ساختار فنی](#ساختار-فنی)
+- [راه‌اندازی (local)](#راه‌اندازی-local)
+- [تست](#تست)
+- [مستندات](#مستندات)
 
-- **Tablo ye moghayese** (safhe ye asli): har nemad × har manba'، ba کمترین/بیشترین، darsad e taghir، jahat (sabz/ghermez)، badge e kohnegi، va marker e «محاسبه‌شده» baraye gheymat haye derived. Gheymat ha be **toman** namayesh dade mishan (zakhire hamishe rial e). SSR + poll e 15 saniye ba ETag + flash e taghir — bedun e reload.
-- **Safhe ye har nemad** (`/price/{symbol}`): chart e zende، moghayese ye manba' ha، nemad haye ham-goruh، va SEO ye kamel (canonical/OG، JSON-LD e `Product`/`AggregateOffer` ba gheymat e daghigh، sitemap e per-symbol، robots e dynamic).
-- **Board e TV** (`/tv`): tamam-safhe، zamine ye tire، font be andaze ye kashi (`cqi`)، sa'at/tarikh e shamsi، Wake Lock، full-screen — baraye namayeshgar e maghaze. Har kashi **yek** gheymat e mo'asser e (hamun adadi ke API mide).
-- **Sefr request e biruni**: font self-host (Vazirmatn)، chart self-host (KLineCharts — TradingView tu Iran block e)، hich CDN-i. Ba e2e tazmin shode.
-- RTL e kamel، raghame Latin hame ja، responsive ta 375px.
+---
+
+## امکانات
+
+### ۱) سایت عمومی
+
+- **تابلوی مقایسه** (صفحهٔ اصلی): هر نماد × هر منبع، با کمترین/بیشترین، درصد تغییر، جهت (سبز/قرمز)، نشان کهنگی قیمت و نشانگر «محاسبه‌شده» برای قیمت‌های مشتق. قیمت‌ها به **تومان** نمایش داده می‌شوند (ذخیره‌سازی همیشه ریال است). رندر سمت سرور + به‌روزرسانی هر ۱۵ ثانیه با ETag و افکت فلش — بدون رفرش صفحه.
+- **صفحهٔ اختصاصی هر نماد** (`/price/{symbol}`): نمودار زنده، مقایسهٔ منابع، نمادهای هم‌گروه و سئوی کامل (canonical/OG، دادهٔ ساخت‌یافتهٔ JSON-LD از نوع `Product`/`AggregateOffer` با قیمت دقیق، سایت‌مپ برای هر نماد و robots پویا).
+- **تابلوی تلویزیونی** (`/tv`): تمام‌صفحه، زمینهٔ تیره، فونت به اندازهٔ کاشی (`cqi`)، ساعت و تاریخ شمسی، Wake Lock و حالت تمام‌صفحه — مناسب نمایشگر مغازه. هر کاشی **یک** قیمت مؤثر را نشان می‌دهد (همان عددی که API می‌دهد).
+- **صفر درخواست بیرونی**: فونت وزیرمتن self-host، نمودار KLineCharts هم self-host (TradingView در ایران مسدود است)، هیچ CDNای در کار نیست. این قید با تست e2e تضمین شده است.
+- راست‌به‌چپ کامل، ارقام لاتین در همه‌جا، واکنش‌گرا تا عرض 375px.
 
 | | |
 |---|---|
-| ![Safhe ye nemad ba chart va SEO](docs/screenshots/public-instrument.png) | ![Board e TV e tamam-safhe](docs/screenshots/public-tv.png) |
+| ![صفحهٔ نماد با نمودار و سئو](docs/screenshots/public-instrument.png) | ![تابلوی تلویزیونی تمام‌صفحه](docs/screenshots/public-tv.png) |
 
-### 2) Motor e gheymat (Pricing Engine)
+### ۲) موتور قیمت (Pricing Engine)
 
-Ghalb e proje: yek **pipeline e 5 marhale-i** (`Fetch → Validate → Enrich → Persist → Publish`) ke har 15 saniye tavasot e yek worker e joda (grid-aligned، bedun e drift) ejra mishe.
+قلب پروژه: یک **پایپ‌لاین ۵ مرحله‌ای** (`Fetch → Validate → Enrich → Persist → Publish`) که هر ۱۵ ثانیه توسط یک worker مجزا (هم‌تراز با شبکهٔ زمانی، بدون رانش) اجرا می‌شود.
 
-- **Fetch e hamzaman** ba `Http::pool` — kond-tarin provider tool e tick ro moshakhas mikone، na jam' e hame. (estjt ~7s javab mide؛ seri mizadim، provider e sevom tick ro mishkast.)
-- **Retry e hooshmand** faghat baraye khata haye gozara ye ettesal (TLS/connect/reset) — timeout va 4xx/5xx amdan retry nemishan؛ retry ha ham hamzaman-and va be budget e baghi-mande clamp mishan.
-- **Sanity e chand-laye**: band e motlagh e har nemad، enheraf e tick-be-tick، check e **cross-provider ba miane** baraye avvalin gheymat e har provider e jadid (zed e khata ye 10× va toman/rial)، va **marja' e e'temad** (trust anchor) ke admin entekhab mikone.
-- **Tazegi (freshness) per-(provider, nemad)**: feed haye Irani shab ha va jom'e ha yakh mizanan، nemad haye jahani akhar e hafte ye jahani — har kodum saghf e khodeshun ro daran؛ gheymat e kohne ba **badge e sen** mimune، gom nemishe.
-- **Gheymat hichvaght float nist**: hamishe `bigint` e minor unit + `scale`، parse ba bcmath. Spread e har manba' ru **read** e'mal mishe، na write — adad e kham e tarikhche hich vaght dast nemikhore.
-- **Zarabān e nevisande (heartbeat)**: age writer e tablo az kar oftad (hatta OOM e saket e Redis)، tablo khodkar be Postgres fallback mikone va `degraded` e'lam mishe.
-- **Spool e Influx**: ghat'i ye InfluxDB hich tick-i ro nemindaze — tick ha tu Redis spool mishan، ba replay bar migardan va candle haye hamun baze **dobare sakhte mishan** (surakh e daemi tu chart peyda nemishe).
+- **دریافت هم‌زمان** با `Http::pool` — کندترین منبع طول tick را تعیین می‌کند، نه جمعِ همه. (استعلام اتحادیه حدود ۷ ثانیه طول می‌کشد؛ اگر سریالی می‌زدیم، منبع سوم tick را می‌شکست.)
+- **تلاش مجدد هوشمند** فقط برای خطاهای گذرای اتصال (TLS/connect/reset) — خطای timeout و 4xx/5xx عمداً تکرار نمی‌شوند؛ تلاش‌های مجدد هم هم‌زمان‌اند و به بودجهٔ باقی‌ماندهٔ tick محدود می‌شوند.
+- **کنترل سلامت چندلایه**: باند مطلق هر نماد، انحراف tick به tick، مقایسهٔ **بین‌منبعی با میانه** برای اولین قیمت هر منبع تازه (در برابر خطای ۱۰ برابری و تومان/ریال) و **مرجع اعتماد** (trust anchor) که ادمین انتخاب می‌کند.
+- **تازگی (freshness) به تفکیک (منبع، نماد)**: فیدهای ایرانی شب‌ها و جمعه‌ها یخ می‌زنند و نمادهای جهانی آخر هفتهٔ میلادی — هر کدام سقف مخصوص خودشان را دارند؛ قیمت کهنه با **نشان سن** می‌ماند و گم نمی‌شود.
+- **قیمت هیچ‌وقت float نیست**: همیشه `bigint` در واحد خرد + `scale`، و تجزیه با bcmath. اسپرد هر منبع روی **خواندن** اعمال می‌شود، نه نوشتن — عدد خامِ تاریخچه هرگز دست نمی‌خورد.
+- **ضربان نویسنده (heartbeat)**: اگر نویسندهٔ تابلو از کار بیفتد (حتی OOM خاموش Redis)، تابلو خودکار به Postgres برمی‌گردد و وضعیت `degraded` اعلام می‌شود.
+- **صف ذخیرهٔ Influx**: قطعی InfluxDB هیچ tickای را نمی‌اندازد — tickها در Redis صف می‌شوند، با replay برمی‌گردند و کندل‌های همان بازه **دوباره ساخته می‌شوند** (هیچ حفرهٔ دائمی در نمودار نمی‌ماند).
 
-### 3) Manba' haye gheymat
+### ۳) منابع قیمت
 
-Har manba' yek adapter e `QuoteSourcePort` e ba **fixture ye vaghei** va test e adad-be-adad:
+هر منبع یک آداپتور `QuoteSourcePort` با **fixture واقعی** و تست عدد به عدد:
 
-| Manba' | No' | Chi mide | Nokte ye fani |
+| منبع | نوع | چه می‌دهد | نکتهٔ فنی |
 |---|---|---|---|
-| اتحادیه طلا و جواهر تهران (estjt) | marja' | 9 nemad | HTML scrape ba DOMXPath؛ separator e `٫`؛ HTTP/1.1 ejbari |
-| تی‌جی‌جی‌یو (tgju) | marja' | 16 nemad (+jofte ye abshode) | timestamp e per-symbol؛ feed e 963 kelid-i ke faghat map-shode ha khunde mishan |
-| نرخ (nerkh) | marja' | 14 nemad | `MAZANEH` → **abshode** (÷4.3318)؛ **noghre ye 999/925 e mohasebati** az ons×dollar e khod e feed |
-| وال‌گلد (wallgold) | platform | abshode + noghre 925 (jofte) | Bearer token؛ har (symbol،side) yek request e joda |
-| طلای ملی (melligold) | platform | abshode (jofte) | challenge e cookie ye ArvanCloud handle mishe |
-| اکوگلد (ecogold) | platform | abshode، 3 sekke، noghre 999 (jofte) | toman ba 8 raghame ashar |
-| طلایین (tlyn) | platform | abshode، mesghal، 3 sekke، ons (jofte) | gheymat be hezar-toman |
-| **API اختصاصی** | dakheli | hame ye nemad ha | gheymat e khod e ma — paeen ro bebin |
+| اتحادیه طلا و جواهر تهران (estjt) | مرجع | ۹ نماد | اسکرپ HTML با DOMXPath؛ جداکنندهٔ «٫»؛ HTTP/1.1 اجباری |
+| تی‌جی‌جی‌یو (tgju) | مرجع | ۱۶ نماد (+ جفت‌قیمت آبشده) | تایم‌استمپ به تفکیک نماد؛ از فید ۹۶۳ کلیدی فقط کلیدهای نگاشت‌شده خوانده می‌شوند |
+| نرخ (nerkh) | مرجع | ۱۴ نماد | «مظنه» → **آبشده** (تقسیم بر 4.3318)؛ **نقرهٔ 999/925 محاسباتی** از انس × دلارِ خودِ فید |
+| وال‌گلد (wallgold) | پلتفرم | آبشده + نقره 925 (جفت‌قیمت) | توکن Bearer؛ هر (نماد، سمت) یک درخواست جدا |
+| طلای ملی (melligold) | پلتفرم | آبشده (جفت‌قیمت) | چالش کوکی ArvanCloud به‌صورت خودکار رد می‌شود |
+| اکوگلد (ecogold) | پلتفرم | آبشده، ۳ سکه، نقره 999 (جفت‌قیمت) | تومان با ۸ رقم اعشار |
+| طلایین (tlyn) | پلتفرم | آبشده، مثقال، ۳ سکه، انس (جفت‌قیمت) | قیمت‌ها به هزار تومان |
+| **API اختصاصی** | داخلی | همهٔ نمادها | قیمت خودِ ما — توضیح پایین |
 
-- **«18 ayar» e platform ha dar vaghe' abshode ye moamelati-e** — hame be `xau-melted-g-irr` map shodan ta moghayese sadegh bashe.
-- **Olaviat e per-nemad**: baraye har nemad zanjire ye manba' ghabel e tanzim e (masalan abshode: aval اتحادیه، bad tgju، …). Feed e mo'asser hamishe avvalin manba' e **taze** ye zanjire-ast.
-- **«API اختصاصی»** (provider e dakheli): gheymat e khod e ma ke **khodkar** az zanjire ye olaviat por mishe، admin mitune per-nemad override kone (halat e «فقط دستی»، import e Excel)، va age hame ye manba' ha ghat' shan، feed e foroushi az hamin zende mimune — ba alarm.
-- Ezafe kardan e manba' e jadid yek dastur-e-amal e 7 ghadame dare (`.claude/skills/add-price-provider`) — fixture ye vaghei، test e exhaustive، va moghayese ba tgju ejbari-e.
+- **«۱۸ عیارِ» پلتفرم‌ها در واقع قیمت معاملهٔ آبشده است** — همه به `xau-melted-g-irr` نگاشت شده‌اند تا مقایسه صادقانه باشد.
+- **اولویت به تفکیک نماد**: برای هر نماد زنجیرهٔ منابع قابل تنظیم است (مثلاً آبشده: اول اتحادیه، بعد tgju و…). فید مؤثر همیشه اولین منبع **تازهٔ** زنجیره است.
+- **«API اختصاصی»** (منبع داخلی): قیمت خود ما که **خودکار** از زنجیرهٔ اولویت پر می‌شود، ادمین می‌تواند برای هر نماد آن را دستی override کند (حالت «فقط دستی»، ایمپورت اکسل) و اگر همهٔ منابع قطع شوند، فید فروشی از همین زنده می‌ماند — همراه با هشدار.
+- افزودن منبع جدید یک دستورعمل ۷ مرحله‌ای دارد (`.claude/skills/add-price-provider`) — fixture واقعی، تست جامع و مقایسه با tgju اجباری است.
 
-### 4) Panel e admin
+### ۴) پنل ادمین
 
-Panel e kamel e Farsi/RTL ru `/dashboard` (Tailwind v4 + Alpine، theme e token-base):
+پنل کامل فارسی/RTL روی `/dashboard` (Tailwind v4 + Alpine، تم مبتنی بر توکن):
 
-- **میزکار**: stat card ha، salamat e har manba' (latency، nemad، rad، khata)، gauge، jadval e moghayese ye zende.
-- **منابع قیمت**: tanzimat + salamat e har manba' tu yek kart؛ roshan/khamoosh e **bedun e reload** (SPA)؛ spread e per-nemad ba preview e server-side؛ marja' e e'temad؛ logo az ketabkhane ye Media.
-- **تنظیم قیمت نمادها**: zanjire ye olaviat e har nemad (drag/bala/paeen)، vaziat e «API اختصاصی»، import/export e Excel ba preview e radif-be-radif.
-- **ماتریس نمادها**: har khune = gheymat + sen + ekhtelaf e beyn e manba' ha؛ arzun-tarin/geran-tarin har radif.
-- **نمودار قیمت**: candle/khati az 5 daghighe ta **salane ba taghvim e shamsi** (hafte az shanbe)؛ overlay e chand manba' ru yek chart ba tooltip e ekhtelaf؛ deep-link e share-pazir.
-- **پایش**: gozaresh e har tick (chi ghabul/rad shod va chera) + **mini-Telescope e upstream**: har request e vaghei be provider ha ba header/body/duration/retry، ba redaction e secret ha.
-- **مشتریان**: CRUD، disable/enable (session ha fori mioftan)، sharj/kasr e dasti ye wallet ba dalil va audit، chart e masraf e API، virayesh ba audit e ghabl/ba'd.
-- **تیکت‌ها**: inbox، goft-o-gu ba peyvast e private (link e emza-dar)، gozar e vaziat ba tarikhche، SMS e etela'-resani.
-- **دسترسی (RBAC)**: naghsh/permission e ghabel e ta'rif tavasot e khod e admin، guard e «akharin modir».
-- **سئو / رسانه**: editor e `seo_meta` e har safhe؛ ketabkhane ye upload ba joloogiri az hazf e file e dar-hal-e-estefade.
+- **میزکار**: کارت‌های آماری، سلامت هر منبع (تأخیر، نماد، ردشده، خطا)، گیج درصد سلامت و جدول مقایسهٔ زنده.
+- **منابع قیمت**: تنظیمات + سلامت هر منبع در یک کارت؛ روشن/خاموش **بدون رفرش** (SPA)؛ اسپرد به تفکیک نماد با پیش‌نمایش سمت سرور؛ مرجع اعتماد؛ لوگو از کتابخانهٔ رسانه.
+- **تنظیم قیمت نمادها**: زنجیرهٔ اولویت هر نماد (جابه‌جایی/بالا/پایین)، وضعیت «API اختصاصی» و ایمپورت/اکسپورت اکسل با پیش‌نمایش سطر به سطر.
+- **ماتریس نمادها**: هر خانه = قیمت + سن + اختلاف بین منابع؛ ارزان‌ترین/گران‌ترینِ هر سطر مشخص است.
+- **نمودار قیمت**: کندل/خطی از ۵ دقیقه تا **سالانه با تقویم شمسی** (هفته از شنبه)؛ هم‌پوشانی چند منبع روی یک نمودار با تولتیپ اختلاف؛ لینک مستقیم قابل اشتراک.
+- **پایش**: گزارش هر tick (چه قبول/رد شد و چرا) + **مینی‌تلسکوپ upstream**: تک‌تک درخواست‌های واقعی به منابع با هدر/بدنه/مدت/تلاش مجدد، با پنهان‌سازی مقادیر حساس.
+- **مشتریان**: CRUD، غیرفعال‌سازی (نشست‌های باز بلافاصله می‌افتند)، شارژ/کسر دستی کیف پول با دلیل و ممیزی، نمودار مصرف API، ویرایش با ثبت قبل/بعد.
+- **تیکت‌ها**: صندوق ورودی، گفت‌وگو با پیوست خصوصی (لینک امضادار)، گذار وضعیت با تاریخچه، اطلاع‌رسانی پیامکی.
+- **دسترسی (RBAC)**: نقش/مجوز قابل تعریف توسط خود ادمین، محافظ «آخرین مدیر».
+- **سئو / رسانه**: ویرایشگر `seo_meta` هر صفحه؛ کتابخانهٔ آپلود با جلوگیری از حذف فایل در حال استفاده.
 
 | | |
 |---|---|
-| ![Mizkar](docs/screenshots/panel-dashboard.png) | ![Manba' haye gheymat](docs/screenshots/panel-providers.png) |
-| ![Tanzim e gheymat e nemad ha](docs/screenshots/panel-priorities.png) | ![Chart e admin ba overlay e manba' ha](docs/screenshots/panel-charts.png) |
-| ![Matrix e nemad ha](docs/screenshots/panel-matrix.png) | ![Payesh e upstream](docs/screenshots/panel-upstream.png) |
+| ![میزکار](docs/screenshots/panel-dashboard.png) | ![منابع قیمت](docs/screenshots/panel-providers.png) |
+| ![تنظیم قیمت نمادها](docs/screenshots/panel-priorities.png) | ![نمودار ادمین با هم‌پوشانی منابع](docs/screenshots/panel-charts.png) |
+| ![ماتریس نمادها](docs/screenshots/panel-matrix.png) | ![پایش upstream](docs/screenshots/panel-upstream.png) |
 
-### 5) API e foroushi + panel e moshtari
+### ۵) API فروشی + پنل مشتری
 
-- **Auth e HMAC**: emzaye canonical ba client/secret، nonce ye yek-bar-masraf (fail-closed)، skew e ±30s، decoy-HMAC zed e timing.
-- **Endpoint ha**: `GET /v1/{instruments, providers, prices, prices/{symbol}, effective, candles, wallet}` — hame ba ETag (pasokh e 304 **pul nemigire**).
-- **Billing e per-call**: reserve e atomic ba Lua ru Redis + sabt tu ledger e PG (manba' e haghighat)؛ **fail-closed** (Redis ya PG ghat' → 503، service ye majani nemidim).
-- **Idempotency e vaghei**: `X-Pb-Request-Id` e sabet → hamun pasokh ta 24 sa'at bedun e kasr e dobare؛ hamun id ba request e motefavet → 409.
-- **Refund e khodkar** ru khata/304 — va age DOROST hamun lahze DB ghat' bud، refund tu saf e paydar mimune va scheduler replay esh mikone (pul e moshtari gom nemishe).
-- **Plan e eshteraki**: admin plan misaze (moddat، sahmie ye kol، saghf e ruzane، nerkh e mazad)؛ call e dakhel e sahmie majani، mazad pay-as-you-go؛ saghf e ruzane → 429.
-- **Panel e self-serve** (`/account`): sakht e site (credential yek bar namayesh)، kharid e plan az wallet، sharj ba dargah e **Vandar** (verify e idempotent)، ledger، chart e masraf، ticket.
-- **Ta'eed e site**: sabt e site → ticket e khodkar → estelam e **enamad** → ta'eed e admin → API fa'al.
-- **KYC ba Zohal**: shahkar (mobile↔code melli)، hoviat e haghighi، sherkat، code posti — gozaresh e khodkar ru ticket (har estelam pul dare؛ faghat yek bar + dokme ye ejra ye dobare).
-- **Factor e rasmi** ba shomare ye motavali (`PB-YYYY-NNNNNN`)، snapshot e **gheyr-ghabel-taghir** az hoviat e ta'eed-shode (faghat az profile e approve-shode ye KYC).
+- **احراز هویت HMAC**: امضای canonical با client/secret، نانس یک‌بارمصرف (fail-closed)، اختلاف ساعت مجاز ±۳۰ ثانیه و decoy-HMAC در برابر حملات زمانی.
+- **اندپوینت‌ها**: `GET /v1/{instruments, providers, prices, prices/{symbol}, effective, candles, wallet}` — همه با ETag (پاسخ 304 **هزینه ندارد**).
+- **شارژ به ازای هر فراخوانی**: رزرو اتمی با Lua روی Redis + ثبت در دفتر کل Postgres (منبع حقیقت)؛ **fail-closed** (قطعی Redis یا PG یعنی 503 — سرویس مجانی نمی‌دهیم).
+- **Idempotency واقعی**: با `X-Pb-Request-Id` ثابت، همان پاسخ تا ۲۴ ساعت بدون کسر دوباره برمی‌گردد؛ همان شناسه با درخواست متفاوت یعنی 409.
+- **بازگشت وجه خودکار** روی خطا/304 — و اگر درست همان لحظه دیتابیس قطع بود، بازگشت در صف پایدار می‌ماند و زمان‌بند آن را replay می‌کند (پول مشتری گم نمی‌شود).
+- **پلن اشتراکی**: ادمین پلن می‌سازد (مدت، سهمیهٔ کل، سقف روزانه، نرخ مازاد)؛ فراخوانی داخل سهمیه رایگان، مازاد به‌صورت pay-as-you-go؛ سقف روزانه یعنی 429.
+- **پنل self-serve مشتری** (`/account`): ساخت سایت (نمایش یک‌بارهٔ credential)، خرید پلن از کیف پول، شارژ با درگاه **وندار** (verify با idempotency)، دفتر کل، نمودار مصرف و تیکت.
+- **تأیید سایت**: ثبت سایت → تیکت خودکار → استعلام **اینماد** → تأیید ادمین → فعال شدن API.
+- **احراز هویت با زحل (KYC)**: شاهکار (موبایل ↔ کد ملی)، هویت حقیقی، شرکت، کد پستی — گزارش خودکار روی تیکت (هر استعلام هزینه دارد؛ فقط یک بار + دکمهٔ اجرای دوباره).
+- **فاکتور رسمی** با شمارهٔ متوالی (`PB-YYYY-NNNNNN`) و اسنپ‌شات **تغییرناپذیر** از هویتِ تأییدشده (فقط از پروفایل تأییدشدهٔ KYC).
 
-### 6) Mali va hesabdari
+### ۶) مالی و حسابداری
 
-- `wallet_transactions` **append-only** — ba **trigger e database** (UPDATE/DELETE/TRUNCATE rad mishe، hatta cascade).
-- Hesabdari ye **do-tarafe** (journal) baraye har harekat e pul.
-- Safhe ye «امور مالی»: daftar e kol e hame ye karbaran ba filter/search/CSV، **gozaresh e mahane be taghvim e Jalali**، tasviye ye dargah، sodur e factor e dasti، sharj e kif e pul.
-- «Virayesh/hazf» e sanad vojud nadare — faghat **sanad e bargasht** (ebtal) ba dalil، admin va reference be sanad e asli. Idempotent.
+- جدول `wallet_transactions` **فقط‌افزودنی (append-only)** است — با **تریگر دیتابیس** (UPDATE/DELETE/TRUNCATE رد می‌شود، حتی cascade).
+- حسابداری **دوطرفه** (journal) برای هر حرکت پول.
+- صفحهٔ «امور مالی»: دفتر کل همهٔ کاربران با فیلتر/جست‌وجو/CSV، **گزارش ماهانه به تقویم شمسی**، تسویهٔ درگاه، صدور فاکتور دستی و شارژ کیف پول.
+- «ویرایش/حذف» سند وجود ندارد — فقط **سند برگشت** (ابطال) با دلیل، نام ادمین و ارجاع به سند اصلی. idempotent.
 
-![Safhe ye mali](docs/screenshots/panel-finance.png)
+![صفحهٔ مالی](docs/screenshots/panel-finance.png)
 
-### 7) Vorud، karbaran va dastresi
+### ۷) ورود، کاربران و دسترسی
 
-- **Login faghat ba mobile + OTP** — hich password-i zakhire nemishe.
-- Code ha **hash e HMAC** tu Redis (dump e Redis bedun e APP_KEY bi-estefade-ast)، yek-bar-masraf ba consume e atomic، 3 ghalat = batel.
-- **Rate limit e joda baraye phone va IP** (ersal va verify)، enumeration-safe (pasokh baraye shomare ye mojud/namojud byte-be-byte yeki-e)، zed e session fixation.
-- Karbar e disable-shode: session haye baz fori mioftan، OTP e dorost ham rad mishe، API haye site hash 403 migiran.
-- Audit e kamel e taghirat e profile (ki، kay، ghabl/ba'd)؛ taghir e hoviat ba'd az KYC، ta'eed ro **khodkar batel** mikone.
+- **ورود فقط با موبایل + کد یک‌بارمصرف** — هیچ رمز عبوری ذخیره نمی‌شود.
+- کدها به‌صورت **هش HMAC** در Redis نگهداری می‌شوند (dump ردیس بدون APP_KEY بی‌استفاده است)، یک‌بارمصرف با مصرف اتمی، و ۳ خطا یعنی ابطال کد.
+- **محدودیت نرخ جداگانه برای شماره و IP** (ارسال و تأیید)، ایمن در برابر enumeration (پاسخ برای شمارهٔ موجود و ناموجود بایت به بایت یکی است) و محافظت در برابر session fixation.
+- کاربر غیرفعال‌شده: نشست‌های باز بلافاصله می‌افتند، کد درست هم رد می‌شود و APIهای سایت‌هایش 403 می‌گیرند.
+- ممیزی کامل تغییرات پروفایل (چه کسی، کی، قبل/بعد)؛ تغییر هویت بعد از KYC، تأییدیه را **خودکار باطل** می‌کند.
 
-![Lista ye moshtarian](docs/screenshots/panel-users.png)
+![فهرست مشتریان](docs/screenshots/panel-users.png)
 
-### 8) Taab-avari va monitoring
+### ۸) تاب‌آوری و مانیتورینگ
 
-Senario haye ghat'i **ru mohit e vaghei** test shodan (`scripts/resilience-check.sh`، 30 check):
+سناریوهای قطعی **روی محیط واقعی** تست شده‌اند (`scripts/resilience-check.sh`، ۳۰ بررسی):
 
-| Chi ghat' she | Chi mishe |
+| چه قطع شود | چه می‌شود |
 |---|---|
-| InfluxDB | tick ha spool mishan؛ ba replay bar migardan va candle ha dobare sakhte mishan — **hich gap-i** |
-| Redis | tablo be Postgres fallback mikone va khodesh ro `degraded` e'lam mikone |
-| PostgreSQL | tick amdan rad mishe (bedun e sanity nemineveisim) vali tablo az Redis zende mimune |
-| Yek provider | baghi edame midan؛ feed e mo'asser be manba' e ba'di ye zanjire mire |
-| Hame ye provider ha | «API اختصاصی» (akharin gheymat e salem) serve mishe + alarm tu panel |
+| InfluxDB | tickها صف می‌شوند؛ با replay برمی‌گردند و کندل‌ها دوباره ساخته می‌شوند — **هیچ حفره‌ای** نمی‌ماند |
+| Redis | تابلو به Postgres برمی‌گردد و خودش را `degraded` اعلام می‌کند |
+| PostgreSQL | tick عمداً رد می‌شود (بدون کنترل سلامت نمی‌نویسیم) ولی تابلو از Redis زنده می‌ماند |
+| یک منبع | بقیه ادامه می‌دهند؛ فید مؤثر به منبع بعدیِ زنجیره می‌رود |
+| همهٔ منابع | «API اختصاصی» (آخرین قیمت سالم) سرو می‌شود + هشدار در پنل |
 
-- **Horizon** (queue) va **Telescope** (faghat local، ba redaction) posht e permission.
-- `pricing:influx:health`: 5 check e salamat e candle/task/spool — scheduler har 5 daghighe.
-- Log e structured e JSON per-line baraye har tick (`pricing.upstream` / `pricing.stored` / `pricing.rejected`) — amade ye Filebeat/Kibana.
+- **Horizon** (صف) و **Telescope** (فقط local، با پنهان‌سازی داده‌های حساس) پشت مجوز دسترسی.
+- `pricing:influx:health`: ۵ بررسی سلامت کندل/تسک/صف — زمان‌بند هر ۵ دقیقه.
+- لاگ ساخت‌یافتهٔ JSON برای هر tick (`pricing.upstream` / `pricing.stored` / `pricing.rejected`) — آمادهٔ Filebeat/Kibana.
 
 ---
 
-## Sakhtar e fani
+## ساختار فنی
 
-**Stack**: Laravel 13 · PHP 8.5 · PostgreSQL 18 · Redis 8 (yek instance، DB0/1/2) · InfluxDB 2.7 · Octane/Swoole · Alpine 3 · Tailwind v4 · Vite 8 · KLineCharts 10 (self-host) · Docker · Playwright.
+**پشته**: Laravel 13 · PHP 8.5 · PostgreSQL 18 · Redis 8 (یک نمونه، DB0/1/2) · InfluxDB 2.7 · Octane/Swoole · Alpine 3 · Tailwind v4 · Vite 8 · KLineCharts 10 (self-host) · Docker · Playwright
 
-### Me'mari: Modular Monolith + Ports & Adapters + CQRS-lite
+### معماری: Modular Monolith + Ports & Adapters + CQRS-lite
+
+</div>
 
 ```
 app/Modules/{Module}/
-├── Domain/           ← PHP e khales: ValueObject، Enum، Service، Port (interface)
-│                        hich chiz e Laravel inja nist — na Facade، na Eloquent، na config()
-├── Application/      ← use-case ha: Action (write) · Query (read) · Dto · Pipeline
-└── Infrastructure/   ← tanha jayi ke donya ye birun hast: Eloquent، Redis، Http، Influx
+├── Domain/           ← PHP خالص: ValueObject، Enum، Service، Port (interface)
+│                        هیچ‌چیزِ لاراول اینجا نیست — نه Facade، نه Eloquent، نه config()
+├── Application/      ← use-case ها: Action (نوشتن) · Query (خواندن) · Dto · Pipeline
+└── Infrastructure/   ← تنها جایی که دنیای بیرون هست: Eloquent، Redis، Http، Influx
 ```
 
-- UI (Controller/Blade) **faghat** `Action`/`Query` seda mizane — hich Eloquent e mostaghim. Yek test e me'mari (`LayerRulesTest`) in ghanun ha ro ru **source code** enforce mikone + Larastan level 6.
-- Har integration e biruni yek **Port** e ba adapter + fake + bind + **test e bind**. Kol e pipeline e gheymat bedun e Docker/DB test mishe.
-- Zire Octane hich halat e moshtarak e khatarnaki nist: client haye mutable bind nemishan (Influx va Zohal ba `Http` e khod e Laravel-and، na SDK).
+<div dir="rtl">
 
-### Module ha
+- لایهٔ UI (کنترلر/Blade) **فقط** `Action`/`Query` صدا می‌زند — هیچ Eloquent مستقیمی. یک تست معماری (`LayerRulesTest`) این قوانین را روی **سورس‌کد** اجبار می‌کند + Larastan سطح ۶.
+- هر یکپارچه‌سازی بیرونی یک **Port** است با آداپتور + fake + bind + **تستِ bind**. کل پایپ‌لاین قیمت بدون Docker و دیتابیس تست می‌شود.
+- زیر Octane هیچ حالت مشترک خطرناکی وجود ندارد: کلاینت‌های mutable هرگز bind نمی‌شوند (Influx و زحل با `Http` خود لاراول کار می‌کنند، نه SDK).
 
-| Module | Kar |
+### ماژول‌ها
+
+| ماژول | وظیفه |
 |---|---|
-| `Pricing` | motor e gheymat: source ha، pipeline، sanity، spread، olaviat، board/TV/chart/SEO feed |
-| `Api` | HMAC auth، charge e per-call، plan/eshterak، usage، inspector |
-| `Wallet` | kif e pul e append-only + idempotency |
-| `Billing` | dargah e Vandar، topup، factor e rasmi |
-| `Finance` | daftar e kol، journal، gozaresh e mahane، ebtal/eslah |
-| `Auth` | OTP، SMS (Kavenegar)، karbaran، audit |
-| `Access` | RBAC (naghsh/permission e dynamic) |
-| `Ticket` | ticket + peyvast e private + gozar e vaziat |
-| `Kyc` | onboarding، estelam haye Zohal، ta'eed e sath |
-| `Seo` | meta/JSON-LD/sitemap/robots + editor |
-| `Media` | upload + ketabkhane + usage tracking |
-| `Panel` / `Common` | shell e dashboard، component ha، helper ha (Money، Jalali، PhoneHelper، …) |
+| `Pricing` | موتور قیمت: منابع، پایپ‌لاین، کنترل سلامت، اسپرد، اولویت، فید تابلو/TV/نمودار/سئو |
+| `Api` | احراز HMAC، شارژ هر فراخوانی، پلن/اشتراک، مصرف، inspector |
+| `Wallet` | کیف پول فقط‌افزودنی + idempotency |
+| `Billing` | درگاه وندار، شارژ، فاکتور رسمی |
+| `Finance` | دفتر کل، journal، گزارش ماهانه، ابطال/اصلاح |
+| `Auth` | کد یک‌بارمصرف، پیامک (کاوه‌نگار)، کاربران، ممیزی |
+| `Access` | نقش و مجوز پویا (RBAC) |
+| `Ticket` | تیکت + پیوست خصوصی + گذار وضعیت |
+| `Kyc` | آنبوردینگ، استعلام‌های زحل، تأیید سطح |
+| `Seo` | متا/JSON-LD/سایت‌مپ/robots + ویرایشگر |
+| `Media` | آپلود + کتابخانه + ردیابی مصرف |
+| `Panel` / `Common` | پوستهٔ داشبورد، کامپوننت‌ها، هلپرها (Money، Jalali، PhoneHelper و…) |
 
-### Jaryan e yek tick (har 15 saniye)
+### جریان یک tick (هر ۱۵ ثانیه)
+
+</div>
 
 ```
-price-worker (container e joda، grid-aligned)
+price-worker (کانتینر جدا، هم‌تراز با شبکهٔ ۱۵ ثانیه‌ای)
    │
    ▼
-Fetch ──── Http::pool e hamzaman + retry e khata ye gozara + log e upstream
+Fetch ──── دریافت هم‌زمان با Http::pool + تلاش مجدد خطای گذرا + لاگ upstream
    ▼
-Validate ─ band e motlagh · enheraf e tick-be-tick · tazegi ye per-(provider,nemad)
-           · cross-provider e avvalin tick (miane) · trust anchor
+Validate ─ باند مطلق · انحراف tick به tick · تازگی به تفکیک (منبع، نماد)
+           · مقایسهٔ بین‌منبعی اولین tick (میانه) · مرجع اعتماد
    ▼
-Enrich ─── jahat، band e rooz (reset ba nime-shab e Tehran)
+Enrich ─── جهت، باند روز (ریست با نیمه‌شب تهران)
    ▼
-Persist ── Postgres (snapshot) + Redis (tablo ye dagh، yek kelid) + Influx (tick)
-           + backup e khodkar e «API اختصاصی»       ← hame isolated: yek sink boyofte، baghi zende-and
+Persist ── Postgres (اسنپ‌شات) + Redis (تابلوی داغ، یک کلید) + Influx (tick)
+           + پشتیبان‌گیری خودکار «API اختصاصی»   ← همه isolated: یکی بیفتد، بقیه زنده‌اند
    ▼
-Publish ── bump e version + heartbeat
+Publish ── نسخهٔ جدید + ضربان (heartbeat)
 ```
 
-### Se store، se naghsh
+<div dir="rtl">
 
-| Store | Naghsh |
+### سه انبار داده، سه نقش
+
+| انبار | نقش |
 |---|---|
-| **PostgreSQL** | manba' e haghighat: akharin snapshot ha، provider ha، karbar/wallet/ledger (~35 jadval، migration hamishe ezafe-shi) |
-| **Redis** (DB0 session/queue · DB1 cache · DB2 prices، `noeviction`+AOF) | tablo ye dagh tu **yek kelid** (yek round-trip)، lock e tick، mirror e billing، spool |
-| **InfluxDB 2.7** | tick haye kham (30 rooz) + candle haye `1m…1d` ba task haye Flux؛ haftegi/mahane/salane **ba taghvim e Jalali tu PHP** tajmi' mishan |
+| **PostgreSQL** | منبع حقیقت: آخرین اسنپ‌شات‌ها، منابع، کاربر/کیف پول/دفتر کل (حدود ۳۵ جدول؛ مایگریشن همیشه افزایشی) |
+| **Redis** (DB0 نشست/صف · DB1 کش · DB2 قیمت‌ها؛ `noeviction` + AOF) | تابلوی داغ در **یک کلید** (یک رفت‌وبرگشت)، قفل tick، آینهٔ شارژ API، صف ذخیره |
+| **InfluxDB 2.7** | tickهای خام (۳۰ روز) + کندل‌های `1m` تا `1d` با تسک‌های Flux؛ هفتگی/ماهانه/سالانه **با تقویم شمسی در PHP** تجمیع می‌شوند |
 
-### Keyfiat
+### کیفیت
 
-- **1,446 test e PHP** (6,433 assertion) — SQLite in-memory + Redis e test (DB13/14/15)؛ hich test-i be provider/dargah/SMS e vaghei network nemizane (fixture haye vaghei tu `tests/Fixtures/`).
-- **127 spec e Playwright** (e2e) ru stack e vaghei ye Docker — az login e OTP ta kharid e plan va tasviye.
-- **Mutation check** ru mekanism haye hassas: test-i ke ba kharab kardan e code sabz bemune، hichi ro sabt nakarde.
-- **Larastan level 6** + Pint + test e me'mari.
-- Fake haye port **gharardad e vaghei ro emza mikonan** (contract test ru har do implementation) — fake ye mehraban-tar az adapter mamnu'.
+- **۱,۴۴۶ تست PHP** (۶,۴۳۳ assertion) — SQLite در حافظه + Redis تست (DB13/14/15)؛ هیچ تستی به منبع/درگاه/پیامک واقعی وصل نمی‌شود (fixtureهای واقعی در `tests/Fixtures/`).
+- **۱۲۷ تست Playwright** (e2e) روی پشتهٔ واقعی Docker — از ورود با کد یک‌بارمصرف تا خرید پلن و تسویه.
+- **Mutation check** روی سازوکارهای حساس: تستی که با خراب‌کردن کد سبز بماند، چیزی را ثبت نکرده است.
+- **Larastan سطح ۶** + Pint + تست معماری.
+- Fakeهای هر Port **همان قرارداد واقعی را امضا می‌کنند** (تست قرارداد روی هر دو پیاده‌سازی) — fake مهربان‌تر از آداپتور ممنوع است.
 
 ---
 
-## Quickstart (local)
+## راه‌اندازی (local)
+
+</div>
 
 ```sh
-cp .env.example .env            # credential ha + APP_KEY ro khodet por kon؛ .env ro commit nakon
+cp .env.example .env            # مقادیر و APP_KEY را خودتان پر کنید؛ .env را commit نکنید
 docker compose -f docker-compose.local.yml up -d --build
 
 dc="docker compose -f docker-compose.local.yml exec octane"
-$dc php artisan migrate --force                 # hamishe ezafe-shi — hich migrate:fresh ru data ye vaghei
-$dc php artisan db:seed                         # ProviderSeeder (hame gheyr-fa'al) + AdminSeeder
-$dc php artisan pricing:influx:provision --tokens   # bucket/task haye Influx + token haye read/write → .env
-docker compose -f docker-compose.local.yml up -d --force-recreate   # ba'd az har taghir e .env
+$dc php artisan migrate --force                 # همیشه افزایشی — هیچ migrate:fresh روی دادهٔ واقعی
+$dc php artisan db:seed                         # ProviderSeeder (همه غیرفعال) + AdminSeeder
+$dc php artisan pricing:influx:provision --tokens   # باکت/تسک‌های Influx + توکن‌های read/write → .env
+docker compose -f docker-compose.local.yml up -d --force-recreate   # بعد از هر تغییر .env
 
 npm install && npm run build
-$dc php artisan octane:reload                   # ba'd az har build e asset
+$dc php artisan octane:reload                   # بعد از هر build فرانت
 ```
 
-Ba'd: tu panel (`/dashboard/providers`) provider haye lazem ro **fa'al** kon va yek marja' e e'temad (trust anchor) entekhab kon. Container e `price-worker` har 15 saniye `pricing:tick` mizane؛ dasti ham mishe:
+<div dir="rtl">
+
+سپس در پنل (`/dashboard/providers`) منابع لازم را **فعال** کنید و یک مرجع اعتماد (trust anchor) انتخاب کنید. کانتینر `price-worker` هر ۱۵ ثانیه `pricing:tick` می‌زند؛ دستی هم می‌شود:
+
+</div>
 
 ```sh
-$dc php artisan pricing:tick --force     # yek tick e kamel، gozaresh tu console (--json ham dare)
-$dc php artisan pricing:influx:health    # salamat e candle ha / task ha
+$dc php artisan pricing:tick --force     # یک tick کامل با گزارش در کنسول (--json هم دارد)
+$dc php artisan pricing:influx:health    # سلامت کندل‌ها / تسک‌ها
 ```
 
-| Chi | Koja |
+<div dir="rtl">
+
+| چی | کجا |
 |---|---|
-| Site e omumi (board + chart) | http://localhost:8300 · `/tv` board e TV |
-| Panel e admin | http://localhost:8300/dashboard (login ba mobile + OTP؛ `BYPASS_OTP` faghat local) |
-| Hesab e customer | http://localhost:8300/account |
-| API e foroushi | `GET /v1/{instruments,providers,prices,prices/{symbol},effective,candles,wallet}` ba HMAC |
-| Horizon / Telescope | `/horizon` · `/telescope` (faghat admin ba permission e `monitoring.view`؛ Telescope faghat local) |
+| سایت عمومی (تابلو + نمودار) | http://localhost:8300 · `/tv` تابلوی تلویزیونی |
+| پنل ادمین | http://localhost:8300/dashboard (ورود با موبایل + کد؛ `BYPASS_OTP` فقط local) |
+| حساب مشتری | http://localhost:8300/account |
+| API فروشی | `GET /v1/{instruments,providers,prices,prices/{symbol},effective,candles,wallet}` با HMAC |
+| Horizon / Telescope | `/horizon` · `/telescope` (فقط ادمین با مجوز `monitoring.view`؛ Telescope فقط local) |
 | Vite HMR · Postgres · Redis · Influx | 5373 · 55434 · 56381 · 8386 |
 
-Port ha amdan shift shodan ta ba projeh haye dige conflict nakhoran — avazeshun nakon bedun e `docker ps -a`.
+پورت‌ها عمداً جابه‌جا شده‌اند تا با پروژه‌های دیگر تداخل نکنند — بدون بررسی `docker ps -a` تغییرشان ندهید.
 
-Kelid haye ekhtiari ye `.env`: `WALLGOLD_API_KEY` (manba' e wallgold)، `VANDAR_API_KEY` (dargah)، `ZOHAL_TOKEN` (KYC)، `KAVENEGAR_*` (SMS) — bedun eshun hamun bakhsh gheyr-fa'al e vali hichi nemishkane.
+کلیدهای اختیاری `.env`: `WALLGOLD_API_KEY` (منبع وال‌گلد)، `VANDAR_API_KEY` (درگاه)، `ZOHAL_TOKEN` (استعلام هویت)، `KAVENEGAR_*` (پیامک) — بدون آن‌ها همان بخش غیرفعال می‌ماند ولی چیزی نمی‌شکند.
 
-## Test
+## تست
+
+</div>
 
 ```sh
-$dc php artisan test --compact        # PHPUnit: SQLite in-memory + Redis DB13/14/15 (dev dast nemikhore)
-$dc composer typecheck                # Larastan L6
-npx playwright test                   # e2e az HOST؛ stack bayad bala bashe؛ 1 worker
+$dc php artisan test --compact        # PHPUnit: SQLite در حافظه + Redis DB13/14/15 (به dev دست نمی‌زند)
+$dc composer typecheck                # Larastan سطح ۶
+npx playwright test                   # e2e از HOST؛ پشته باید بالا باشد؛ 1 worker
 $dc vendor/bin/pint --dirty
 ```
 
-Test e PostgreSQL e mali (`tests/Integration/FinancePostgresTest.php`) faghat ba `PB_TEST_PG_DATABASE=priceboard_verify_*` ejra mishe — hargez ru DB e dev.
+<div dir="rtl">
 
-## Mostanadat
+تست PostgreSQL مالی (`tests/Integration/FinancePostgresTest.php`) فقط با `PB_TEST_PG_DATABASE=priceboard_verify_*` اجرا می‌شود — هرگز روی دیتابیس dev.
 
-- [`docs/TASKS.md`](docs/TASKS.md) — **koja hastim** (aval in ro bekhun)
-- [`docs/PLAN.md`](docs/PLAN.md) — plan va tasmim ha (chi va chera)
-- [`docs/architecture.md`](docs/architecture.md) — laye ha، pipeline، manba' ha، mali، schema، ops، test
-- [`docs/dashboard-design.md`](docs/dashboard-design.md) — token ha va component haye theme
-- [`CLAUDE.md`](CLAUDE.md) · [`app/Modules/CLAUDE.md`](app/Modules/CLAUDE.md) · [`resources/views/CLAUDE.md`](resources/views/CLAUDE.md) — ghanun haye kar
-- `.claude/skills/` — dastur e amal e gam-be-gam (`add-price-provider`، `pricing-architecture`، `influx-timeseries`، `dashboard-ui`، `docker-dev`)
+## مستندات
+
+- [`docs/TASKS.md`](docs/TASKS.md) — **کجا هستیم** (اول این را بخوانید)
+- [`docs/PLAN.md`](docs/PLAN.md) — نقشه و تصمیم‌ها (چه و چرا)
+- [`docs/architecture.md`](docs/architecture.md) — لایه‌ها، پایپ‌لاین، منابع، مالی، اسکیما، عملیات، تست
+- [`docs/dashboard-design.md`](docs/dashboard-design.md) — توکن‌ها و کامپوننت‌های تم
+- [`CLAUDE.md`](CLAUDE.md) · [`app/Modules/CLAUDE.md`](app/Modules/CLAUDE.md) · [`resources/views/CLAUDE.md`](resources/views/CLAUDE.md) — قوانین کار
+- `.claude/skills/` — دستورعمل‌های گام‌به‌گام (`add-price-provider`، `pricing-architecture`، `influx-timeseries`، `dashboard-ui`، `docker-dev`)
+
+</div>
